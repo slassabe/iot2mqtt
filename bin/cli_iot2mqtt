@@ -1,0 +1,96 @@
+#!/usr/local/bin/python3
+# coding=utf-8
+import argparse
+import logging
+import signal
+import sys
+import time
+
+from iot2mqtt import central, mqtthelper, messenger
+from iot2mqtt import __version__
+
+
+ANIMATION = "|/-\\"
+C_GREEN = "\033[0;32m"
+C_END = "\033[0m"
+C_BOLD = "\033[1m"
+
+def animate_cursor(position: int):
+    _anim = ANIMATION[position % len(ANIMATION)]
+    print(f'\r{C_GREEN}{_anim}{C_END}', end="")
+
+
+def signal_handler(sig, frame):
+    print('\nSignal received, exiting...')
+    sys.exit(0)
+
+
+def _handle_msg(msg: messenger.Message, devices: str, verbose: bool) -> None:
+    _device_name = msg.device_name
+    if devices and _device_name not in devices:
+        return
+    if verbose:
+        _details = (
+            f"{C_BOLD}type:{C_END} {msg.message_type}"
+            f" - {C_BOLD}protocol:{C_END} {msg.protocol.value}"
+            f" - {C_BOLD}model:{C_END} {msg.model.value}\n"
+            f"\t{C_BOLD}raw:{C_END} {msg.raw_item}\n"
+            f"\t{C_BOLD}refined:{C_END} {msg.refined}"
+        )
+    else:
+        _details = (
+            f"{C_BOLD}type:{C_END} {msg.message_type}"
+            f" - {C_BOLD}refined:{C_END} {msg.refined} "
+        )
+    print(f'{C_GREEN} [{msg.device_name}]{C_END} {_details}')
+
+
+def main():
+    # Register the signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+
+    print(f"iot2mqtt version: {__version__}")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-b", "--brocker", type=str,
+                        help="set the host of the broker")
+    parser.add_argument("-d", "--devices", type=str,
+                        help="set the devices to spy, comma separated names")
+    parser.add_argument("-l", "--loop", type=int, default=10,
+                        help="loop for a specific number of seconds(default 10 sec.)")
+    parser.add_argument("-v", "--verbose",
+                        action="store_true", help="increase output verbosity")
+
+    args = parser.parse_args()
+    if args.brocker:
+        _brocker = args.brocker
+        print(f"MQTT: Using broker {_brocker}")
+    else:
+        _brocker = "localhost"
+        print(f"MQTT: Using default broker {_brocker}")
+    _client = mqtthelper.ClientHelper(
+        mqtthelper.MQTTContext(hostname=_brocker),
+        mqtthelper.SecurityContext()
+    )
+    try:
+        _client.start()
+    except mqtthelper.ConnectionException:
+        sys.exit(1)
+
+    _refined_queue = central.get_refined_data_queue(_client)
+
+    # Configure a dispatcher to handle all incoming messages
+    _dispatcher = messenger.Dispatcher(
+        input_queue=_refined_queue,
+        output_queue=None,
+        conditional_handlers=[],
+        default_handler=lambda msg: _handle_msg(msg, args.devices, args.verbose)
+    )
+    # Animate cursor
+    for pos in range(args.loop):
+        animate_cursor(pos)
+        time.sleep(1)
+    _dispatcher.force_stop()
+    sys.exit(0)
+    
+if __name__ == "__main__":
+    main()
