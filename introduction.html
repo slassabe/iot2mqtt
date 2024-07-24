@@ -52,6 +52,14 @@
 <li class="toctree-l3"><a class="reference internal" href="#key-features">Key Features</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation-from-github">Installation from Github</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#test-installation">Test installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-devices-and-protocol">Supported Devices and Protocol</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#related-projects">Related projects</a></li>
 </ul>
 </li>
@@ -86,7 +94,7 @@
              
   <section id="iot2mqtt-simplifying-iot-solutions-with-mqtt-integration">
 <h1>iot2mqtt: Simplifying IoT Solutions with MQTT Integration<a class="headerlink" href="#iot2mqtt-simplifying-iot-solutions-with-mqtt-integration" title="Link to this heading"></a></h1>
-<p>“Less is More - Powering Your IoT Solutions with MQTT integration”</p>
+<p><em><strong>“Less is More”</strong></em></p>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p><strong>iot2mqtt</strong> is a versatile Python library built upon the Paho™ MQTT client. It is designed to simplify IoT application development by providing a programmatic alternative to traditional home automation platforms, without the overpromises of no-code solutions.</p>
@@ -104,6 +112,161 @@
 <li><p><strong>Abstract Devices</strong>: Comprehensive support for creating and managing abstract devices, simplifying the integration between different device models, providers, and protocols.</p></li>
 </ul>
 </section>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<p>To get started with <strong>iot2mqtt</strong>, follow these steps:</p>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Python 3.x</p></li>
+<li><p>IoT bridges if required (e.g., Zigbee2MQTT, ring to MQTT, miflora to MQTT)</p></li>
+</ul>
+</section>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>The latest stable version is available in the Python Package Index (PyPi) and can be installed using</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>iot2mqtt
+</pre></div>
+</div>
+<p>or with <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate<span class="w">  </span><span class="c1"># On Windows use `venv\Scripts\activate`</span>
+pip3<span class="w"> </span>install<span class="w"> </span>iot2mqtt
+</pre></div>
+</div>
+</section>
+<section id="installation-from-github">
+<h3>Installation from Github<a class="headerlink" href="#installation-from-github" title="Link to this heading"></a></h3>
+<p>To obtain the code, you can clone the Github repository:</p>
+<ol class="arabic">
+<li><p>Clone the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/slassabe/iot2mqtt.git
+</pre></div>
+</div>
+</li>
+<li><p>Navigate to the project directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>iot2mqtt
+</pre></div>
+</div>
+</li>
+<li><p>(Optional) Create and activate a virtual environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate<span class="w">  </span><span class="c1"># On Windows use `venv\Scripts\activate`</span>
+</pre></div>
+</div>
+</li>
+<li><p>Install the required dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>pip3<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<section id="test-installation">
+<h2>Test installation<a class="headerlink" href="#test-installation" title="Link to this heading"></a></h2>
+<p>To verify that the installation was successful, you can use the <code class="docutils literal notranslate"><span class="pre">cli_iot2mqtt</span></code> command. This command will help you ensure that everything is set up correctly.</p>
+<ol class="arabic">
+<li><p>Open your terminal.</p></li>
+<li><p>Run the following command:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>cli_iot2mqtt
+</pre></div>
+</div>
+</li>
+</ol>
+<p>You should see output similar to the screenshot below, indicating that the command is working as expected.</p>
+<p><img alt="Alt text" src="_images/cli_iot2mqtt.png" /></p>
+</section>
+<section id="supported-devices-and-protocol">
+<h2>Supported Devices and Protocol<a class="headerlink" href="#supported-devices-and-protocol" title="Link to this heading"></a></h2>
+<p>Below is a table outlining the available codecs.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Protocol</p></th>
+<th class="head"><p>Model</p></th>
+<th class="head"><p>Availability</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Homie</p></td>
+<td><p>Miflora</p></td>
+<td><p>In progress</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>NAS-AB02B2</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>RING</p></td>
+<td><p>RingCamera</p></td>
+<td><p>In progress</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>TASMOTA</p></td>
+<td><p>Shelly Plug S</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://templates.blakadder.com/shelly_plug_S.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>SHELLY</p></td>
+<td><p>Shelly Plug S</p></td>
+<td><p>In progress</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>TASMOTA</p></td>
+<td><p>Shelly Uni</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://templates.blakadder.com/shelly_UNI.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>SHELLY</p></td>
+<td><p>Shelly Uni</p></td>
+<td><p>In progress</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>SRTS-A01</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/SRTS-A01.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>Z2M</p></td>
+<td><p>TS0601_soil</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/TS0601_soil.html">Link</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>SNZB-02</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/SNZB-02.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>Z2M</p></td>
+<td><p>SNZB-01</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/SNZB-01.html">Link</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>SNZB-03</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/SNZB-03.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>Z2M</p></td>
+<td><p>ZBMINI-L</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/ZBMINI.html">Link</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>ZBMINIL2</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/ZBMINIL2.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>Z2M</p></td>
+<td><p>S26R2ZB</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/S26R2ZB.html">Link</a></p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="related-projects">
 <h2>Related projects<a class="headerlink" href="#related-projects" title="Link to this heading"></a></h2>
