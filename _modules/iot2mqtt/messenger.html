@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iot2mqtt.messenger &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=51b770b3"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            iot2mqtt
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">iot2mqtt.messenger</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for iot2mqtt.messenger</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/local/bin/python3</span>
+<span class="c1"># coding=utf-8</span>
+<span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">uuid4</span>
+
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SerializeAsAny</span>
+
+<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">dev</span><span class="p">,</span> <span class="n">utils</span>
+
+
+<div class="viewcode-block" id="MessageType">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.MessageType">[docs]</a>
+<span class="k">class</span> <span class="nc">MessageType</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration for IOT message types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DISCO</span> <span class="o">=</span> <span class="s2">&quot;discovery&quot;</span>
+    <span class="n">AVAIL</span> <span class="o">=</span> <span class="s2">&quot;availability&quot;</span>
+    <span class="n">STATE</span> <span class="o">=</span> <span class="s2">&quot;state&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span></div>
+
+
+
+<div class="viewcode-block" id="Item">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Item">[docs]</a>
+<span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a raw data item in the IoT system.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        data (Union[Dict, str, List[Dict]]): The data associated with the item.</span>
+<span class="sd">            It can be a dictionary, a string, or a list of dictionaries.</span>
+<span class="sd">        tag (Optional[str]): An optional tag for the item, which can be used</span>
+<span class="sd">            for additional metadata or categorization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="Message">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Message">[docs]</a>
+<span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a message in the IoT system.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        protocol (dev.Protocol): The communication protocol used by the device.</span>
+<span class="sd">        model (Optional[dev.Model]): The model of the device, if available.</span>
+<span class="sd">        device_name (str): The name of the device.</span>
+<span class="sd">        message_type (MessageType): The type of the message (e.g., discovery,</span>
+<span class="sd">            availability, state).</span>
+<span class="sd">        raw_item (Item): The raw data item associated with the message.</span>
+<span class="sd">        id (UUID): A unique identifier for the message, generated by default.</span>
+<span class="sd">        refined (Optional[Item]): An optional refined version of the raw item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span>
+    <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message_type</span><span class="p">:</span> <span class="n">MessageType</span>
+    <span class="n">raw_item</span><span class="p">:</span> <span class="n">Item</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">uuid4</span><span class="p">)</span>
+    <span class="n">refined</span><span class="p">:</span> <span class="n">SerializeAsAny</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Item</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># Class predicate definition</span>
+<div class="viewcode-block" id="is_type_discovery">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.is_type_discovery">[docs]</a>
+<span class="k">def</span> <span class="nf">is_type_discovery</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="o">.</span><span class="n">message_type</span> <span class="o">==</span> <span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span></div>
+
+
+
+<div class="viewcode-block" id="is_type_availability">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.is_type_availability">[docs]</a>
+<span class="k">def</span> <span class="nf">is_type_availability</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="o">.</span><span class="n">message_type</span> <span class="o">==</span> <span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span></div>
+
+
+
+<div class="viewcode-block" id="is_type_state">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.is_type_state">[docs]</a>
+<span class="k">def</span> <span class="nf">is_type_state</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">msg</span><span class="o">.</span><span class="n">message_type</span> <span class="o">==</span> <span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span></div>
+
+
+
+<div class="viewcode-block" id="QueueManager">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.QueueManager">[docs]</a>
+<span class="k">class</span> <span class="nc">QueueManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    QueueManager is a base class that implements a thread-safe message queue manager.</span>
+
+<span class="sd">    This class provides the basic functionality for managing input and output queues</span>
+<span class="sd">    that can be used by derived classes to implement specific message processing logic.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_queue (queue.Queue): The queue from which messages are consumed.</span>
+<span class="sd">        output_queue (queue.Queue): The queue to which processed messages are forwarded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_queue</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">,</span> <span class="n">output_queue</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_queue</span> <span class="o">=</span> <span class="n">input_queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span> <span class="o">=</span> <span class="n">output_queue</span></div>
+
+
+
+<div class="viewcode-block" id="Producer">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Producer">[docs]</a>
+<span class="k">class</span> <span class="nc">Producer</span><span class="p">(</span><span class="n">QueueManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Producer is a thread-safe message producer that puts messages onto an output queue.</span>
+
+<span class="sd">    This class extends the QueueManager to provide functionality for producing messages</span>
+<span class="sd">    and placing them onto an output queue for further processing by consumers.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        output_queue (queue.Queue): The queue to which produced messages are forwarded.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_queue</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_queue</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_queue</span><span class="o">=</span><span class="n">output_queue</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Producer.put">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Producer.put">[docs]</a>
+    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Message</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Puts a message onto the output queue.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message (Union[Message, str]): The message to be placed onto the output queue.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">Handler</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Message</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Message</span><span class="p">]]</span>
+<span class="n">HandlerList</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Handler</span><span class="p">]]</span>
+
+<span class="n">Condition</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Message</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span>
+<span class="n">ConditionalProcessing</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Condition</span><span class="p">,</span> <span class="n">Handler</span><span class="p">]</span>
+<span class="n">ConditionalProcessingList</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">List</span><span class="p">[</span><span class="n">ConditionalProcessing</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Dispatcher">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Dispatcher">[docs]</a>
+<span class="k">class</span> <span class="nc">Dispatcher</span><span class="p">(</span><span class="n">QueueManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dispatcher is a thread-safe message dispatcher that processes messages from an input queue</span>
+<span class="sd">    based on specified conditional handlers and optionally forwards the processed messages to an</span>
+<span class="sd">    output queue.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_queue (queue.Queue): The queue from which messages are consumed.</span>
+<span class="sd">        output_queue (Optional[queue.Queue]): The queue to which processed messages are</span>
+<span class="sd">            forwarded.</span>
+<span class="sd">        conditional_handlers (ConditionalProcessingList): A list of tuples where each tuple</span>
+<span class="sd">            contains a condition function and a handler function.</span>
+<span class="sd">        default_handler (Optional[Handler]): A default handler function to process messages</span>
+<span class="sd">            that do not match any condition. Defaults to None.</span>
+<span class="sd">        name (Optional[str]): An optional name for the dispatcher. If not provided, a default</span>
+<span class="sd">            name is generated.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        STOP (str): Sentinel value used to signal the dispatcher to stop processing messages.</span>
+
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    Here is an example of how to access incoming MQTT messages and process them using a</span>
+<span class="sd">    dispatcher according to their message type:</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        import time</span>
+<span class="sd">        from iot2mqtt import central, mqtthelper, messenger</span>
+
+<span class="sd">        TARGET = &quot;localhost&quot;</span>
+
+<span class="sd">        def main():</span>
+<span class="sd">            _client = mqtthelper.ClientHelper(</span>
+<span class="sd">                mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()</span>
+<span class="sd">            )</span>
+<span class="sd">            _client.start()</span>
+<span class="sd">            _refined_queue = central.get_refined_data_queue(_client)</span>
+
+<span class="sd">            messenger.Dispatcher(</span>
+<span class="sd">                input_queue=_refined_queue,</span>
+<span class="sd">                output_queue=None,</span>
+<span class="sd">                conditional_handlers=[</span>
+<span class="sd">                    (messenger.is_type_availability,</span>
+<span class="sd">                    lambda msg: print(f&quot;Availability: {msg.device_name} {msg.refined}&quot;)),</span>
+<span class="sd">                ],</span>
+<span class="sd">            )</span>
+
+<span class="sd">        if __name__ == &quot;__main__&quot;:</span>
+<span class="sd">            main()</span>
+<span class="sd">            while True:</span>
+<span class="sd">                time.sleep(1)</span>
+<span class="sd">        # Display :</span>
+<span class="sd">        # Availability: SWITCH_CAVE is_online=True</span>
+<span class="sd">        # Availability: SWITCH_PLUG is_online=False</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">STOP</span> <span class="o">=</span> <span class="s2">&quot;STOP&quot;</span>
+    <span class="n">_instance_nb</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">_instance_nb_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_queue</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">,</span>
+        <span class="n">output_queue</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">],</span>
+        <span class="n">conditional_handlers</span><span class="p">:</span> <span class="n">ConditionalProcessingList</span><span class="p">,</span>
+        <span class="n">default_handler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Handler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">input_queue</span><span class="p">,</span> <span class="n">output_queue</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">Dispatcher</span><span class="o">.</span><span class="n">_instance_nb_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;Dispatcher#</span><span class="si">{</span><span class="n">Dispatcher</span><span class="o">.</span><span class="n">_instance_nb</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">Dispatcher</span><span class="o">.</span><span class="n">_instance_nb</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditional_handlers</span> <span class="o">=</span> <span class="n">conditional_handlers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_handler</span> <span class="o">=</span> <span class="n">default_handler</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>  <span class="c1"># Use an event for stopping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] Dispatcher started at </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">conditional_handlers_count</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conditional_handlers</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_handlers</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Dispatcher(name=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;conditional_handlers_count=</span><span class="si">{</span><span class="n">conditional_handlers_count</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;input_queue_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">()</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;output_queue_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span><span class="o">.</span><span class="n">qsize</span><span class="p">()</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;N/A&#39;</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_no_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Message</span><span class="p">]:</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;No handler set for message with ID: </span><span class="si">%s</span><span class="s2">, Device: </span><span class="si">%s</span><span class="s2">, Type: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">.</span><span class="n">device_name</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">.</span><span class="n">message_type</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process_and_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Handler</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Processes a message using the given handler and puts the result in the output queue.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            handler (Handler): The handler function to process the message.</span>
+<span class="sd">            message (Message): The message to be processed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_result</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">_result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">_result</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The main loop that processes messages from the input queue based on conditional handlers.</span>
+
+<span class="sd">        This method runs in a separate thread and continuously processes messages from the input</span>
+<span class="sd">        queue.</span>
+<span class="sd">        It checks each message against the conditional handlers and processes it using the first</span>
+<span class="sd">        matching handler.</span>
+<span class="sd">        If no handlers match, the default handler is used. The loop stops when the stop event is</span>
+<span class="sd">        set or a STOP message is received.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span>  <span class="c1"># Use timeout to periodically check the stop event</span>
+            <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">_message</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">STOP</span><span class="p">:</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] Dispatcher stopped&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">_message</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Message is None&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">_found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">_condition</span><span class="p">,</span> <span class="n">_handler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conditional_handlers</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">_condition</span><span class="p">(</span><span class="n">_message</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">_found</span><span class="p">:</span>
+                            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                                <span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">: Ignored] Id: </span><span class="si">%s</span><span class="s2"> - Device: </span><span class="si">%s</span><span class="s2"> - Type : </span><span class="si">%s</span><span class="s2"> - Refined: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                <span class="n">_message</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                <span class="n">_message</span><span class="o">.</span><span class="n">device_name</span><span class="p">,</span>
+                                <span class="n">_message</span><span class="o">.</span><span class="n">message_type</span><span class="p">,</span>
+                                <span class="n">_message</span><span class="o">.</span><span class="n">refined</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="k">break</span>
+                        <span class="n">_found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_process_and_put</span><span class="p">(</span><span class="n">_handler</span><span class="p">,</span> <span class="n">_message</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_found</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_process_and_put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_handler</span><span class="p">,</span> <span class="n">_message</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Exception evaluating conditional handler handler: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">e</span><span class="p">,</span>
+                    <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_input_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Dispatcher.stop_loop">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Dispatcher.stop_loop">[docs]</a>
+    <span class="k">def</span> <span class="nf">stop_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process all pending messages and stop the loop.&quot;&quot;&quot;</span>
+        <span class="c1"># self._input_queue.put(self.STOP, block=True, timeout=1)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STOP</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Dispatcher.force_stop">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.messenger.Dispatcher.force_stop">[docs]</a>
+    <span class="k">def</span> <span class="nf">force_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forcefully stops the dispatcher by setting the stop event.</span>
+
+<span class="sd">        This method signals the dispatcher to stop processing messages by setting</span>
+<span class="sd">        the internal stop event. It is typically used to gracefully shut down the</span>
+<span class="sd">        dispatcher when it is no longer needed. Once the stop event is set, the</span>
+<span class="sd">        dispatcher will complete processing any current message and then exit its</span>
+<span class="sd">        run loop.</span>
+
+<span class="sd">        Logs a debug message indicating that the dispatcher has been forcefully stopped.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_event</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>  <span class="c1"># Signal the stop event</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] Dispatcher force stopped&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

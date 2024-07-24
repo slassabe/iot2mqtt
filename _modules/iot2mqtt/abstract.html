@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iot2mqtt.abstract &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=51b770b3"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            iot2mqtt
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">iot2mqtt.abstract</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for iot2mqtt.abstract</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/local/bin/python3</span>
+<span class="c1"># coding=utf-8</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">iot2mqtt.abstract</span>
+<span class="sd">=================</span>
+
+<span class="sd">This module defines various abstract representations of IoT device states and attributes.</span>
+<span class="sd">It provides a set of Pydantic models and enumerations to represent the state and configuration</span>
+<span class="sd">of different types of IoT devices, such as switches, sensors, and alarms.</span>
+
+<span class="sd">Classes</span>
+<span class="sd">-------</span>
+
+<span class="sd">- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.</span>
+<span class="sd">- AirSensor: Represents the state of an air sensor device.</span>
+<span class="sd">- Alarm: Represents the state of an alarm device.</span>
+<span class="sd">- AlarmVolumes: Enumeration representing possible alarm volume levels.</span>
+<span class="sd">- Availability: Represents the availability status of a device.</span>
+<span class="sd">- Button: Represents the state of a button device.</span>
+<span class="sd">- ButtonValues: Enumeration representing possible button actions.</span>
+<span class="sd">- DeviceState: Root class for all device state classes.</span>
+<span class="sd">- Motion: Represents the state of a motion sensor device.</span>
+<span class="sd">- SrtsA01: Represents the state of a specific Zigbee thermostat device.</span>
+<span class="sd">- Switch: Represents the state of a switch device.</span>
+<span class="sd">- Switch2Channels: Represents the state of a switch device with two channels.</span>
+
+
+<span class="sd">Enums</span>
+<span class="sd">-----</span>
+
+<span class="sd">- ButtonValues: Enumeration representing possible button actions.</span>
+<span class="sd">- AlarmVolumes: Enumeration representing possible alarm volume levels.</span>
+
+<span class="sd">Constants</span>
+<span class="sd">---------</span>
+
+<span class="sd">- POWER_ON: String constant representing the &quot;ON&quot; state.</span>
+<span class="sd">- POWER_OFF: String constant representing the &quot;OFF&quot; state.</span>
+<span class="sd">- SWITCH_ON: Switch instance representing the &quot;ON&quot; state.</span>
+<span class="sd">- SWITCH_OFF: Switch instance representing the &quot;OFF&quot; state.</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+
+<span class="sd">Here is an example of how to use the `Switch` class:</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    from iot2mqtt.abstract import Switch, POWER_ON, POWER_OFF</span>
+
+<span class="sd">    switch = Switch(power=POWER_ON)</span>
+<span class="sd">    print(switch.power)  # Output: ON</span>
+
+<span class="sd">    switch.power = POWER_OFF</span>
+<span class="sd">    print(switch.power)  # Output: OFF</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">AliasChoices</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">computed_field</span><span class="p">,</span> <span class="n">confloat</span>
+
+
+<div class="viewcode-block" id="Availability">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Availability">[docs]</a>
+<span class="k">class</span> <span class="nc">Availability</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the availability status of a device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        is_online (bool): Indicates whether the device is online. This field is immutable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_online</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Registry">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Registry">[docs]</a>
+<span class="k">class</span> <span class="nc">Registry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a registry of dicovered devices.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        device_names (List[str]): A list of device names.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">device_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="DeviceState">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.DeviceState">[docs]</a>
+<span class="k">class</span> <span class="nc">DeviceState</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Root class for all device state classes.</span>
+
+<span class="sd">    This class serves as the base for various device state representations,</span>
+<span class="sd">    providing common attributes and functionality.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        last_seen (Optional[datetime]): The timestamp of when the device was</span>
+<span class="sd">                                        last seen. This field can be accessed</span>
+<span class="sd">                                        using aliases &quot;last_seen&quot; or &quot;Time&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">last_seen</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">&quot;last_seen&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AirSensor">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.AirSensor">[docs]</a>
+<span class="k">class</span> <span class="nc">AirSensor</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of an air sensor device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        humidity (Optional[float]): The humidity level measured by the sensor.</span>
+<span class="sd">        temperature (Optional[float]): The temperature measured by the sensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">humidity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="n">POWER_ON</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span>
+<span class="n">POWER_OFF</span> <span class="o">=</span> <span class="s2">&quot;OFF&quot;</span>
+
+
+<div class="viewcode-block" id="Switch">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Switch">[docs]</a>
+<span class="k">class</span> <span class="nc">Switch</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a switch device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        power_on_behavior (Optional[str]): The behavior of the switch when power is restored.</span>
+<span class="sd">        power (str): The current power state of the switch: &quot;ON&quot; or &quot;OFF&quot;</span>
+<span class="sd">            This field can be accessed using aliases &quot;power&quot;, &quot;state&quot;, or &quot;POWER&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">power_on_behavior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">power</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">&quot;power&quot;</span><span class="p">,</span> <span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;POWER&quot;</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="n">SWITCH_ON</span> <span class="o">=</span> <span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">POWER_ON</span><span class="p">)</span>
+<span class="n">SWITCH_OFF</span> <span class="o">=</span> <span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">POWER_OFF</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Switch2Channels">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Switch2Channels">[docs]</a>
+<span class="k">class</span> <span class="nc">Switch2Channels</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a switch device with two channels.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        power1 (str): The current power state of the first channel: &quot;ON&quot; or &quot;OFF&quot;</span>
+<span class="sd">            This field can be accessed using aliases &quot;power1&quot; or &quot;POWER1&quot;.</span>
+<span class="sd">        power2 (str): The current power state of the second channel: &quot;ON&quot; or &quot;OFF&quot;</span>
+<span class="sd">            This field can be accessed using aliases &quot;power2&quot; or &quot;POWER2&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">power1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">&quot;power1&quot;</span><span class="p">,</span> <span class="s2">&quot;POWER1&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">power2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">&quot;power2&quot;</span><span class="p">,</span> <span class="s2">&quot;POWER2&quot;</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Motion">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Motion">[docs]</a>
+<span class="k">class</span> <span class="nc">Motion</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a motion sensor device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        occupancy (Optional[bool]): Indicates whether motion is detected.</span>
+<span class="sd">        tamper (Optional[bool]): Indicates whether the device has been tampered with.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">occupancy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tamper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ButtonValues">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.ButtonValues">[docs]</a>
+<span class="k">class</span> <span class="nc">ButtonValues</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration representing possible button actions.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        SINGLE_ACTION: Represents a single button press action.</span>
+<span class="sd">        DOUBLE_ACTION: Represents a double button press action.</span>
+<span class="sd">        LONG_ACTION: Represents a long button press action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SINGLE_ACTION</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span>
+    <span class="n">DOUBLE_ACTION</span> <span class="o">=</span> <span class="s2">&quot;double&quot;</span>
+    <span class="n">LONG_ACTION</span> <span class="o">=</span> <span class="s2">&quot;long&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Button">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Button">[docs]</a>
+<span class="k">class</span> <span class="nc">Button</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a button device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        action (ButtonValues): The action performed by the button.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="n">ButtonValues</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ADC">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.ADC">[docs]</a>
+<span class="k">class</span> <span class="nc">ADC</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of an ADC (Analog-to-Digital Converter) device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        Range (Optional[float]): The range value of the ADC.</span>
+<span class="sd">        voltage (float): The computed voltage based on the range value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">Range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@computed_field</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Range</span> <span class="o">/</span> <span class="mi">100</span></div>
+
+
+
+<div class="viewcode-block" id="SrtsA01">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.SrtsA01">[docs]</a>
+<span class="k">class</span> <span class="nc">SrtsA01</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+    <span class="c1"># Température d&#39;absence pré-définie</span>
+    <span class="n">away_preset_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=-</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mf">35.0</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Batterie restante en %, peut prendre jusqu&#39;à 24 heures avant d&#39;être signalée.</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si cette vanne est calibrée, utilisez l&#39;option calibrer</span>
+    <span class="c1"># pour calibrer.</span>
+    <span class="n">calibrated</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si cette vanne est calibrée, utilisez l&#39;option calibrer pour calibrer.</span>
+    <span class="n">child_lock</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Température de l&#39;appareil</span>
+    <span class="n">device_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Entrée pour le capteur de température à distance</span>
+    <span class="c1"># (lorsque le capteur est réglé sur externe)</span>
+    <span class="n">external_temperature_input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mi">55</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">internal_heating_setpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Qualité du lien (force du signal)</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Température actuelle mesurée par le capteur interne ou externe</span>
+    <span class="n">local_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Consigne de température</span>
+    <span class="n">occupied_heating_setpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mi">30</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Nombre de pannes de courant (depuis le dernier couplage)</span>
+    <span class="n">power_outage_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Mode de l&#39;appareil (similaire à system_mode): &#39;manual&#39;, &#39;away&#39;, &#39;auto&#39;</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;manual&quot;</span><span class="p">,</span> <span class="s2">&quot;away&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Lorsqu&#39;il est activé, l&#39;appareil change d&#39;état en fonction de vos</span>
+    <span class="c1"># paramètres de programmation.</span>
+    <span class="n">schedule</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Configuration intelligente de l&#39;horaire (par défaut :</span>
+    <span class="c1"># lun, mar, mer, jeu, ven|8:00,24.0|18:00,17.0|23:00,22.0|8:00,22.0)</span>
+    <span class="n">schedule_settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Sélectionnez le détecteur température à utiliser</span>
+    <span class="n">sensor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;internal&quot;</span><span class="p">,</span> <span class="s2">&quot;external&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si l&#39;appareil est en mode configuration (E11)</span>
+    <span class="n">setup</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Mode de l&#39;appareil</span>
+    <span class="n">system_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;off&quot;</span><span class="p">,</span> <span class="s2">&quot;heat&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">update</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Avertit d&#39;une anomalie de contrôle de la température si la détection</span>
+    <span class="c1"># de la vanne est activée (par exemple, thermostat mal installé,</span>
+    <span class="c1"># défaillance de la vanne ou étalonnage incorrect, lien incorrect</span>
+    <span class="c1"># avec le capteur de température externe)</span>
+    <span class="n">valve_alarm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Détermine si des anomalies de contrôle de la température</span>
+    <span class="c1"># doivent être détectées</span>
+    <span class="n">valve_detection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Tension de la batterie en millivolts</span>
+    <span class="n">voltage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Active/désactive la détection de fenêtre de l&#39;appareil</span>
+    <span class="n">window_detection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si la fenêtre est ouverte</span>
+    <span class="n">window_open</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="AlarmVolumes">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.AlarmVolumes">[docs]</a>
+<span class="k">class</span> <span class="nc">AlarmVolumes</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration representing possible alarm volume levels.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        LOW: Low volume level.</span>
+<span class="sd">        MEDIUM: Medium volume level.</span>
+<span class="sd">        HIGH: High volume level.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">LOW</span> <span class="o">=</span> <span class="s2">&quot;low&quot;</span>
+    <span class="n">MEDIUM</span> <span class="o">=</span> <span class="s2">&quot;medium&quot;</span>
+    <span class="n">HIGH</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Alarm">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.Alarm">[docs]</a>
+<span class="k">class</span> <span class="nc">Alarm</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of an alarm device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        alarm (Optional[bool]): Indicates whether the alarm is active.</span>
+<span class="sd">        battery_low (Optional[bool]): Indicates whether the battery is low.</span>
+<span class="sd">        duration (Optional[int]): Duration of the alarm.</span>
+<span class="sd">        melody (Optional[int]): Melody of the alarm.</span>
+<span class="sd">        volume (Optional[Literal[&quot;low&quot;, &quot;medium&quot;, &quot;high&quot;]]): Volume level of the alarm.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alarm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">melody</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">volume</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;low&quot;</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

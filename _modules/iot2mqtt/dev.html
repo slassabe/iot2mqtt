@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iot2mqtt.dev &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=51b770b3"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            iot2mqtt
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">iot2mqtt.dev</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for iot2mqtt.dev</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/local/bin/python3</span>
+<span class="c1"># coding=utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">iot2mqtt.dev</span>
+<span class="sd">============</span>
+
+<span class="sd">This module defines various enumerations and classes related to IoT device models, protocols, </span>
+<span class="sd">and actions.</span>
+<span class="sd">It also includes custom exceptions for handling specific error cases.</span>
+
+<span class="sd">Classes and Enums</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">- Model: Enumeration representing different models of IoT devices.</span>
+<span class="sd">- Protocol: Enumeration representing different communication protocols used by IoT devices.</span>
+<span class="sd">- Device: Represents a generic IoT device in the system.</span>
+<span class="sd">- ButtonAction: Enumeration defining button action values.</span>
+<span class="sd">- DecodingException: Exception raised for errors in the decoding process.</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+
+<span class="sd">Here is an example of how to use the `Device` class:</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    from iot2mqtt.dev import Device, Protocol, Model</span>
+
+<span class="sd">    device = Device(</span>
+<span class="sd">        name=&quot;Living Room Light&quot;,</span>
+<span class="sd">        protocol=Protocol.Z2M,</span>
+<span class="sd">        model=Model.SN_MINI</span>
+<span class="sd">    )</span>
+<span class="sd">    print(device)</span>
+<span class="sd">    # Output: name=&#39;Living Room Light&#39; protocol=&lt;Protocol.Z2M: &#39;Zigbee2MQTT&#39;&gt; model=&lt;Model.SN_MINI: &#39;ZBMINI-L&#39;&gt;</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">utils</span>
+
+
+<div class="viewcode-block" id="Model">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.Model">[docs]</a>
+<span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This enum is used to represent the different models of devices that can be discovered.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        MIFLORA (str): Xiaomi Mi Flora plant sensor.</span>
+<span class="sd">        NEO_ALARM (str): Neo NAS-AB02B2 Zigbee Siren.</span>
+<span class="sd">        RING_CAMERA (str): Ring Camera.</span>
+<span class="sd">        SHELLY_PLUGS (str): Shelly Plug S WiFi smart plug.</span>
+<span class="sd">        SHELLY_UNI (str): Shelly Uni WiFi relay/dimmer.</span>
+<span class="sd">        SRTS_A01 (str): SRTS-A01 Zigbee device.</span>
+<span class="sd">        TUYA_SOIL (str): Tuya TS0601_soil Zigbee soil moisture sensor.</span>
+<span class="sd">        SN_AIRSENSOR (str): Sonoff Zigbee air temperature/humidity sensor.</span>
+<span class="sd">        SN_BUTTON (str): Sonoff SNZB-01 Zigbee wireless button.</span>
+<span class="sd">        SN_MOTION (str): Sonoff SNZB-03 Zigbee motion sensor.</span>
+<span class="sd">        SN_MINI (str): Sonoff ZBMINI-L Zigbee wireless switch module.</span>
+<span class="sd">        SN_MINI_L2 (str): Sonoff ZBMINIL2 Zigbee wireless switch module.</span>
+<span class="sd">        SN_SMART_PLUG (str): Sonoff S26R2ZB Zigbee smart plug.</span>
+<span class="sd">        SN_ZBBRIDGE (str): Sonoff ZbBridge Tasmota signature.</span>
+<span class="sd">        NONE (str): No model, used in discovery messages.</span>
+<span class="sd">        UNKNOWN (str): Unknown model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">MIFLORA</span> <span class="o">=</span> <span class="s2">&quot;Miflora&quot;</span>
+    <span class="n">NEO_ALARM</span> <span class="o">=</span> <span class="s2">&quot;NAS-AB02B2&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html</span>
+    <span class="n">RING_CAMERA</span> <span class="o">=</span> <span class="s2">&quot;RingCamera&quot;</span>
+    <span class="n">SHELLY_PLUGS</span> <span class="o">=</span> <span class="s2">&quot;Shelly Plug S&quot;</span>  <span class="c1"># Shelly Plug S WiFi smart plug</span>
+    <span class="n">SHELLY_UNI</span> <span class="o">=</span> <span class="s2">&quot;Shelly Uni&quot;</span>  <span class="c1"># Shelly Uni WiFi relay/dimmer</span>
+    <span class="n">SRTS_A01</span> <span class="o">=</span> <span class="s2">&quot;SRTS-A01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SRTS-A01.html</span>
+    <span class="n">TUYA_SOIL</span> <span class="o">=</span> <span class="s2">&quot;TS0601_soil&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/TS0601_soil.html</span>
+    <span class="n">SN_AIRSENSOR</span> <span class="o">=</span> <span class="s2">&quot;SNZB-02&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-02.html</span>
+    <span class="n">SN_BUTTON</span> <span class="o">=</span> <span class="s2">&quot;SNZB-01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-01.html</span>
+    <span class="n">SN_MOTION</span> <span class="o">=</span> <span class="s2">&quot;SNZB-03&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-03.html</span>
+    <span class="n">SN_MINI</span> <span class="o">=</span> <span class="s2">&quot;ZBMINI-L&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/ZBMINI.html</span>
+    <span class="n">SN_MINI_L2</span> <span class="o">=</span> <span class="s2">&quot;ZBMINIL2&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/ZBMINIL2.html</span>
+    <span class="n">SN_SMART_PLUG</span> <span class="o">=</span> <span class="s2">&quot;S26R2ZB&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/S26R2ZB.html</span>
+    <span class="n">SN_ZBBRIDGE</span> <span class="o">=</span> <span class="s2">&quot;Sonoff ZbBridge&quot;</span>  <span class="c1"># Tasmota signature for Sonoff ZbBridge</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="s2">&quot;None&quot;</span>  <span class="c1"># No model</span>
+    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="s2">&quot;Unknown&quot;</span>  <span class="c1"># Unknown model</span>
+
+<div class="viewcode-block" id="Model.from_str">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.Model.from_str">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_str</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the Model enum value corresponding to the given label.</span>
+
+<span class="sd">        This method takes a label as input and returns the corresponding Model enum value.</span>
+<span class="sd">        If the label does not correspond to any Model enum value, it returns Model.UNKNOWN.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            label (str): The label to get the Model enum value for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Model: The Model enum value corresponding to the label, or Model.UNKNOWN if</span>
+<span class="sd">            the label does not correspond to any Model enum value.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+
+<span class="sd">        Here is an example of how to use the `Model` enum:</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from iot2mqtt.dev import Model</span>
+
+<span class="sd">            model = Model.from_str(&quot;SRTS-A01&quot;)</span>
+<span class="sd">            print(model)  # Output: Model.SRTS_A01</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Model</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">Model</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">label</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">model</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Unknown model: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Model</span><span class="o">.</span><span class="n">UNKNOWN</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Protocol">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.Protocol">[docs]</a>
+<span class="k">class</span> <span class="nc">Protocol</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration for different communication protocols used by IoT devices.</span>
+
+<span class="sd">    This enum class represents various communication protocols that IoT devices can use to interact</span>
+<span class="sd">    with each other and with central systems. Each protocol is represented as a string constant.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        DEFAULT (str): Default protocol, used as a fallback.</span>
+<span class="sd">        HOMIE (str): The Homie IoT convention for MQTT.</span>
+<span class="sd">        RING (str): The protocol used by Ring devices.</span>
+<span class="sd">        SHELLY (str): The protocol used by Shelly smart home devices.</span>
+<span class="sd">        TASMOTA (str): The protocol used by Tasmota firmware for ESP8266/ESP32 boards.</span>
+<span class="sd">        Z2M (str): The Zigbee2MQTT protocol for Zigbee devices.</span>
+<span class="sd">        Z2T (str): The Zigbee2Tasmota protocol for Zigbee devices using Tasmota firmware.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DEFAULT</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span>
+    <span class="n">HOMIE</span> <span class="o">=</span> <span class="s2">&quot;Homie&quot;</span>
+    <span class="n">RING</span> <span class="o">=</span> <span class="s2">&quot;Ring&quot;</span>
+    <span class="n">SHELLY</span> <span class="o">=</span> <span class="s2">&quot;Shelly&quot;</span>
+    <span class="n">TASMOTA</span> <span class="o">=</span> <span class="s2">&quot;Tasmota&quot;</span>
+    <span class="n">Z2M</span> <span class="o">=</span> <span class="s2">&quot;Zigbee2MQTT&quot;</span>
+    <span class="n">Z2T</span> <span class="o">=</span> <span class="s2">&quot;Zigbee2Tasmota&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Device">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.Device">[docs]</a>
+<span class="k">class</span> <span class="nc">Device</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a generic IoT device in the system.</span>
+
+<span class="sd">    This class serves as a base model for all types of IoT devices. It defines common properties</span>
+<span class="sd">    and methods that all devices should have. Specific device types should inherit from this class</span>
+<span class="sd">    and add their own unique properties and methods.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str): The human-readable name of the device. This field is immutable.</span>
+<span class="sd">        protocol (Protocol): The communication protocol used by the device. This field is immutable.</span>
+<span class="sd">        address (Optional[str]): The network address of the device. Defaults to None.</span>
+<span class="sd">        model (Optional[Model]): The model of the device. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span><span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">),)</span>
+    <span class="n">protocol</span><span class="p">:</span> <span class="n">Protocol</span> <span class="o">=</span> <span class="p">(</span><span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">),)</span>
+    <span class="n">address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span></div>
+
+
+
+<div class="viewcode-block" id="ButtonAction">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.ButtonAction">[docs]</a>
+<span class="k">class</span> <span class="nc">ButtonAction</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration defining button action values.</span>
+
+<span class="sd">    This enum defines string constants for possible button actions</span>
+<span class="sd">    like single press, double press, long press, etc.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        SINGLE_ACTION (str): Represents a single button press action.</span>
+<span class="sd">        DOUBLE_ACTION (str): Represents a double button press action.</span>
+<span class="sd">        LONG_ACTION (str): Represents a long button press action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SINGLE_ACTION</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span>
+    <span class="n">DOUBLE_ACTION</span> <span class="o">=</span> <span class="s2">&quot;double&quot;</span>
+    <span class="n">LONG_ACTION</span> <span class="o">=</span> <span class="s2">&quot;long&quot;</span></div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

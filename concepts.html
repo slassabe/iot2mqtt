@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Concepts &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=51b770b3"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="User Guide" href="userguide.html" />
+    <link rel="prev" title="iot2mqtt: Simplifying IoT Solutions with MQTT Integration" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            iot2mqtt
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Core Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mqtt">MQTT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#messages">Messages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-usage">Example Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#processing-pipeline">Processing pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#message-of-type-discovery">Message of type Discovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#message-of-type-state-or-availability">Message of type State or Availability</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#abstract-device-state">Abstract Device State</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#explanation">Explanation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#subclasses-of-iot2mqtt-abstract-devicestate">Subclasses of <code class="docutils literal notranslate"><span class="pre">iot2mqtt.abstract.DeviceState</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#purpose-and-usage">Purpose and Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Example Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#encoder">Encoder</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Example Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#device-accessor">Device Accessor</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Core Concepts</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/concepts.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-concepts">
+<h1>Core Concepts<a class="headerlink" href="#core-concepts" title="Link to this heading"></a></h1>
+<p>This section provides an overview of the fundamental concepts and principles that underpin this project. Understanding these concepts will help you to use and contribute to the project more effectively.</p>
+<p><img alt="Alt text" src="_images/features.png" /></p>
+<section id="mqtt">
+<h2>MQTT<a class="headerlink" href="#mqtt" title="Link to this heading"></a></h2>
+<p>The MQTT service is essential for establishing a connection to an MQTT broker and handling events such as connect and disconnect. It also allows for the addition of custom handlers for these events. Furthermore, main loop facilities are necessary for the continuous processing of these events. This support is provided by the <code class="docutils literal notranslate"><span class="pre">iot2mqtt.mqtthelper.ClientHelper</span></code> class.</p>
+</section>
+<section id="messages">
+<h2>Messages<a class="headerlink" href="#messages" title="Link to this heading"></a></h2>
+<p>MQTT messages are represented by the <code class="docutils literal notranslate"><span class="pre">iot2mqtt.messenger.Message</span></code> class. This class serves as a container to store various attributes related to the message. These attributes include:</p>
+<ul class="simple">
+<li><p><strong>Incoming RAW Data</strong>: The raw data received via MQTT.</p></li>
+<li><p><strong>Device Name</strong>: The name of the device issuing the message.</p></li>
+<li><p><strong>Message Type</strong>: The type of message, which can be one of the following:</p>
+<ul>
+<li><p><strong>Discovery</strong>: Indicates that a new device has been discovered.</p></li>
+<li><p><strong>Availability</strong>: Indicates the availability status of a device (e.g., online or offline).</p></li>
+<li><p><strong>State Notification</strong>: Provides updates on the state of a device (e.g., on or off).</p></li>
+</ul>
+</li>
+<li><p><strong>IoT Protocol</strong>: The protocol used by the device, such as Zigbee or TASMOTA.</p></li>
+<li><p><strong>Device Model</strong>: The model of the device.</p></li>
+<li><p><strong>Refined Data</strong>: The data extracted and processed from the raw data.</p></li>
+</ul>
+<p>The data attributes are progressively completed in a processing pipeline and are stored in the <code class="docutils literal notranslate"><span class="pre">Message</span></code> object. This allows for the customization of behavior based on the message content. Messages can be read from python <code class="docutils literal notranslate"><span class="pre">Queue</span></code> returned by function call to <code class="docutils literal notranslate"><span class="pre">iot2mqtt.central.get_refined_data_queue()</span></code>.</p>
+<section id="example-usage">
+<h3>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h3>
+<p>Below is an example demonstrating how to use the ClientHelper class to connect to an MQTT broker and process messages from the refined data queue.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># Initialize the MQTT client helper with the broker&#39;s hostname and security context</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="s2">&quot;localhost&quot;</span><span class="p">),</span> 
+        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="c1"># Start the MQTT client to establish a connection with the broker</span>
+    <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="c1"># Get the refined data queue which will contain processed MQTT messages</span>
+    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
+
+    <span class="c1"># Continuously process messages from the refined data queue</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">_refined_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Received message: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="c1"># Entry point of the script</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+</pre></div>
+</div>
+</section>
+</section>
+<section id="processing-pipeline">
+<h2>Processing pipeline<a class="headerlink" href="#processing-pipeline" title="Link to this heading"></a></h2>
+<p><img alt="Alt text" src="_images/pipe.png" /></p>
+<p>Once the MQTT service is connected, the processing pipeline is started. The pipeline consists of a number of stages, each responsible for a specific task. The stages are as follows:</p>
+<section id="message-of-type-discovery">
+<h3>Message of type Discovery<a class="headerlink" href="#message-of-type-discovery" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Discover Devices</strong>: This stage involves parsing the raw data to extract the device name, model, and protocol. It identifies new devices that have been discovered in the network.</p></li>
+<li><p><strong>Trigger Requests to Get Device State</strong>: After discovering a device, this stage sends requests to obtain the current state of the device. This ensures that the system has the latest information about the device’s status.</p></li>
+</ul>
+</section>
+<section id="message-of-type-state-or-availability">
+<h3>Message of type State or Availability<a class="headerlink" href="#message-of-type-state-or-availability" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Resolve the Device Model</strong>: This stage determines the specific model of the device based on the information provided in the message. It ensures that the correct model is identified for further processing.</p></li>
+<li><p><strong>Normalize the Data</strong>: This stage involves normalizing the data to a cross-device model and cross-protocol format. It converts the raw data into a standardized format that can be easily used by other components of the system.</p></li>
+</ul>
+</section>
+</section>
+<section id="abstract-device-state">
+<h2>Abstract Device State<a class="headerlink" href="#abstract-device-state" title="Link to this heading"></a></h2>
+<p>Refined data are modeled as abstract objects that are both model and protocol agnostic with the help of <code class="docutils literal notranslate"><span class="pre">iot2mqtt.abstract.DeviceState</span></code> subclasses. These subclasses provide a standardized way to represent the state of various IoT devices, making it easier to process and utilize the data across different components of the system.</p>
+<p>They offer a robust layer for the serialization and deserialization of state data, primarily used when communicating with devices via MQTT. This ensures that the state information of various IoT devices can be accurately converted to and from JSON format, facilitating seamless data exchange and interoperability across different device models and protocols.</p>
+<section id="explanation">
+<h3>Explanation<a class="headerlink" href="#explanation" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Serialization: The process of converting the state data of a device into a JSON format string. This is essential for sending the state information over MQTT, as JSON is a widely accepted data interchange format.</p></li>
+<li><p>Deserialization: The process of converting a JSON format string back into a structured state data object. This allows the system to interpret and utilize the state information received from MQTT messages.</p></li>
+</ul>
+<p>By providing a standardized way to serialize and deserialize state data, these classes ensure that the system can handle state information consistently, regardless of the device model or protocol. This is crucial for maintaining interoperability and reliability in an IoT ecosystem where devices from different manufacturers and with different communication protocols need to work together seamlessly.</p>
+</section>
+<section id="subclasses-of-iot2mqtt-abstract-devicestate">
+<h3>Subclasses of <code class="docutils literal notranslate"><span class="pre">iot2mqtt.abstract.DeviceState</span></code><a class="headerlink" href="#subclasses-of-iot2mqtt-abstract-devicestate" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>ADC</strong>: Represents the state of an ADC (Analog-to-Digital Converter) device.</p></li>
+<li><p><strong>AirSensor</strong>: Represents the state of an air sensor device, such as temperature, humidity, or air quality sensors.</p></li>
+<li><p><strong>Alarm</strong>: Represents the state of an alarm device, indicating whether the alarm is triggered or not.</p></li>
+<li><p><strong>Availability</strong>: Represents the availability status of a device, indicating whether the device is online or offline.</p></li>
+<li><p><strong>Button</strong>: Represents the state of a button device, capturing button press events.</p></li>
+<li><p><strong>ButtonValues</strong>: Enumeration representing possible button actions, such as single press, double press, or long press.</p></li>
+<li><p><strong>Motion</strong>: Represents the state of a motion sensor device, indicating whether motion is detected or not.</p></li>
+<li><p><strong>SrtsA01</strong>: Represents the state of a specific Zigbee thermostat device, capturing temperature settings and modes.</p></li>
+<li><p><strong>Switch</strong>: Represents the state of a switch device, indicating whether the switch is on or off.</p></li>
+<li><p><strong>Switch2Channels</strong>: Represents the state of a switch device with two channels, allowing control of two separate circuits.</p></li>
+</ul>
+</section>
+<section id="purpose-and-usage">
+<h3>Purpose and Usage<a class="headerlink" href="#purpose-and-usage" title="Link to this heading"></a></h3>
+<p>These objects are designed to represent the processed data extracted from the raw MQTT messages. The refined data is stored within the <code class="docutils literal notranslate"><span class="pre">Message</span></code> object, making it easily accessible for further use. By storing refined data in the <code class="docutils literal notranslate"><span class="pre">Message</span></code> object, users can customize the behavior of their applications based on the content of the messages. This flexibility is crucial for developing robust IoT solutions that can adapt to various devices and protocols seamlessly.</p>
+</section>
+<section id="id1">
+<h3>Example Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Below is an example demonstrating how to use the abstract device state classes in your application. This example shows how to create Switch state objects by deserializing state values from different device protocols (Sonoff and TASMOTA).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">abstract</span>
+
+<span class="c1"># Creating a Switch state object deserializing Sonoff state values.</span>
+<span class="n">_SONOFF_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;ON&quot;</span><span class="p">}</span>
+<span class="n">switch_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_SONOFF_VALUES</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sonoff Switch power is: </span><span class="si">{</span><span class="n">switch_state</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Creating a Switch state object deserializing TASMOTA state values.</span>
+<span class="n">_TASMOTA_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;POWER&quot;</span><span class="p">:</span> <span class="s2">&quot;ON&quot;</span><span class="p">}</span>
+<span class="n">switch_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_TASMOTA_VALUES</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tasmota Switch power is: </span><span class="si">{</span><span class="n">switch_state</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="encoder">
+<h2>Encoder<a class="headerlink" href="#encoder" title="Link to this heading"></a></h2>
+<p>An encoder is responsible to serialize abstract data state according to the device model and protocol into JSON format. This is done by the <code class="docutils literal notranslate"><span class="pre">iot2mqtt.encoder.encode()</span></code> function.</p>
+<p>An encoder is required if :</p>
+<ul class="simple">
+<li><p>Several devices belong to the same group and share common attributes.</p></li>
+<li><p>The device is actionable, meaning its state can be modified (e.g., it can be turned on or off).</p></li>
+</ul>
+<p>For example, this is the case for a Switch.</p>
+<section id="id2">
+<h3>Example Usage<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Below is an example of how to encode an abstract <code class="docutils literal notranslate"><span class="pre">Switch</span></code> state into device-specific states for a Shelly Plug and a Sonoff Smart Plug:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
+
+<span class="c1"># Define the abstract state for a Switch</span>
+<span class="n">_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">abstract</span><span class="o">.</span><span class="n">POWER_ON</span><span class="p">)</span>
+
+<span class="c1"># Encode the state for a Shelly Plug-in</span>
+<span class="n">_shelly_on</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">_shelly_on</span><span class="p">)</span>  <span class="c1"># Output: {&#39;POWER&#39;: &#39;ON&#39;}</span>
+
+<span class="c1"># Encode the state for a Sonoff Smart Plug</span>
+<span class="n">_sonoff_on</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">_sonoff_on</span><span class="p">)</span> <span class="c1"># Output: {&#39;state&#39;: &#39;ON&#39;}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="device-accessor">
+<h2>Device Accessor<a class="headerlink" href="#device-accessor" title="Link to this heading"></a></h2>
+<p>Access to the device requires to trigger a specific command on the device, such as turning it on or get its state. The command is directly sent to the device over MQTT protocols (like TASMOTA) or via bridges (like Zigbee2MQTT). The device process the command then returns state acknoledge. Class <code class="docutils literal notranslate"><span class="pre">iot2mqtt.dev.DeviceAccessor</span></code> is responsible for triggering commands to devices upon MQTT.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="iot2mqtt: Simplifying IoT Solutions with MQTT Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="userguide.html" class="btn btn-neutral float-right" title="User Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
