@@ -23,7 +23,7 @@ def _get_version() -> str:
 setup(
     name='iot2mqtt',
     version=_get_version(),
-    description='Less is More - Powering Your IoT Solutions with MQTT integration',
+    description='Simplifying IoT Solutions with MQTT Integration',
     long_description=_get_readme_content(),
     long_description_content_type="text/markdown",
     license="MIT",

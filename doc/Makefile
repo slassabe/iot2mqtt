@@ -7,7 +7,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = src
 BUILDDIR      = _build
-GITDEST   	  = iotlib-github
+GITDEST   	  = origin
 
 # Put it first so that "make" without argument is like "make help".
 help:

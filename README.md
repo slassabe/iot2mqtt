@@ -1,8 +1,12 @@
-# iot2mqtt: Less is More - Simplifying IoT Solutions with MQTT Integration
+# iot2mqtt: Simplifying IoT Solutions with MQTT Integration
+
+***"Less is More"***
 
 ## Introduction
 
 **iot2mqtt** is a versatile Python library built upon the Paho™ MQTT client. It is designed to simplify IoT application development by providing a programmatic alternative to traditional home automation platforms, without the overpromises of no-code solutions.
+
+![Landscape](https://slassabe.github.io/iot2mqtt/_images/landscape.png)
 
 ## Description
 
@@ -86,30 +90,7 @@ To verify that the installation was successful, you can use the `cli_iot2mqtt` c
 
 You should see output similar to the screenshot below, indicating that the command is working as expected.
 
-![Alt text](doc/src/_images/cli_iot2mqtt.png)
-
-## Supported Devices and Protocol
-
-Below is a table outlining the available codecs.
-
-|Protocol| Model           | Availability  | Description |
-| ------ | --------------- | ------------- | ------------|
-| Homie  | Miflora         | In progress   | 
-| Z2M    | NAS-AB02B2      | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html)|
-| RING   | RingCamera      | In progress   |
-| TASMOTA| Shelly Plug S   | Release 0.9.0 | [Link](https://templates.blakadder.com/shelly_plug_S.html)|
-| SHELLY | Shelly Plug S   | In progress   |
-| TASMOTA| Shelly Uni      | Release 0.9.0 | [Link](https://templates.blakadder.com/shelly_UNI.html)|
-| SHELLY | Shelly Uni      | In progress   |
-| Z2M    | SRTS-A01        | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SRTS-A01.html)|
-| Z2M    | TS0601_soil     | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/TS0601_soil.html)|
-| Z2M    | SNZB-02         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html)|
-| Z2M    | SNZB-01         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
-| Z2M    | SNZB-03         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
-| Z2M    | ZBMINI-L        | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/ZBMINI.html) |
-| Z2M    | ZBMINIL2        | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/ZBMINIL2.html) |
-| Z2M    | S26R2ZB         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/S26R2ZB.html) |
-
+![cli_iot2mqtt](https://slassabe.github.io/iot2mqtt/_images/cli_iot2mqtt.png)
 
 ## Related projects
 
