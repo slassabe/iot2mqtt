@@ -13,7 +13,8 @@ PIP = pip3
 
 # Twine command
 TWINE = twine
-TWINE_REPOSITORY = testpypi
+#TWINE_REPOSITORY = testpypi
+TWINE_REPOSITORY = pypi
 
 # Clean target
 .PHONY: clean

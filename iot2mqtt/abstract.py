@@ -63,6 +63,46 @@ from typing import List, Literal, Optional
 
 from pydantic import AliasChoices, BaseModel, Field, computed_field, confloat
 
+# Abstract IOT device properties
+
+ACTION = "action"
+ALARM = "alarm"
+AWAY_PRESET_TEMPERATURE = "away_preset_temperature"
+BATTERY = "battery"
+BATTERY_LOW = "battery_low"
+CALIBRATED = "calibrated"
+CHILD_LOCK = "child_lock"
+DEVICE_TEMPERATURE = "device_temperature"
+DURATION = "duration"
+EXTERNAL_TEMPERATURE_INPUT = "external_temperature_input"
+HUMIDITY = "humidity"
+INTERNAL_HEATING_SETPOINT = "internal_heating_setpoint"
+LINKQUALITY = "linkquality"
+LOCAL_TEMPERATURE = "local_temperature"
+MELODY = "melody"
+OCCUPIED_HEATING_SETPOINT = "occupied_heating_setpoint"
+OCCUPANCY = "occupancy"
+POWER = "power"
+POWER1 = "power1"
+POWER2 = "power2"
+POWER_ON_BEHAVIOUR = "power_on_behavior"
+POWER_OUTAGE_COUNT = "power_outage_count"
+PRESET = "preset"
+RANGE = "Range"
+SCHEDULE = "schedule"
+SCHEDULE_SETTING = "schedule_setting"
+SENSOR = "sensor"
+SETUP = "setup"
+SYSTEM_MODE = "system_mode"
+TAMPER = "tamper"
+TEMPERATURE = "temperature"
+UPDATE = "update"
+VALVE_ALARM = "valve_alarm"
+VALVE_DETECTION = "valve_detection"
+VOLTAGE = "voltage"
+VOLUME = "volume"
+WINDOW_DETECTION = "window_detection"
+WINDOW_OPEN = "window_open"
 
 class Availability(BaseModel):
     """
@@ -102,7 +142,6 @@ class DeviceState(BaseModel):
     last_seen: Optional[datetime] = Field(
         default=None, validation_alias=AliasChoices("last_seen", "Time")
     )
-
 
 class AirSensor(DeviceState):
     """
@@ -284,7 +323,6 @@ class AlarmVolumes(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
-
 
 class Alarm(DeviceState):
     """
