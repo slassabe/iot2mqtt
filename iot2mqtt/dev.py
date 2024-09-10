@@ -1,124 +1,73 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 """
-iot2mqtt.dev
-============
-
 This module defines various enumerations and classes related to IoT device models, protocols, 
-and actions.
-It also includes custom exceptions for handling specific error cases.
+and actions. It also includes custom exceptions for handling specific error cases.
 
 Classes and Enums
 -----------------
 
-- Model: Enumeration representing different models of IoT devices.
+- Model: Represents a model of an IoT device.
+- ModelFactory: Singleton class responsible for managing instances of Model objects.
 - Protocol: Enumeration representing different communication protocols used by IoT devices.
 - Device: Represents a generic IoT device in the system.
 - ButtonAction: Enumeration defining button action values.
-- DecodingException: Exception raised for errors in the decoding process.
-
-Examples
---------
-
-Here is an example of how to use the `Device` class:
-
-.. code-block:: python
-
-    from iot2mqtt.dev import Device, Protocol, Model
-
-    device = Device(
-        name="Living Room Light",
-        protocol=Protocol.Z2M,
-        model=Model.SN_MINI
-    )
-    print(device)
-    # Output: name='Living Room Light' protocol=<Protocol.Z2M: 'Zigbee2MQTT'> model=<Model.SN_MINI: 'ZBMINI-L'>
-
 
 """
 
 from enum import Enum
-from typing import Optional
+from threading import Lock
+from typing import Dict, Optional
 
-from pydantic import BaseModel, Field
-
-from iot2mqtt import utils
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class Model(str, Enum):
+class Model(BaseModel, frozen=True):
     """
-    This enum is used to represent the different models of devices that can be discovered.
+    Represents a model of an IoT device.
+
+    Args:
+        tag (str): The tag associated with the device model.
+    """
+
+    tag: str = Field(frozen=True)
+
+
+class ModelFactory:
+    """
+    ModelFactory is a singleton class responsible for managing instances of Model objects.
+
+    This class ensures that only one instance of each Model is created and provides a thread-safe
+    mechanism for accessing these instances.
 
     Attributes:
-        MIFLORA (str): Xiaomi Mi Flora plant sensor.
-        NEO_ALARM (str): Neo NAS-AB02B2 Zigbee Siren.
-        RING_CAMERA (str): Ring Camera.
-        SHELLY_PLUGS (str): Shelly Plug S WiFi smart plug.
-        SHELLY_UNI (str): Shelly Uni WiFi relay/dimmer.
-        SRTS_A01 (str): SRTS-A01 Zigbee device.
-        TUYA_SOIL (str): Tuya TS0601_soil Zigbee soil moisture sensor.
-        SN_AIRSENSOR (str): Sonoff Zigbee air temperature/humidity sensor.
-        SN_BUTTON (str): Sonoff SNZB-01 Zigbee wireless button.
-        SN_MOTION (str): Sonoff SNZB-03 Zigbee motion sensor.
-        SN_MINI (str): Sonoff ZBMINI-L Zigbee wireless switch module.
-        SN_MINI_L2 (str): Sonoff ZBMINIL2 Zigbee wireless switch module.
-        SN_SMART_PLUG (str): Sonoff S26R2ZB Zigbee smart plug.
-        SN_ZBBRIDGE (str): Sonoff ZbBridge Tasmota signature.
-        NONE (str): No model, used in discovery messages.
-        UNKNOWN (str): Unknown model.
+        UNKNOWN (Model): A default model instance with the tag 'UNKNOWN'.
     """
 
-    MIFLORA = "Miflora"
-    NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
-    RING_CAMERA = "RingCamera"
-    SHELLY_PLUGS = "Shelly Plug S"  # Shelly Plug S WiFi smart plug
-    SHELLY_UNI = "Shelly Uni"  # Shelly Uni WiFi relay/dimmer
-    SRTS_A01 = "SRTS-A01"  # https://www.zigbee2mqtt.io/devices/SRTS-A01.html
-    TUYA_SOIL = "TS0601_soil"  # https://www.zigbee2mqtt.io/devices/TS0601_soil.html
-    SN_AIRSENSOR = "SNZB-02"  # https://www.zigbee2mqtt.io/devices/SNZB-02.html
-    SN_BUTTON = "SNZB-01"  # https://www.zigbee2mqtt.io/devices/SNZB-01.html
-    SN_MOTION = "SNZB-03"  # https://www.zigbee2mqtt.io/devices/SNZB-03.html
-    SN_MINI = "ZBMINI-L"  # https://www.zigbee2mqtt.io/devices/ZBMINI.html
-    SN_MINI_L2 = "ZBMINIL2"  # https://www.zigbee2mqtt.io/devices/ZBMINIL2.html
-    SN_SMART_PLUG = "S26R2ZB"  # https://www.zigbee2mqtt.io/devices/S26R2ZB.html
-    SN_ZBBRIDGE = "Sonoff ZbBridge"  # Tasmota signature for Sonoff ZbBridge
-    NONE = "None"  # No model
-    UNKNOWN = "Unknown"  # Unknown model
+    _model_instances: Dict[str, Model] = {}
+    _lock: Lock = Lock()
+    UNKNOWN: Model = Model(tag="UNKNOWN")
 
-    @staticmethod
-    def from_str(label: str):
+    @classmethod
+    def get(cls, tag: str) -> Model:
         """
-        Returns the Model enum value corresponding to the given label.
-
-        This method takes a label as input and returns the corresponding Model enum value.
-        If the label does not correspond to any Model enum value, it returns Model.UNKNOWN.
+        Retrieve a Model instance by its tag. If the tag does not exist, create a new Model
+        instance with the given tag.
 
         Args:
-            label (str): The label to get the Model enum value for.
+            tag (str): The tag associated with the Model instance.
 
         Returns:
-            Model: The Model enum value corresponding to the label, or Model.UNKNOWN if
-            the label does not correspond to any Model enum value.
-
-        Examples
-        --------
-
-        Here is an example of how to use the `Model` enum:
-
-        .. code-block:: python
-
-            from iot2mqtt.dev import Model
-
-            model = Model.from_str("SRTS-A01")
-            print(model)  # Output: Model.SRTS_A01
+            Model: The Model instance associated with the given tag, or a new instance if the
+            tag does not exist.
         """
-        if label is None:
-            return Model.NONE
-        for model in Model:
-            if model.value == label:
-                return model
-        utils.i2m_log.warning("Unknown model: %s", label)
-        return Model.UNKNOWN
+
+        with cls._lock:
+            if tag in cls._model_instances:
+                return cls._model_instances[tag]
+            _model_instance = Model(tag=tag)
+            cls._model_instances[tag] = _model_instance
+            return _model_instance
 
 
 class Protocol(Enum):
@@ -162,6 +111,8 @@ class Device(BaseModel):
         model (Optional[Model]): The model of the device. Defaults to None.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     name: str = (Field(frozen=True),)
     protocol: Protocol = (Field(frozen=True),)
     address: Optional[str] = (None,)
@@ -184,5 +135,3 @@ class ButtonAction(Enum):
     SINGLE_ACTION = "single"
     DOUBLE_ACTION = "double"
     LONG_ACTION = "long"
-
-

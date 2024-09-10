@@ -2,9 +2,6 @@
 # coding=utf-8
 
 """
-iot2mqtt.abstract
-=================
-
 This module defines various abstract representations of IoT device states and attributes.
 It provides a set of Pydantic models and enumerations to represent the state and configuration
 of different types of IoT devices, such as switches, sensors, and alarms.
@@ -12,48 +9,25 @@ of different types of IoT devices, such as switches, sensors, and alarms.
 Classes
 -------
 
-- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.
-- AirSensor: Represents the state of an air sensor device.
-- Alarm: Represents the state of an alarm device.
-- AlarmVolumes: Enumeration representing possible alarm volume levels.
 - Availability: Represents the availability status of a device.
-- Button: Represents the state of a button device.
-- ButtonValues: Enumeration representing possible button actions.
+- Registry: Represents a registry of discovered devices.
 - DeviceState: Root class for all device state classes.
-- Motion: Represents the state of a motion sensor device.
-- SrtsA01: Represents the state of a specific Zigbee thermostat device.
+- AirSensor: Represents the state of an air sensor device.
 - Switch: Represents the state of a switch device.
 - Switch2Channels: Represents the state of a switch device with two channels.
-
-
-Enums
------
-
+- Motion: Represents the state of a motion sensor device.
 - ButtonValues: Enumeration representing possible button actions.
+- Button: Represents the state of a button device.
+- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.
+- SrtsA01: Represents the state of a specific Zigbee thermostat device.
 - AlarmVolumes: Enumeration representing possible alarm volume levels.
+- Alarm: Represents the state of an alarm device.
 
 Constants
 ---------
 
 - POWER_ON: String constant representing the "ON" state.
 - POWER_OFF: String constant representing the "OFF" state.
-- SWITCH_ON: Switch instance representing the "ON" state.
-- SWITCH_OFF: Switch instance representing the "OFF" state.
-
-Examples
---------
-
-Here is an example of how to use the `Switch` class:
-
-.. code-block:: python
-
-    from iot2mqtt.abstract import Switch, POWER_ON, POWER_OFF
-
-    switch = Switch(power=POWER_ON)
-    print(switch.power)  # Output: ON
-
-    switch.power = POWER_OFF
-    print(switch.power)  # Output: OFF
 
 """
 
@@ -104,6 +78,7 @@ VOLUME = "volume"
 WINDOW_DETECTION = "window_detection"
 WINDOW_OPEN = "window_open"
 
+
 class Availability(BaseModel):
     """
     Represents the availability status of a device.
@@ -142,6 +117,7 @@ class DeviceState(BaseModel):
     last_seen: Optional[datetime] = Field(
         default=None, validation_alias=AliasChoices("last_seen", "Time")
     )
+
 
 class AirSensor(DeviceState):
     """
@@ -252,10 +228,20 @@ class ADC(DeviceState):
     @computed_field
     @property
     def voltage(self) -> float:
+        """
+        Calculate the voltage based on the range.
+
+        Returns:
+            float: The calculated voltage in volts.
+        """
         return self.Range / 100
 
 
 class SrtsA01(DeviceState):
+    """
+    Represents the state of a Smart radiator thermostat AQARA SRTS-A01.
+    """
+
     # Température d'absence pré-définie
     away_preset_temperature: Optional[confloat(gt=-10.0, lt=35.0)] = None
     # Batterie restante en %, peut prendre jusqu'à 24 heures avant d'être signalée.
@@ -323,6 +309,7 @@ class AlarmVolumes(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
 
 class Alarm(DeviceState):
     """

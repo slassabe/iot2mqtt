@@ -14,10 +14,10 @@ This guide explains how to retrieve and display the state of a device, specifica
 The following example demonstrates how to use the `iot2mqtt` library to connect to an MQTT broker, retrieve messages from an air sensor, and display its temperature and humidity.
 
 ```python
-from iot2mqtt import (abstract, central, dev, mqtthelper, messenger)
+from iot2mqtt import (abstract, central, mqtthelper, messenger, setup)
 
 # Define the MQTT broker hostname
-TARGET = "groseille.back.internal"
+TARGET = "localhost"
 
 def main():
     # Initialize the MQTT client helper with the specified context
@@ -36,11 +36,10 @@ def main():
         _message = _refined_queue.get()
 
         # Check if the message was issued by the specified Airsensor Model
-        if messenger.is_type_state(_message) and _message.model == dev.Model.SN_AIRSENSOR:
+        if messenger.is_type_state(_message) and _message.model == setup.Models.SN_AIRSENSOR:
             _instance: abstract.AirSensor = _message.refined
             print(f'Air sensor state changed to: {_instance.temperature} °C - {_instance.humidity} %')
             _nb_messages += 1
-
 
 if __name__ == "__main__":
     main()
@@ -52,7 +51,10 @@ if __name__ == "__main__":
 - ***Data Queue*** : It retrieves the refined data queue from the central module.
 - ***Message Processing***: The script continuously processes messages from the refined data queue.
 - ***Message Filtering***: It checks if the message is of type state and if it was issued by the Airsensor Model.
-- ***Display***: If the conditions are met, it prints the air sensor's temperature and humidity.
+- ***Display***: If the conditions are met, it prints the air sensor's temperature and humidity :
+  - Air sensor state changed to: 19.11 °C - 78.77 %
+  - Air sensor state changed to: 19.02 °C - 78.27 %
+  - Air sensor state changed to: 19.02 °C - 78.77 %
 
 This example provides a basic template for integrating with an MQTT broker and processing messages from an air sensor. You can extend this example to handle other types of devices and messages as needed.
 
@@ -67,7 +69,7 @@ The following example demonstrates how to set the NEO Nas Alarm to ON for 10 sec
 
 ```python
 import time
-from iot2mqtt import central, mqtthelper, messenger
+from iot2mqtt import dev, central, mqtthelper
 
 TARGET = "localhost"
 
@@ -96,7 +98,6 @@ def main():
 if __name__ == "__main__":
     main()
     for _ in range(10):
-        print(".", end="", flush=True)
         time.sleep(1)
 ```
 
@@ -106,7 +107,6 @@ if __name__ == "__main__":
 - ***Device Accessor*** : It creates a `DeviceAccessor` instance with the MQTT client.
 - ***State Definition*** : It defines the state to set the NEO Nas Alarm to ON for 10 seconds.
 - ***State Change*** : It triggers the state change on the device.
-
 
 ## How to Change the State of One or More Switches
 
@@ -119,7 +119,7 @@ The following example demonstrates how to change the switch state for devices us
 
 ```python
 import time
-from iot2mqtt import central, mqtthelper, messenger
+from iot2mqtt import dev, central, mqtthelper, setup
 
 TARGET = "localhost"
 
@@ -134,7 +134,7 @@ def main():
     _accessor.switch_power_change(
         device_names="SWITCH_PLUG",
         protocol=dev.Protocol.Z2M,
-        model=dev.Model.SN_SMART_PLUG,
+        model=setup.Models.SN_SMART_PLUG,
         power_on=True,
         on_time=5,
     )
@@ -160,31 +160,35 @@ Alternatively, you can change the switch state for multiple devices using the `s
 
 ```python
 import time
-from iot2mqtt import central, mqtthelper, messenger
+from iot2mqtt import central, mqtthelper
 
 TARGET = "localhost"
+SWITCH1 = "0x00124b0024cb17d3" # Zigbee switch device
+SWITCH2 = "tasmota_577591" # Tasmota switch device
 
 def main():
     _client = mqtthelper.ClientHelper(
         mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
     )
     _client.start()
-
     # Initialize the message pipe to discover devices
-    _refined_queue = central.get_refined_data_queue(_client)
+    central.get_refined_data_queue(_client)
+
     time.sleep(2)  # Wait for the MQTT client to be discovered
     _accessor = central.DeviceAccessor(mqtt_client=_client)
     # Set switch ON for 5 sec.
     _accessor.switch_power_change_helper(
-        device_names="SWITCH_PLUG1,SWITCH_PLUG2",
+        device_names=f"{SWITCH1},{SWITCH2}",
         power_on=True,
         on_time=5,
     )
 
+
 if __name__ == "__main__":
     main()
-    while True:
+    for pos in range(10):
         time.sleep(1)
+
 ```
 
 #### Explanation
@@ -193,7 +197,7 @@ if __name__ == "__main__":
 - ***Message Pipe*** : It initializes the message pipe to discover devices.
 - ***Wait*** : It waits 2 sec. for the MQTT client to be discovered.
 - ***Device Accessor*** : It creates a `DeviceAccessor` instance with the MQTT client.
-- ***State Change*** : It triggers the state change on the switch devices.
+- ***State Change*** : It triggers the state change on the `Zigbee` and `Tasmota` switch devices.
 - ***Note*** : The `switch_power_change_helper()` method is a convenience method that uses the `trigger_change_state()` method under the hood.
 
 ### Wrapup
@@ -251,7 +255,6 @@ def main():
             # End loop
             return
 
-
 if __name__ == "__main__":
     main()
 ```
@@ -279,9 +282,9 @@ SWITCH = "SWITCH_CAVE"
 BUTTON_DEVICE = "INTER_CAVE"
 
 # Define the duration (in seconds) for which the switch should remain on
-SHORT_TIME = 15  # 3*60
-MEDIUM_TIME = 30  # 5*60
-LONG_TIME = 60  # 10*60
+SHORT_TIME = 15  
+MEDIUM_TIME = 30  
+LONG_TIME = 60  
 
 def main():
     # Initialize the MQTT client helper with the specified context

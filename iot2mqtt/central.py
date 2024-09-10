@@ -8,6 +8,17 @@ This module includes classes and functions to manage MQTT topic configurations,
 subscribe to topics, process incoming messages, and trigger state changes on devices.
 It supports multiple protocols such as Zigbee2MQTT and Tasmota.
 
+Classes
+-------
+
+- Scrutinizer: Subscribes to MQTT topics and processes incoming messages.
+- DeviceAccessor: Accesses device state via MQTT.
+
+Functions
+---------
+
+- get_refined_data_queue: Returns a queue of refined messages by processing raw messages from MQTT.
+
 """
 import json
 import threading
@@ -42,7 +53,6 @@ class _TopicManager(metaclass=utils.Singleton):
     """
 
     def __init__(self) -> None:
-        # self._topic_registry: Dict[TopicRegistryKey, "TopicManager"] = {}
         self._topic_registry = {}
 
 
@@ -487,20 +497,7 @@ class _TimerManager:
             raise
 
 
-timer_manager = _TimerManager()
-
-
-def is_timer_active(device_name: str) -> bool:
-    """
-    Checks if a timer is active for a specific device.
-
-    Args:
-        device_name (str): The name of the device to check for an active timer.
-
-    Returns:
-        bool: True if a timer is active for the specified device, False otherwise.
-    """
-    return device_name in timer_manager._timer_registry
+_timer_manager = _TimerManager()
 
 
 class DeviceAccessor:
@@ -533,7 +530,8 @@ class DeviceAccessor:
 
         Args:
             device_name (str): The name of the device for which the state is being retrieved.
-            protocol (dev.Protocol): The communication protocol used by the device (e.g., Z2M, TASMOTA).
+            protocol (dev.Protocol): The communication protocol used by the device (e.g., Z2M, 
+                TASMOTA).
             model (dev.Model): The model of the device.
 
         Raises:
@@ -663,7 +661,7 @@ class DeviceAccessor:
                 "model": model,
                 "power_on": _power_on,
             }
-            timer_manager.create_timer(
+            _timer_manager.create_timer(
                 device_name=device_name,
                 countdown=_countdown,
                 task=self._do_switch_power,
@@ -680,7 +678,7 @@ class DeviceAccessor:
                 "on_time": on_time,
                 "off_time": off_time,
             }
-            timer_manager.create_timer(
+            _timer_manager.create_timer(
                 device_name=device_name,
                 countdown=countdown,
                 task=self.switch_power_change,
@@ -859,40 +857,6 @@ def get_refined_data_queue(mqtt_client: mqtthelper.ClientHelper) -> Queue:
         default_handler=processor.Processor.pass_through,
     )
     return _refined_queue
-
-
-_CONFIG_DEVICE = {
-    (dev.Model.SN_MINI, dev.Protocol.Z2M): {"state": ""},
-    (dev.Model.SN_MINI_L2, dev.Protocol.Z2M): {"state": ""},
-    (dev.Model.SN_SMART_PLUG, dev.Protocol.Z2M): {"state": ""},
-    (dev.Model.SHELLY_PLUGS, dev.Protocol.TASMOTA): {"POWER": ""},
-    (dev.Model.SHELLY_UNI, dev.Protocol.TASMOTA): {"POWER1": "", "POWER2": ""},
-}
-
-
-def _config_device(
-    message: messenger.Message, accessor: DeviceAccessor
-) -> Optional[messenger.Message]:
-    _registry = message.refined
-    for _device_name in _registry.device_names:
-        _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(
-            _device_name
-        )
-        _model = _device.model
-        _protocol = _device.protocol
-        _config_payload = _CONFIG_DEVICE.get((_model, _protocol))
-        if _config_payload is None:
-            utils.i2m_log.warning("No config payload for %s", _device_name)
-            continue
-        utils.i2m_log.info(
-            "Device: %s - Model: %s - Protocol: %s - Payload: %s",
-            _device_name,
-            _model,
-            _protocol,
-            _config_payload,
-        )
-        accessor.trigger_change_state(_device_name, _protocol, _config_payload)
-    return message
 
 
 def _get_device_state(

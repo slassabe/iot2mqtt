@@ -1,8 +1,6 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 """
-Processor Module
-
 This module provides various classes and functions for processing IoT messages within the 
 iot2mqtt framework. It includes abstract base classes, utility functions, and concrete 
 implementations for handling different types of messages and device protocols.
@@ -212,7 +210,7 @@ class ModelResolver(Processor):
             message if the model is unknown.
 
         Raises:
-            DecodingException: If a discovery message.
+            DecodingException: If a discovery message is received.
 
         """
         if message.message_type == messenger.MessageType.DISCO:
@@ -220,8 +218,8 @@ class ModelResolver(Processor):
             raise DecodingException(_error_msg)
         _device_name = message.device_name
         _device = Discoverer.directory.get_device(_device_name)
-        message.model = _device.model if _device else dev.Model.UNKNOWN
-        if message.model == dev.Model.UNKNOWN:
+        message.model = _device.model if _device else dev.ModelFactory.UNKNOWN
+        if message.model == dev.ModelFactory.UNKNOWN:
             utils.i2m_log.debug(
                 "[%s]: message type: %s - unknown model for: %s",
                 self.__class__.__name__,
@@ -313,7 +311,6 @@ class Discoverer(Processor):
         if message.message_type != messenger.MessageType.DISCO:
             _error_msg = f"Not a discovery message: {message.message_type}"
             raise DecodingException(_error_msg)
-        message.model = dev.Model.NONE
         if message.protocol == dev.Protocol.Z2M:
             return self._discover_z2m(message)
         if message.protocol == dev.Protocol.TASMOTA:
@@ -324,36 +321,67 @@ class Discoverer(Processor):
         return message
 
     def _discover_z2m(self, message: messenger.Message) -> Optional[messenger.Message]:
-        def _device_dict(raw_message: dict, device_type_list: List[str]) -> Dict:
+        _key_name = "friendly_name"
+        _key_address = "ieee_address"
+        _key_model = "model"
+        _key_definition = "definition"
+        _key_type = "type"
+        _device_types = ["EndDevice", "Router"]
+        # Magic strings
+        NO_DEFINITION = "NO_DEFINITION"
+        NO_MODEL = "NO_MODEL"
+        NO_FRIENDLY_NAME = "NO_FRIENDLY_NAME"
+        NO_IEEE_ADDRESS = "NO_IEEE_ADDRESS"
+
+        def _device_dict(
+            raw_message: dict, device_type_list: List[str]
+        ) -> List[dev.Device]:
+            def _get_model(entry: dict) -> str:
+                _definition = entry.get(_key_definition)
+                if not _definition:
+                    utils.i2m_log.warning(
+                        "[%s]: no 'definition' key in raw data : %s",
+                        entry.get(_key_name),
+                        entry,
+                    )
+                    return NO_DEFINITION
+                _model = _definition.get(_key_model)
+                if not _model:
+                    utils.i2m_log.warning(
+                        "[%s]: no 'model' key in definition data: %s",
+                        entry.get(_key_name),
+                        _definition,
+                    )
+                    return NO_MODEL
+                return _model
+
             return [
                 dev.Device(
-                    name=entry.get("friendly_name"),
+                    name=entry.get(_key_name, NO_FRIENDLY_NAME),
                     protocol=dev.Protocol.Z2M,
-                    address=entry.get("ieee_address"),
-                    model=dev.Model.from_str(entry.get("definition", {}).get("model")),
+                    address=entry.get(_key_address, NO_IEEE_ADDRESS),
+                    model=dev.ModelFactory.get(_get_model(entry)),
                 )
                 for entry in raw_message
-                if entry.get("type") in device_type_list
+                if entry.get(_key_type) in device_type_list
             ]
 
-        def _device_list(raw_message: dict, device_type_list: List[str]) -> Dict:
+        def _device_list(raw_message: dict, device_type_list: List[str]) -> List[str]:
             return [
-                entry.get("friendly_name")
+                entry.get(_key_name)
                 for entry in raw_message
-                if entry.get("type") in device_type_list
+                if entry.get(_key_type) in device_type_list
             ]
 
-        device_types = [
-            "EndDevice",
-            "Router",
-        ]
         _raw_data = message.raw_item.data
         if not isinstance(_raw_data, list):
-            _error_msg = f"Bad format: {message}"
+            _error_msg = (
+                f"Bad format: {message} - Expected list, got {type(_raw_data).__name__}"
+            )
             raise DecodingException(_error_msg)
-        _discovery_result = _device_dict(_raw_data, device_type_list=device_types)
+        _discovery_result = _device_dict(_raw_data, device_type_list=_device_types)
         self.directory.update_devices(_discovery_result)
-        _devices = _device_list(_raw_data, device_type_list=device_types)
+        _devices = _device_list(_raw_data, device_type_list=_device_types)
         message.refined = abstract.Registry(device_names=_devices)
         return message
 
@@ -377,7 +405,7 @@ class Discoverer(Processor):
         _device = dev.Device(
             address=_device_address,
             name=_device_name,
-            model=dev.Model.from_str(_device_model),
+            model=dev.ModelFactory.get(_device_model),
             protocol=dev.Protocol.TASMOTA,
         )
         self.directory.update_devices([_device])
@@ -453,6 +481,63 @@ class AvailabilityNormalizer(Processor):
         return message
 
 
+class StateNormalizerFactory:
+    """
+    Factory class for managing state normalizers for different device models.
+
+    This class provides methods to register and retrieve state normalizers, which are responsible
+    for refining raw message data into structured device state representations. It maintains an
+    internal registry to store the mapping between device models and their corresponding state
+    normalizers.
+
+    """
+
+    _registry: Dict[dev.Model, Type[abstract.DeviceState]] = {}
+
+    def __init__(
+        self,
+        initial_registry: Optional[Dict[dev.Model, Type[abstract.DeviceState]]] = None,
+    ) -> None:
+        """
+        Initialize the factory with an optional initial registry.
+
+        Args:
+            initial_registry (Optional[Dict[dev.Model, Type[abstract.DeviceState]]]): An optional
+                dictionary to initialize the registry with. If provided, the dictionary will be
+                used to update the internal registry.
+        """
+        if initial_registry:
+            self._registry.update(initial_registry)
+
+    @classmethod
+    def get(cls, model: dev.Model) -> Optional[Type[abstract.DeviceState]]:
+        """
+        Retrieve the target abstract type for a given model.
+
+        Args:
+            model (dev.Model): The device model for which to retrieve the state normalizer.
+
+        Returns:
+            Optional[Type[abstract.DeviceState]]: The state normalizer class for the given model,
+            or None if the model is not found in the registry.
+        """
+        return cls._registry.get(model)
+
+    @classmethod
+    def register(
+        cls, model: dev.Model, abstract_type: Type[abstract.DeviceState]
+    ) -> None:
+        """
+        Register a target abstract type for the given model.
+
+        Args:
+            model (dev.Model): The device model to register.
+            abstract_type (Type[abstract.DeviceState]): The state normalizer class to associate
+                with the given model.
+        """
+        cls._registry[model] = abstract_type
+
+
 class StateNormalizer(Processor):
     """
     A processor that normalizes the state of various devices based on their model and protocol.
@@ -460,19 +545,6 @@ class StateNormalizer(Processor):
     The `StateNormalizer` class is responsible for refining raw message data into structured
     device state representations. It supports different device models and protocols.
     """
-
-    _REFINE_CONFIG = {
-        dev.Model.SN_AIRSENSOR: abstract.AirSensor,
-        dev.Model.SN_MINI: abstract.Switch,
-        dev.Model.SN_MINI_L2: abstract.Switch,
-        dev.Model.SN_SMART_PLUG: abstract.Switch,
-        dev.Model.SHELLY_PLUGS: abstract.Switch,
-        dev.Model.SHELLY_UNI: abstract.Switch2Channels,
-        dev.Model.SN_MOTION: abstract.Motion,
-        dev.Model.SN_BUTTON: abstract.Button,
-        dev.Model.SRTS_A01: abstract.SrtsA01,
-        dev.Model.NEO_ALARM: abstract.Alarm,
-    }
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
         """
@@ -494,7 +566,7 @@ class StateNormalizer(Processor):
             raise DecodingException(_error_msg)
         _raw_data = message.raw_item.data
         _tag = message.raw_item.tag
-        _target_class = self._REFINE_CONFIG.get(message.model)
+        _target_class = StateNormalizerFactory.get(message.model)
         if message.protocol == dev.Protocol.Z2M:
             if not _target_class:
                 _error_msg = (

@@ -1,11 +1,46 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 """
-Encoder Module
-
 This module provides functionality for encoding and validating device states, managing timers, 
 and handling power state changes for various device models.
 
+Classes
+-------
+
+- Encoder: Transforms and validates device states.
+- EncoderRegistry: Manages encoders for different device models.
+
+Functions
+---------
+
+- encode: Encodes the state of a device model into a dictionary format using the appropriate encoder.
+
+Examples
+--------
+
+Here is an example of how to use the encoder module to encode a device state:
+
+.. code-block:: python
+
+    from iot2mqtt import (abstract, dev, encoder, setup)
+
+    TARGET = "localhost"
+
+    def main():
+        _state = abstract.Switch(power=abstract.POWER_ON)
+        _shelly_on = encoder.encode(
+            model=setup.Models.SHELLY_PLUGS,
+            state=_state,
+        )
+        print(_shelly_on) # Display {'POWER': 'ON'}
+        _sonoff_on = encoder.encode(
+            model=setup.Models.SN_SMART_PLUG,
+            state=_state,
+        )
+        print(_sonoff_on) # Display {'state': 'ON'}
+
+    if __name__ == "__main__":
+        main()
 """
 
 from typing import Any, Callable, Dict, List, Optional
@@ -50,7 +85,6 @@ class Encoder(BaseModel):
             _converter = (
                 self.field_converters.get(key) if self.field_converters else None
             )
-
             if _converter is None:
                 transformed_value = value
             else:
@@ -60,24 +94,6 @@ class Encoder(BaseModel):
             else:
                 _encoded_state[_alias] = transformed_value
         return _encoded_state
-
-    def check_compliance(self, state_dump: Dict) -> bool:
-        """
-        Checks if the given state dictionary complies with the expected fields.
-
-        Args:
-            state_dump (Dict): The state dictionary to be checked for compliance.
-
-        Returns:
-            bool: True if the state dictionary complies with the encoder's expected fields,
-            False otherwise.
-        """
-        _compliant = True
-        for key, value in state_dump.items():
-            if key not in self.settable_fields:
-                utils.i2m_log.warning('Cannot encode field "%s"', key)
-                _compliant = False
-        return _compliant
 
 
 class EncoderRegistry:
@@ -145,53 +161,6 @@ class EncoderRegistry:
         return EncoderRegistry._registry.get(model)
 
 
-EncoderRegistry(
-    models=[dev.Model.SN_MINI, dev.Model.SN_MINI_L2, dev.Model.SN_SMART_PLUG],
-    settable_fields=["state"],
-    gettable_fields=["state"],
-    field_aliases={"power": "state"},
-)
-EncoderRegistry(
-    models=[dev.Model.SHELLY_PLUGS],
-    settable_fields=["Power"],
-    gettable_fields=["Power"],
-    field_aliases={"power": "Power"},
-)
-
-EncoderRegistry(
-    models=[dev.Model.SHELLY_UNI],
-    settable_fields=["Power1", "Power2"],
-    gettable_fields=["Power1", "Power2"],
-    field_aliases={"power1": "Power1", "power2": "Power2"},
-)
-
-EncoderRegistry(
-    models=[dev.Model.NEO_ALARM],
-    settable_fields=["alarm", "duration", "melody", "volume"],
-    gettable_fields=[],
-)
-
-EncoderRegistry(
-    models=[dev.Model.SRTS_A01],
-    settable_fields=[
-        "child_lock",
-        "external_temperature_input",
-        "occupied_heating_setpoint",
-        "preset",
-        "schedule_settings",
-        "schedule",
-        "schedule_settings",
-        "sensor",
-        "system_mode",
-        "valve_detection",
-        "window_detection",
-    ],
-    gettable_fields=[
-        "child_lock",  # Just one field request get all fields
-    ],
-)
-
-
 def encode(model: dev.Model, state: abstract.DeviceState) -> Dict[str, Any]:
     """
     Encode the state of a device model into a dictionary format using the appropriate encoder.
@@ -207,6 +176,7 @@ def encode(model: dev.Model, state: abstract.DeviceState) -> Dict[str, Any]:
     """
     utils.check_parameter("model", model, dev.Model)
     utils.check_parameter("state", state, abstract.DeviceState)
+
     _encoder = EncoderRegistry.get_encoder(model=model)
     if _encoder is None:
         utils.i2m_log.warning(
@@ -214,25 +184,3 @@ def encode(model: dev.Model, state: abstract.DeviceState) -> Dict[str, Any]:
         )
         return state.model_dump()
     return _encoder.transform(state)
-
-
-def check_compliance(model: dev.Model, state: Dict) -> bool:
-    """
-    Check if the given state complies with the encoder for the specified model.
-
-    Args:
-        model (dev.Model): The device model for which compliance needs to be
-            checked.
-        state (Dict): The state of the device to be checked for compliance.
-
-    Returns:
-        bool: True if the state complies with the encoder, False otherwise.
-
-    """
-    utils.check_parameter("model", model, dev.Model)
-    utils.check_parameter("state", state, Dict)
-    _encoder = EncoderRegistry.get_encoder(model=model)
-    if _encoder is None:
-        utils.i2m_log.warning("No encoder found for model: %s", model)
-        return False
-    return _encoder.check_compliance(state)

@@ -33,7 +33,7 @@ def _handle_msg(msg: messenger.Message, devices: str, verbose: bool) -> None:
         _details = (
             f"{C_BOLD}type:{C_END} {msg.message_type}"
             f" - {C_BOLD}protocol:{C_END} {msg.protocol.value}"
-            f" - {C_BOLD}model:{C_END} {msg.model.value}\n"
+            f" - {C_BOLD}model:{C_END} {msg.model}\n"
             f"\t{C_BOLD}raw:{C_END} {msg.raw_item}\n"
             f"\t{C_BOLD}refined:{C_END} {msg.refined}"
         )

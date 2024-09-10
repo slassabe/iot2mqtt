@@ -1,6 +1,26 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 
+"""
+This module provides utility functions and classes for the iot2mqtt framework.
+
+Classes
+-------
+
+- Singleton: A metaclass for creating singleton classes.
+
+Functions
+---------
+
+- check_parameter: Validates a parameter against specified type and optionality requirements.
+
+Constants
+---------
+
+- i2m_log: Logger instance for the iot2mqtt module.
+- DEBUG: Boolean flag indicating whether debugging is enabled.
+
+"""
 import logging
 from typing import Any, Type, TypeVar
 

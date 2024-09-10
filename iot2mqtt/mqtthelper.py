@@ -2,29 +2,9 @@
 # coding=utf-8
 
 """
-This module contains the ClientHelper class which implements the IMQTTService interface.
-
-The MQTTClient class is responsible for handling MQTT-specific operations. It uses the 
-paho.mqtt.client library for MQTT operations and provides methods for connecting, disconnecting, 
-and handling MQTT events.
-
-Examples
---------
-
-Here is an example of how to use the `ClientHelper` class:
-
-.. code-block:: python
-
-    from iot2mqtt import mqtthelper
-
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), 
-        mqtthelper.SecurityContext()
-    )
-    _client.start()
-    # Handle messages from the MQTT broker.
-    while True:
-        time.sleep(1)
+This module provides helper classes and functions for managing MQTT client operations 
+using the paho.mqtt.client library. It includes context and security configurations, 
+as well as client management for connecting, disconnecting, and handling MQTT events.
 
 """
 import dataclasses
