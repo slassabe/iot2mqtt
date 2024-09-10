@@ -63,10 +63,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#subclasses-of-iot2mqtt-abstract-devicestate">Subclasses of <code class="docutils literal notranslate"><span class="pre">iot2mqtt.abstract.DeviceState</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#purpose-and-usage">Purpose and Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id1">Example Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Explanation</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#encoder">Encoder</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id2">Example Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Example Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Explanation</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#device-accessor">Device Accessor</a></li>
@@ -130,28 +132,25 @@
 <h3>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h3>
 <p>Below is an example demonstrating how to use the ClientHelper class to connect to an MQTT broker and process messages from the refined data queue.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span>
+<span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="c1"># Initialize the MQTT client helper with the broker&#39;s hostname and security context</span>
     <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="s2">&quot;localhost&quot;</span><span class="p">),</span> 
+        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> 
         <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="c1"># Start the MQTT client to establish a connection with the broker</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-
     <span class="c1"># Get the refined data queue which will contain processed MQTT messages</span>
     <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
-
-    <span class="c1"># Continuously process messages from the refined data queue</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="c1"># Get and print the 10 next messages from refined queue</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">_refined_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Received message: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="c1"># Entry point of the script</span>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-
 </pre></div>
 </div>
 </section>
@@ -213,15 +212,26 @@
 
 <span class="c1"># Creating a Switch state object deserializing Sonoff state values.</span>
 <span class="n">_SONOFF_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;ON&quot;</span><span class="p">}</span>
-<span class="n">switch_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_SONOFF_VALUES</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sonoff Switch power is: </span><span class="si">{</span><span class="n">switch_state</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">abstract_switch1</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_SONOFF_VALUES</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sonoff Switch power is: </span><span class="si">{</span><span class="n">abstract_switch1</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="c1"># Output: Sonoff Switch power is: ON</span>
 
 <span class="c1"># Creating a Switch state object deserializing TASMOTA state values.</span>
 <span class="n">_TASMOTA_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;POWER&quot;</span><span class="p">:</span> <span class="s2">&quot;ON&quot;</span><span class="p">}</span>
-<span class="n">switch_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_TASMOTA_VALUES</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tasmota Switch power is: </span><span class="si">{</span><span class="n">switch_state</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">abstract_switch2</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_TASMOTA_VALUES</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tasmota Switch power is: </span><span class="si">{</span><span class="n">abstract_switch2</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="c1"># Output: Tasmota Switch power is: ON</span>
 </pre></div>
 </div>
+</section>
+<section id="id2">
+<h3>Explanation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>In this example, we create two instances of the <code class="docutils literal notranslate"><span class="pre">Switch</span></code> class:</p>
+<ul class="simple">
+<li><p>one with a JSON state encoding format for a Sonoff device: <code class="docutils literal notranslate"><span class="pre">{&quot;state&quot;:</span> <span class="pre">&quot;ON&quot;}</span></code></p></li>
+<li><p>the other with a JSON state encoding format for a Tasmota device <code class="docutils literal notranslate"><span class="pre">{&quot;POWER&quot;:</span> <span class="pre">&quot;ON&quot;}</span></code></p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">Switch</span></code> class is a subclass of the <code class="docutils literal notranslate"><span class="pre">abstract.DeviceState</span></code> class, which provides a standardized way to represent the state of various IoT devices.</p>
 </section>
 </section>
 <section id="encoder">
@@ -233,30 +243,40 @@
 <li><p>The device is actionable, meaning its state can be modified (e.g., it can be turned on or off).</p></li>
 </ul>
 <p>For example, this is the case for a Switch.</p>
-<section id="id2">
-<h3>Example Usage<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
-<p>Below is an example of how to encode an abstract <code class="docutils literal notranslate"><span class="pre">Switch</span></code> state into device-specific states for a Shelly Plug and a Sonoff Smart Plug:</p>
+<section id="id3">
+<h3>Example Usage<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>Below is an example of how to encode an abstract <code class="docutils literal notranslate"><span class="pre">Switch</span></code> state into device-specific states for a Shelly Plug and a Sonoff Smart Plug.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">encoder</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">setup</span><span class="p">)</span>
 
 <span class="c1"># Define the abstract state for a Switch</span>
 <span class="n">_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">abstract</span><span class="o">.</span><span class="n">POWER_ON</span><span class="p">)</span>
 
 <span class="c1"># Encode the state for a Shelly Plug-in</span>
 <span class="n">_shelly_on</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">,</span>
     <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">_shelly_on</span><span class="p">)</span>  <span class="c1"># Output: {&#39;POWER&#39;: &#39;ON&#39;}</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">_shelly_on</span><span class="p">)</span>  
+<span class="c1"># Output: {&#39;POWER&#39;: &#39;ON&#39;}</span>
 
 <span class="c1"># Encode the state for a Sonoff Smart Plug</span>
 <span class="n">_sonoff_on</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
     <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">_sonoff_on</span><span class="p">)</span> <span class="c1"># Output: {&#39;state&#39;: &#39;ON&#39;}</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">_sonoff_on</span><span class="p">)</span> 
+<span class="c1"># Output: {&#39;state&#39;: &#39;ON&#39;}</span>
 </pre></div>
 </div>
+</section>
+<section id="id4">
+<h3>Explanation<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>In this example, we create an abstract <code class="docutils literal notranslate"><span class="pre">Switch</span></code> state object with the power set to <code class="docutils literal notranslate"><span class="pre">POWER_ON</span></code>. We then encode this state for two different models using the <code class="docutils literal notranslate"><span class="pre">encoder.encode()</span></code> function.</p>
+<ul class="simple">
+<li><p>The resulting JSON state for the Shelly Plug-in is <code class="docutils literal notranslate"><span class="pre">{'POWER':</span> <span class="pre">'ON'}</span></code>,</p></li>
+<li><p>For the Sonoff Smart Plug, it is <code class="docutils literal notranslate"><span class="pre">{'state':</span> <span class="pre">'ON'}</span></code>.</p></li>
+</ul>
 </section>
 </section>
 <section id="device-accessor">

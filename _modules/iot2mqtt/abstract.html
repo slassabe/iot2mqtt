@@ -78,9 +78,6 @@
 <span class="c1"># coding=utf-8</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">iot2mqtt.abstract</span>
-<span class="sd">=================</span>
-
 <span class="sd">This module defines various abstract representations of IoT device states and attributes.</span>
 <span class="sd">It provides a set of Pydantic models and enumerations to represent the state and configuration</span>
 <span class="sd">of different types of IoT devices, such as switches, sensors, and alarms.</span>
@@ -88,48 +85,25 @@
 <span class="sd">Classes</span>
 <span class="sd">-------</span>
 
-<span class="sd">- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.</span>
-<span class="sd">- AirSensor: Represents the state of an air sensor device.</span>
-<span class="sd">- Alarm: Represents the state of an alarm device.</span>
-<span class="sd">- AlarmVolumes: Enumeration representing possible alarm volume levels.</span>
 <span class="sd">- Availability: Represents the availability status of a device.</span>
-<span class="sd">- Button: Represents the state of a button device.</span>
-<span class="sd">- ButtonValues: Enumeration representing possible button actions.</span>
+<span class="sd">- Registry: Represents a registry of discovered devices.</span>
 <span class="sd">- DeviceState: Root class for all device state classes.</span>
-<span class="sd">- Motion: Represents the state of a motion sensor device.</span>
-<span class="sd">- SrtsA01: Represents the state of a specific Zigbee thermostat device.</span>
+<span class="sd">- AirSensor: Represents the state of an air sensor device.</span>
 <span class="sd">- Switch: Represents the state of a switch device.</span>
 <span class="sd">- Switch2Channels: Represents the state of a switch device with two channels.</span>
-
-
-<span class="sd">Enums</span>
-<span class="sd">-----</span>
-
+<span class="sd">- Motion: Represents the state of a motion sensor device.</span>
 <span class="sd">- ButtonValues: Enumeration representing possible button actions.</span>
+<span class="sd">- Button: Represents the state of a button device.</span>
+<span class="sd">- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.</span>
+<span class="sd">- SrtsA01: Represents the state of a specific Zigbee thermostat device.</span>
 <span class="sd">- AlarmVolumes: Enumeration representing possible alarm volume levels.</span>
+<span class="sd">- Alarm: Represents the state of an alarm device.</span>
 
 <span class="sd">Constants</span>
 <span class="sd">---------</span>
 
 <span class="sd">- POWER_ON: String constant representing the &quot;ON&quot; state.</span>
 <span class="sd">- POWER_OFF: String constant representing the &quot;OFF&quot; state.</span>
-<span class="sd">- SWITCH_ON: Switch instance representing the &quot;ON&quot; state.</span>
-<span class="sd">- SWITCH_OFF: Switch instance representing the &quot;OFF&quot; state.</span>
-
-<span class="sd">Examples</span>
-<span class="sd">--------</span>
-
-<span class="sd">Here is an example of how to use the `Switch` class:</span>
-
-<span class="sd">.. code-block:: python</span>
-
-<span class="sd">    from iot2mqtt.abstract import Switch, POWER_ON, POWER_OFF</span>
-
-<span class="sd">    switch = Switch(power=POWER_ON)</span>
-<span class="sd">    print(switch.power)  # Output: ON</span>
-
-<span class="sd">    switch.power = POWER_OFF</span>
-<span class="sd">    print(switch.power)  # Output: OFF</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -138,6 +112,47 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">AliasChoices</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">computed_field</span><span class="p">,</span> <span class="n">confloat</span>
+
+<span class="c1"># Abstract IOT device properties</span>
+
+<span class="n">ACTION</span> <span class="o">=</span> <span class="s2">&quot;action&quot;</span>
+<span class="n">ALARM</span> <span class="o">=</span> <span class="s2">&quot;alarm&quot;</span>
+<span class="n">AWAY_PRESET_TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;away_preset_temperature&quot;</span>
+<span class="n">BATTERY</span> <span class="o">=</span> <span class="s2">&quot;battery&quot;</span>
+<span class="n">BATTERY_LOW</span> <span class="o">=</span> <span class="s2">&quot;battery_low&quot;</span>
+<span class="n">CALIBRATED</span> <span class="o">=</span> <span class="s2">&quot;calibrated&quot;</span>
+<span class="n">CHILD_LOCK</span> <span class="o">=</span> <span class="s2">&quot;child_lock&quot;</span>
+<span class="n">DEVICE_TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;device_temperature&quot;</span>
+<span class="n">DURATION</span> <span class="o">=</span> <span class="s2">&quot;duration&quot;</span>
+<span class="n">EXTERNAL_TEMPERATURE_INPUT</span> <span class="o">=</span> <span class="s2">&quot;external_temperature_input&quot;</span>
+<span class="n">HUMIDITY</span> <span class="o">=</span> <span class="s2">&quot;humidity&quot;</span>
+<span class="n">INTERNAL_HEATING_SETPOINT</span> <span class="o">=</span> <span class="s2">&quot;internal_heating_setpoint&quot;</span>
+<span class="n">LINKQUALITY</span> <span class="o">=</span> <span class="s2">&quot;linkquality&quot;</span>
+<span class="n">LOCAL_TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;local_temperature&quot;</span>
+<span class="n">MELODY</span> <span class="o">=</span> <span class="s2">&quot;melody&quot;</span>
+<span class="n">OCCUPIED_HEATING_SETPOINT</span> <span class="o">=</span> <span class="s2">&quot;occupied_heating_setpoint&quot;</span>
+<span class="n">OCCUPANCY</span> <span class="o">=</span> <span class="s2">&quot;occupancy&quot;</span>
+<span class="n">POWER</span> <span class="o">=</span> <span class="s2">&quot;power&quot;</span>
+<span class="n">POWER1</span> <span class="o">=</span> <span class="s2">&quot;power1&quot;</span>
+<span class="n">POWER2</span> <span class="o">=</span> <span class="s2">&quot;power2&quot;</span>
+<span class="n">POWER_ON_BEHAVIOUR</span> <span class="o">=</span> <span class="s2">&quot;power_on_behavior&quot;</span>
+<span class="n">POWER_OUTAGE_COUNT</span> <span class="o">=</span> <span class="s2">&quot;power_outage_count&quot;</span>
+<span class="n">PRESET</span> <span class="o">=</span> <span class="s2">&quot;preset&quot;</span>
+<span class="n">RANGE</span> <span class="o">=</span> <span class="s2">&quot;Range&quot;</span>
+<span class="n">SCHEDULE</span> <span class="o">=</span> <span class="s2">&quot;schedule&quot;</span>
+<span class="n">SCHEDULE_SETTING</span> <span class="o">=</span> <span class="s2">&quot;schedule_setting&quot;</span>
+<span class="n">SENSOR</span> <span class="o">=</span> <span class="s2">&quot;sensor&quot;</span>
+<span class="n">SETUP</span> <span class="o">=</span> <span class="s2">&quot;setup&quot;</span>
+<span class="n">SYSTEM_MODE</span> <span class="o">=</span> <span class="s2">&quot;system_mode&quot;</span>
+<span class="n">TAMPER</span> <span class="o">=</span> <span class="s2">&quot;tamper&quot;</span>
+<span class="n">TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;temperature&quot;</span>
+<span class="n">UPDATE</span> <span class="o">=</span> <span class="s2">&quot;update&quot;</span>
+<span class="n">VALVE_ALARM</span> <span class="o">=</span> <span class="s2">&quot;valve_alarm&quot;</span>
+<span class="n">VALVE_DETECTION</span> <span class="o">=</span> <span class="s2">&quot;valve_detection&quot;</span>
+<span class="n">VOLTAGE</span> <span class="o">=</span> <span class="s2">&quot;voltage&quot;</span>
+<span class="n">VOLUME</span> <span class="o">=</span> <span class="s2">&quot;volume&quot;</span>
+<span class="n">WINDOW_DETECTION</span> <span class="o">=</span> <span class="s2">&quot;window_detection&quot;</span>
+<span class="n">WINDOW_OPEN</span> <span class="o">=</span> <span class="s2">&quot;window_open&quot;</span>
 
 
 <div class="viewcode-block" id="Availability">
@@ -318,6 +333,12 @@
     <span class="nd">@computed_field</span>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the voltage based on the range.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: The calculated voltage in volts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Range</span> <span class="o">/</span> <span class="mi">100</span></div>
 
 
@@ -325,6 +346,10 @@
 <div class="viewcode-block" id="SrtsA01">
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.SrtsA01">[docs]</a>
 <span class="k">class</span> <span class="nc">SrtsA01</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a Smart radiator thermostat AQARA SRTS-A01.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1"># Température d&#39;absence pré-définie</span>
     <span class="n">away_preset_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=-</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mf">35.0</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Batterie restante en %, peut prendre jusqu&#39;à 24 heures avant d&#39;être signalée.</span>

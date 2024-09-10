@@ -77,128 +77,80 @@
 <span></span><span class="ch">#!/usr/local/bin/python3</span>
 <span class="c1"># coding=utf-8</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">iot2mqtt.dev</span>
-<span class="sd">============</span>
-
 <span class="sd">This module defines various enumerations and classes related to IoT device models, protocols, </span>
-<span class="sd">and actions.</span>
-<span class="sd">It also includes custom exceptions for handling specific error cases.</span>
+<span class="sd">and actions. It also includes custom exceptions for handling specific error cases.</span>
 
 <span class="sd">Classes and Enums</span>
 <span class="sd">-----------------</span>
 
-<span class="sd">- Model: Enumeration representing different models of IoT devices.</span>
+<span class="sd">- Model: Represents a model of an IoT device.</span>
+<span class="sd">- ModelFactory: Singleton class responsible for managing instances of Model objects.</span>
 <span class="sd">- Protocol: Enumeration representing different communication protocols used by IoT devices.</span>
 <span class="sd">- Device: Represents a generic IoT device in the system.</span>
 <span class="sd">- ButtonAction: Enumeration defining button action values.</span>
-<span class="sd">- DecodingException: Exception raised for errors in the decoding process.</span>
-
-<span class="sd">Examples</span>
-<span class="sd">--------</span>
-
-<span class="sd">Here is an example of how to use the `Device` class:</span>
-
-<span class="sd">.. code-block:: python</span>
-
-<span class="sd">    from iot2mqtt.dev import Device, Protocol, Model</span>
-
-<span class="sd">    device = Device(</span>
-<span class="sd">        name=&quot;Living Room Light&quot;,</span>
-<span class="sd">        protocol=Protocol.Z2M,</span>
-<span class="sd">        model=Model.SN_MINI</span>
-<span class="sd">    )</span>
-<span class="sd">    print(device)</span>
-<span class="sd">    # Output: name=&#39;Living Room Light&#39; protocol=&lt;Protocol.Z2M: &#39;Zigbee2MQTT&#39;&gt; model=&lt;Model.SN_MINI: &#39;ZBMINI-L&#39;&gt;</span>
-
 
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Lock</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
-
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
 
 
 <div class="viewcode-block" id="Model">
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.Model">[docs]</a>
-<span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This enum is used to represent the different models of devices that can be discovered.</span>
+<span class="sd">    Represents a model of an IoT device.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        MIFLORA (str): Xiaomi Mi Flora plant sensor.</span>
-<span class="sd">        NEO_ALARM (str): Neo NAS-AB02B2 Zigbee Siren.</span>
-<span class="sd">        RING_CAMERA (str): Ring Camera.</span>
-<span class="sd">        SHELLY_PLUGS (str): Shelly Plug S WiFi smart plug.</span>
-<span class="sd">        SHELLY_UNI (str): Shelly Uni WiFi relay/dimmer.</span>
-<span class="sd">        SRTS_A01 (str): SRTS-A01 Zigbee device.</span>
-<span class="sd">        TUYA_SOIL (str): Tuya TS0601_soil Zigbee soil moisture sensor.</span>
-<span class="sd">        SN_AIRSENSOR (str): Sonoff Zigbee air temperature/humidity sensor.</span>
-<span class="sd">        SN_BUTTON (str): Sonoff SNZB-01 Zigbee wireless button.</span>
-<span class="sd">        SN_MOTION (str): Sonoff SNZB-03 Zigbee motion sensor.</span>
-<span class="sd">        SN_MINI (str): Sonoff ZBMINI-L Zigbee wireless switch module.</span>
-<span class="sd">        SN_MINI_L2 (str): Sonoff ZBMINIL2 Zigbee wireless switch module.</span>
-<span class="sd">        SN_SMART_PLUG (str): Sonoff S26R2ZB Zigbee smart plug.</span>
-<span class="sd">        SN_ZBBRIDGE (str): Sonoff ZbBridge Tasmota signature.</span>
-<span class="sd">        NONE (str): No model, used in discovery messages.</span>
-<span class="sd">        UNKNOWN (str): Unknown model.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        tag (str): The tag associated with the device model.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">MIFLORA</span> <span class="o">=</span> <span class="s2">&quot;Miflora&quot;</span>
-    <span class="n">NEO_ALARM</span> <span class="o">=</span> <span class="s2">&quot;NAS-AB02B2&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html</span>
-    <span class="n">RING_CAMERA</span> <span class="o">=</span> <span class="s2">&quot;RingCamera&quot;</span>
-    <span class="n">SHELLY_PLUGS</span> <span class="o">=</span> <span class="s2">&quot;Shelly Plug S&quot;</span>  <span class="c1"># Shelly Plug S WiFi smart plug</span>
-    <span class="n">SHELLY_UNI</span> <span class="o">=</span> <span class="s2">&quot;Shelly Uni&quot;</span>  <span class="c1"># Shelly Uni WiFi relay/dimmer</span>
-    <span class="n">SRTS_A01</span> <span class="o">=</span> <span class="s2">&quot;SRTS-A01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SRTS-A01.html</span>
-    <span class="n">TUYA_SOIL</span> <span class="o">=</span> <span class="s2">&quot;TS0601_soil&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/TS0601_soil.html</span>
-    <span class="n">SN_AIRSENSOR</span> <span class="o">=</span> <span class="s2">&quot;SNZB-02&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-02.html</span>
-    <span class="n">SN_BUTTON</span> <span class="o">=</span> <span class="s2">&quot;SNZB-01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-01.html</span>
-    <span class="n">SN_MOTION</span> <span class="o">=</span> <span class="s2">&quot;SNZB-03&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-03.html</span>
-    <span class="n">SN_MINI</span> <span class="o">=</span> <span class="s2">&quot;ZBMINI-L&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/ZBMINI.html</span>
-    <span class="n">SN_MINI_L2</span> <span class="o">=</span> <span class="s2">&quot;ZBMINIL2&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/ZBMINIL2.html</span>
-    <span class="n">SN_SMART_PLUG</span> <span class="o">=</span> <span class="s2">&quot;S26R2ZB&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/S26R2ZB.html</span>
-    <span class="n">SN_ZBBRIDGE</span> <span class="o">=</span> <span class="s2">&quot;Sonoff ZbBridge&quot;</span>  <span class="c1"># Tasmota signature for Sonoff ZbBridge</span>
-    <span class="n">NONE</span> <span class="o">=</span> <span class="s2">&quot;None&quot;</span>  <span class="c1"># No model</span>
-    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="s2">&quot;Unknown&quot;</span>  <span class="c1"># Unknown model</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Model.from_str">
-<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.Model.from_str">[docs]</a>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">from_str</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+
+
+<div class="viewcode-block" id="ModelFactory">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.ModelFactory">[docs]</a>
+<span class="k">class</span> <span class="nc">ModelFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ModelFactory is a singleton class responsible for managing instances of Model objects.</span>
+
+<span class="sd">    This class ensures that only one instance of each Model is created and provides a thread-safe</span>
+<span class="sd">    mechanism for accessing these instances.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        UNKNOWN (Model): A default model instance with the tag &#39;UNKNOWN&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_model_instances</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">_lock</span><span class="p">:</span> <span class="n">Lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+    <span class="n">UNKNOWN</span><span class="p">:</span> <span class="n">Model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="s2">&quot;UNKNOWN&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ModelFactory.get">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.dev.ModelFactory.get">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns the Model enum value corresponding to the given label.</span>
-
-<span class="sd">        This method takes a label as input and returns the corresponding Model enum value.</span>
-<span class="sd">        If the label does not correspond to any Model enum value, it returns Model.UNKNOWN.</span>
+<span class="sd">        Retrieve a Model instance by its tag. If the tag does not exist, create a new Model</span>
+<span class="sd">        instance with the given tag.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            label (str): The label to get the Model enum value for.</span>
+<span class="sd">            tag (str): The tag associated with the Model instance.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Model: The Model enum value corresponding to the label, or Model.UNKNOWN if</span>
-<span class="sd">            the label does not correspond to any Model enum value.</span>
-
-<span class="sd">        Examples</span>
-<span class="sd">        --------</span>
-
-<span class="sd">        Here is an example of how to use the `Model` enum:</span>
-
-<span class="sd">        .. code-block:: python</span>
-
-<span class="sd">            from iot2mqtt.dev import Model</span>
-
-<span class="sd">            model = Model.from_str(&quot;SRTS-A01&quot;)</span>
-<span class="sd">            print(model)  # Output: Model.SRTS_A01</span>
+<span class="sd">            Model: The Model instance associated with the given tag, or a new instance if the</span>
+<span class="sd">            tag does not exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Model</span><span class="o">.</span><span class="n">NONE</span>
-        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">Model</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">label</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">model</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Unknown model: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">Model</span><span class="o">.</span><span class="n">UNKNOWN</span></div>
+
+        <span class="k">with</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_model_instances</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_model_instances</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+            <span class="n">_model_instance</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_model_instances</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">_model_instance</span>
+            <span class="k">return</span> <span class="n">_model_instance</span></div>
 </div>
 
 
@@ -249,6 +201,8 @@
 <span class="sd">        model (Optional[Model]): The model of the device. Defaults to None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span><span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">),)</span>
     <span class="n">protocol</span><span class="p">:</span> <span class="n">Protocol</span> <span class="o">=</span> <span class="p">(</span><span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">),)</span>
     <span class="n">address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span>
@@ -274,8 +228,6 @@
     <span class="n">SINGLE_ACTION</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span>
     <span class="n">DOUBLE_ACTION</span> <span class="o">=</span> <span class="s2">&quot;double&quot;</span>
     <span class="n">LONG_ACTION</span> <span class="o">=</span> <span class="s2">&quot;long&quot;</span></div>
-
-
 
 </pre></div>
 

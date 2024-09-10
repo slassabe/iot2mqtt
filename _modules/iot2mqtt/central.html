@@ -84,6 +84,17 @@
 <span class="sd">subscribe to topics, process incoming messages, and trigger state changes on devices.</span>
 <span class="sd">It supports multiple protocols such as Zigbee2MQTT and Tasmota.</span>
 
+<span class="sd">Classes</span>
+<span class="sd">-------</span>
+
+<span class="sd">- Scrutinizer: Subscribes to MQTT topics and processes incoming messages.</span>
+<span class="sd">- DeviceAccessor: Accesses device state via MQTT.</span>
+
+<span class="sd">Functions</span>
+<span class="sd">---------</span>
+
+<span class="sd">- get_refined_data_queue: Returns a queue of refined messages by processing raw messages from MQTT.</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">threading</span>
@@ -95,7 +106,7 @@
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ValidationError</span>
 
 <span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">messenger</span><span class="p">,</span> <span class="n">mqtthelper</span><span class="p">,</span> <span class="n">processor</span><span class="p">,</span>
-                      <span class="n">utils</span><span class="p">)</span>
+                      <span class="n">setup</span><span class="p">,</span> <span class="n">utils</span><span class="p">)</span>
 
 <span class="n">Z2M_INFO_BASE_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;zigbee2mqtt&quot;</span>
 <span class="n">Z2M_CMND_BASE_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;zigbee2mqtt&quot;</span>
@@ -118,7 +129,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># self._topic_registry: Dict[TopicRegistryKey, &quot;TopicManager&quot;] = {}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span> <span class="o">=</span> <span class="p">{}</span>
 
 
@@ -566,23 +576,7 @@
             <span class="k">raise</span>
 
 
-<span class="n">timer_manager</span> <span class="o">=</span> <span class="n">_TimerManager</span><span class="p">()</span>
-
-
-<div class="viewcode-block" id="is_timer_active">
-<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.is_timer_active">[docs]</a>
-<span class="k">def</span> <span class="nf">is_timer_active</span><span class="p">(</span><span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Checks if a timer is active for a specific device.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        device_name (str): The name of the device to check for an active timer.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        bool: True if a timer is active for the specified device, False otherwise.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">device_name</span> <span class="ow">in</span> <span class="n">timer_manager</span><span class="o">.</span><span class="n">_timer_registry</span></div>
-
+<span class="n">_timer_manager</span> <span class="o">=</span> <span class="n">_TimerManager</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="DeviceAccessor">
@@ -753,7 +747,7 @@
                 <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
                 <span class="s2">&quot;power_on&quot;</span><span class="p">:</span> <span class="n">_power_on</span><span class="p">,</span>
             <span class="p">}</span>
-            <span class="n">timer_manager</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
+            <span class="n">_timer_manager</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
                 <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
                 <span class="n">countdown</span><span class="o">=</span><span class="n">_countdown</span><span class="p">,</span>
                 <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_do_switch_power</span><span class="p">,</span>
@@ -770,7 +764,7 @@
                 <span class="s2">&quot;on_time&quot;</span><span class="p">:</span> <span class="n">on_time</span><span class="p">,</span>
                 <span class="s2">&quot;off_time&quot;</span><span class="p">:</span> <span class="n">off_time</span><span class="p">,</span>
             <span class="p">}</span>
-            <span class="n">timer_manager</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
+            <span class="n">_timer_manager</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
                 <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
                 <span class="n">countdown</span><span class="o">=</span><span class="n">countdown</span><span class="p">,</span>
                 <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">switch_power_change</span><span class="p">,</span>
@@ -959,40 +953,6 @@
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">_refined_queue</span></div>
 
-
-
-<span class="n">_CONFIG_DEVICE</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="p">(</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SN_MINI</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
-    <span class="p">(</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SN_MINI_L2</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
-    <span class="p">(</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
-    <span class="p">(</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;POWER&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
-    <span class="p">(</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">SHELLY_UNI</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">):</span> <span class="p">{</span><span class="s2">&quot;POWER1&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;POWER2&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
-<span class="p">}</span>
-
-
-<span class="k">def</span> <span class="nf">_config_device</span><span class="p">(</span>
-    <span class="n">message</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">DeviceAccessor</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">]:</span>
-    <span class="n">_registry</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">refined</span>
-    <span class="k">for</span> <span class="n">_device_name</span> <span class="ow">in</span> <span class="n">_registry</span><span class="o">.</span><span class="n">device_names</span><span class="p">:</span>
-        <span class="n">_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">DeviceDirectory</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span>
-            <span class="n">_device_name</span>
-        <span class="p">)</span>
-        <span class="n">_model</span> <span class="o">=</span> <span class="n">_device</span><span class="o">.</span><span class="n">model</span>
-        <span class="n">_protocol</span> <span class="o">=</span> <span class="n">_device</span><span class="o">.</span><span class="n">protocol</span>
-        <span class="n">_config_payload</span> <span class="o">=</span> <span class="n">_CONFIG_DEVICE</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">_model</span><span class="p">,</span> <span class="n">_protocol</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">_config_payload</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No config payload for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_device_name</span><span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Device: </span><span class="si">%s</span><span class="s2"> - Model: </span><span class="si">%s</span><span class="s2"> - Protocol: </span><span class="si">%s</span><span class="s2"> - Payload: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">_device_name</span><span class="p">,</span>
-            <span class="n">_model</span><span class="p">,</span>
-            <span class="n">_protocol</span><span class="p">,</span>
-            <span class="n">_config_payload</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">accessor</span><span class="o">.</span><span class="n">trigger_change_state</span><span class="p">(</span><span class="n">_device_name</span><span class="p">,</span> <span class="n">_protocol</span><span class="p">,</span> <span class="n">_config_payload</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">message</span>
 
 
 <span class="k">def</span> <span class="nf">_get_device_state</span><span class="p">(</span>

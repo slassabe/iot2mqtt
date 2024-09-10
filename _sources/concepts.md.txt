@@ -30,28 +30,25 @@ Below is an example demonstrating how to use the ClientHelper class to connect t
 
 ```python
 from iot2mqtt import central, mqtthelper
+TARGET = "localhost"
 
 def main():
     # Initialize the MQTT client helper with the broker's hostname and security context
     _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname="localhost"), 
+        mqtthelper.MQTTContext(hostname=TARGET), 
         mqtthelper.SecurityContext()
     )
     # Start the MQTT client to establish a connection with the broker
     _client.start()
-
     # Get the refined data queue which will contain processed MQTT messages
     _refined_queue = central.get_refined_data_queue(_client)
-
-    # Continuously process messages from the refined data queue
-    while True:
+    # Get and print the 10 next messages from refined queue
+    for _ in range(10):
         message = _refined_queue.get()
         print(f'Received message: {message}')
 
-# Entry point of the script
 if __name__ == "__main__":
     main()
-
 ````
 
 ## Processing pipeline
@@ -109,14 +106,25 @@ from iot2mqtt import abstract
 
 # Creating a Switch state object deserializing Sonoff state values.
 _SONOFF_VALUES = {"state": "ON"}
-switch_state = abstract.Switch(**_SONOFF_VALUES)
-print(f"Sonoff Switch power is: {switch_state.power}")
+abstract_switch1 = abstract.Switch(**_SONOFF_VALUES)
+print(f"Sonoff Switch power is: {abstract_switch1.power}")
+# Output: Sonoff Switch power is: ON
 
 # Creating a Switch state object deserializing TASMOTA state values.
 _TASMOTA_VALUES = {"POWER": "ON"}
-switch_state = abstract.Switch(**_TASMOTA_VALUES)
-print(f"Tasmota Switch power is: {switch_state.power}")
+abstract_switch2 = abstract.Switch(**_TASMOTA_VALUES)
+print(f"Tasmota Switch power is: {abstract_switch2.power}")
+# Output: Tasmota Switch power is: ON
 ```
+
+### Explanation
+
+In this example, we create two instances of the `Switch` class:
+
+- one with a JSON state encoding format for a Sonoff device: `{"state": "ON"}`
+- the other with a JSON state encoding format for a Tasmota device `{"POWER": "ON"}`
+
+The `Switch` class is a subclass of the `abstract.DeviceState` class, which provides a standardized way to represent the state of various IoT devices. 
 
 ## Encoder
 
@@ -131,29 +139,38 @@ For example, this is the case for a Switch.
 
 ### Example Usage
 
-Below is an example of how to encode an abstract `Switch` state into device-specific states for a Shelly Plug and a Sonoff Smart Plug:
+Below is an example of how to encode an abstract `Switch` state into device-specific states for a Shelly Plug and a Sonoff Smart Plug.
 
 ```python
 
-from iot2mqtt import (abstract, dev, encoder)
+from iot2mqtt import (abstract, encoder, setup)
 
 # Define the abstract state for a Switch
 _state = abstract.Switch(power=abstract.POWER_ON)
 
 # Encode the state for a Shelly Plug-in
 _shelly_on = encoder.encode(
-    model=dev.Model.SHELLY_PLUGS,
+    model=setup.Models.SHELLY_PLUGS,
     state=_state,
 )
-print(_shelly_on)  # Output: {'POWER': 'ON'}
+print(_shelly_on)  
+# Output: {'POWER': 'ON'}
 
 # Encode the state for a Sonoff Smart Plug
 _sonoff_on = encoder.encode(
-    model=dev.Model.SN_SMART_PLUG,
+    model=setup.Models.SN_SMART_PLUG,
     state=_state,
 )
-print(_sonoff_on) # Output: {'state': 'ON'}
+print(_sonoff_on) 
+# Output: {'state': 'ON'}
 ```
+
+### Explanation
+
+In this example, we create an abstract `Switch` state object with the power set to `POWER_ON`. We then encode this state for two different models using the `encoder.encode()` function.
+
+- The resulting JSON state for the Shelly Plug-in is `{'POWER': 'ON'}`, 
+- For the Sonoff Smart Plug, it is `{'state': 'ON'}`.
 
 ## Device Accessor
 

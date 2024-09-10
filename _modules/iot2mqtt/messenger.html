@@ -76,6 +76,74 @@
   <h1>Source code for iot2mqtt.messenger</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/local/bin/python3</span>
 <span class="c1"># coding=utf-8</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module defines the messaging system for the IoT framework, including message types, </span>
+<span class="sd">message structures, and the mechanisms for producing and dispatching messages.</span>
+
+<span class="sd">Classes</span>
+<span class="sd">-------</span>
+
+<span class="sd">- MessageType: Enumeration for IoT message types.</span>
+<span class="sd">- Item: Represents a raw data item in the IoT system.</span>
+<span class="sd">- Message: Represents a message in the IoT system.</span>
+<span class="sd">- QueueManager: Base class for managing input and output queues.</span>
+<span class="sd">- Producer: Thread-safe message producer that puts messages onto an output queue.</span>
+<span class="sd">- Dispatcher: Thread-safe message dispatcher that processes messages from an input queue</span>
+<span class="sd">  based on specified conditional handlers.</span>
+
+<span class="sd">Functions</span>
+<span class="sd">---------</span>
+
+<span class="sd">- is_type_discovery: Checks if a message is of type discovery.</span>
+<span class="sd">- is_type_availability: Checks if a message is of type availability.</span>
+<span class="sd">- is_type_state: Checks if a message is of type state.</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+
+<span class="sd">Here is an example of how to access incoming MQTT messages and process them using a</span>
+<span class="sd">dispatcher according to their message type:</span>
+
+<span class="sd">.. code-block:: python</span>
+
+<span class="sd">    import time</span>
+
+<span class="sd">    from iot2mqtt import central, mqtthelper, messenger</span>
+
+<span class="sd">    TARGET = &quot;localhost&quot;</span>
+
+
+<span class="sd">    def main():</span>
+<span class="sd">        _client = mqtthelper.ClientHelper(</span>
+<span class="sd">            mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()</span>
+<span class="sd">        )</span>
+<span class="sd">        _client.start()</span>
+<span class="sd">        _refined_queue = central.get_refined_data_queue(_client)</span>
+
+<span class="sd">        messenger.Dispatcher(</span>
+<span class="sd">            input_queue=_refined_queue,</span>
+<span class="sd">            output_queue=None,</span>
+<span class="sd">            conditional_handlers=[</span>
+<span class="sd">                (messenger.is_type_availability, </span>
+<span class="sd">                lambda msg: print(f&quot;Availability: {msg.device_name} {msg.refined}&quot;)),</span>
+<span class="sd">            ],</span>
+<span class="sd">        )</span>
+
+
+<span class="sd">    if __name__ == &quot;__main__&quot;:</span>
+<span class="sd">        main()</span>
+<span class="sd">        for _ in range(10):</span>
+<span class="sd">            # Wait for 10 seconds before exiting</span>
+<span class="sd">            print(&quot;.&quot;, end=&quot;&quot;, flush=True)</span>
+<span class="sd">            time.sleep(1)</span>
+
+<span class="sd">    # Display :</span>
+<span class="sd">    # Availability: SWITCH_CAVE is_online=True</span>
+<span class="sd">    # Availability: SWITCH_PLUG is_online=False</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">enum</span>
 <span class="kn">import</span> <span class="nn">queue</span>
 <span class="kn">import</span> <span class="nn">threading</span>
@@ -83,7 +151,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">uuid4</span>
 
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SerializeAsAny</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SerializeAsAny</span>
 
 <span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">dev</span><span class="p">,</span> <span class="n">utils</span>
 
@@ -138,6 +206,8 @@
 <span class="sd">        id (UUID): A unique identifier for the message, generated by default.</span>
 <span class="sd">        refined (Optional[Item]): An optional refined version of the raw item.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span>
@@ -254,44 +324,6 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        STOP (str): Sentinel value used to signal the dispatcher to stop processing messages.</span>
-
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-
-<span class="sd">    Here is an example of how to access incoming MQTT messages and process them using a</span>
-<span class="sd">    dispatcher according to their message type:</span>
-
-<span class="sd">    .. code-block:: python</span>
-
-<span class="sd">        import time</span>
-<span class="sd">        from iot2mqtt import central, mqtthelper, messenger</span>
-
-<span class="sd">        TARGET = &quot;localhost&quot;</span>
-
-<span class="sd">        def main():</span>
-<span class="sd">            _client = mqtthelper.ClientHelper(</span>
-<span class="sd">                mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()</span>
-<span class="sd">            )</span>
-<span class="sd">            _client.start()</span>
-<span class="sd">            _refined_queue = central.get_refined_data_queue(_client)</span>
-
-<span class="sd">            messenger.Dispatcher(</span>
-<span class="sd">                input_queue=_refined_queue,</span>
-<span class="sd">                output_queue=None,</span>
-<span class="sd">                conditional_handlers=[</span>
-<span class="sd">                    (messenger.is_type_availability,</span>
-<span class="sd">                    lambda msg: print(f&quot;Availability: {msg.device_name} {msg.refined}&quot;)),</span>
-<span class="sd">                ],</span>
-<span class="sd">            )</span>
-
-<span class="sd">        if __name__ == &quot;__main__&quot;:</span>
-<span class="sd">            main()</span>
-<span class="sd">            while True:</span>
-<span class="sd">                time.sleep(1)</span>
-<span class="sd">        # Display :</span>
-<span class="sd">        # Availability: SWITCH_CAVE is_online=True</span>
-<span class="sd">        # Availability: SWITCH_PLUG is_online=False</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
