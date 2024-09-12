@@ -29,19 +29,20 @@ The data attributes are progressively completed in a processing pipeline and are
 Below is an example demonstrating how to use the ClientHelper class to connect to an MQTT broker and process messages from the refined data queue.
 
 ```python
-from iot2mqtt import central, mqtthelper
+import iot2mqtt as i2m
+
 TARGET = "localhost"
 
 def main():
     # Initialize the MQTT client helper with the broker's hostname and security context
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), 
-        mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET),
+        i2m.mqtthelper.SecurityContext()
     )
     # Start the MQTT client to establish a connection with the broker
     _client.start()
     # Get the refined data queue which will contain processed MQTT messages
-    _refined_queue = central.get_refined_data_queue(_client)
+    _refined_queue = i2m.central.get_refined_data_queue(_client)
     # Get and print the 10 next messages from refined queue
     for _ in range(10):
         message = _refined_queue.get()
@@ -49,6 +50,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 ````
 
 ## Processing pipeline
@@ -102,17 +104,17 @@ These objects are designed to represent the processed data extracted from the ra
 Below is an example demonstrating how to use the abstract device state classes in your application. This example shows how to create Switch state objects by deserializing state values from different device protocols (Sonoff and TASMOTA).
 
 ```python
-from iot2mqtt import abstract
+import iot2mqtt as i2m
 
 # Creating a Switch state object deserializing Sonoff state values.
 _SONOFF_VALUES = {"state": "ON"}
-abstract_switch1 = abstract.Switch(**_SONOFF_VALUES)
+abstract_switch1 = i2m.abstract.Switch(**_SONOFF_VALUES)
 print(f"Sonoff Switch power is: {abstract_switch1.power}")
 # Output: Sonoff Switch power is: ON
 
 # Creating a Switch state object deserializing TASMOTA state values.
 _TASMOTA_VALUES = {"POWER": "ON"}
-abstract_switch2 = abstract.Switch(**_TASMOTA_VALUES)
+abstract_switch2 = i2m.abstract.Switch(**_TASMOTA_VALUES)
 print(f"Tasmota Switch power is: {abstract_switch2.power}")
 # Output: Tasmota Switch power is: ON
 ```
@@ -142,27 +144,27 @@ For example, this is the case for a Switch.
 Below is an example of how to encode an abstract `Switch` state into device-specific states for a Shelly Plug and a Sonoff Smart Plug.
 
 ```python
-
-from iot2mqtt import (abstract, encoder, setup)
+import iot2mqtt as i2m
 
 # Define the abstract state for a Switch
-_state = abstract.Switch(power=abstract.POWER_ON)
+_state = i2m.abstract.Switch(power=i2m.abstract.POWER_ON)
 
 # Encode the state for a Shelly Plug-in
-_shelly_on = encoder.encode(
-    model=setup.Models.SHELLY_PLUGS,
+_shelly_on = i2m.encoder.encode(
+    model=i2m.setup.Models.SHELLY_PLUGS,
     state=_state,
 )
 print(_shelly_on)  
 # Output: {'POWER': 'ON'}
 
 # Encode the state for a Sonoff Smart Plug
-_sonoff_on = encoder.encode(
-    model=setup.Models.SN_SMART_PLUG,
+_sonoff_on = i2m.encoder.encode(
+    model=i2m.setup.Models.SN_SMART_PLUG,
     state=_state,
 )
 print(_sonoff_on) 
 # Output: {'state': 'ON'}
+
 ```
 
 ### Explanation

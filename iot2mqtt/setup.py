@@ -128,5 +128,3 @@ class Models(metaclass=utils.Singleton):
             ],
         )
 
-
-Models()

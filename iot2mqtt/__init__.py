@@ -4,5 +4,8 @@
 This is the initialization module for the iot2mqtt package.
 
 """
+from iot2mqtt import (abstract, central, dev, processor, messenger, mqtthelper, setup)
 
 from .version import __version__
+
+setup.Models()

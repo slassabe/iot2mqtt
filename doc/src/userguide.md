@@ -14,20 +14,20 @@ This guide explains how to retrieve and display the state of a device, specifica
 The following example demonstrates how to use the `iot2mqtt` library to connect to an MQTT broker, retrieve messages from an air sensor, and display its temperature and humidity.
 
 ```python
-from iot2mqtt import (abstract, central, mqtthelper, messenger, setup)
+import iot2mqtt as i2m
 
 # Define the MQTT broker hostname
 TARGET = "localhost"
 
 def main():
     # Initialize the MQTT client helper with the specified context
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
     )
     _client.start()
 
     # Get the refined data queue from the central module
-    _refined_queue = central.get_refined_data_queue(_client)
+    _refined_queue = i2m.central.get_refined_data_queue(_client)
 
     # Get and print the next 3 Airsensor messages from the refined data queue
     _nb_messages = 0
@@ -36,8 +36,8 @@ def main():
         _message = _refined_queue.get()
 
         # Check if the message was issued by the specified Airsensor Model
-        if messenger.is_type_state(_message) and _message.model == setup.Models.SN_AIRSENSOR:
-            _instance: abstract.AirSensor = _message.refined
+        if i2m.messenger.is_type_state(_message) and _message.model == i2m.setup.Models.SN_AIRSENSOR:
+            _instance: i2m.abstract.AirSensor = _message.refined
             print(f'Air sensor state changed to: {_instance.temperature} °C - {_instance.humidity} %')
             _nb_messages += 1
 
@@ -69,20 +69,28 @@ The following example demonstrates how to set the NEO Nas Alarm to ON for 10 sec
 
 ```python
 import time
-from iot2mqtt import dev, central, mqtthelper
+import iot2mqtt as i2m
 
 TARGET = "localhost"
 
 def main():
-    # Initialize the MQTT client helper with the target hostname
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
     )
     _client.start()
 
     # Create a DeviceAccessor instance with the MQTT client
-    _accessor = central.DeviceAccessor(mqtt_client=_client)
+    _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
 
+    # Set Zigbee NEO Nas Alarm melody
+    _state_melody = {
+        "melody": 9,
+    }
+    _accessor.trigger_change_state(
+        device_name="ALARM",
+        protocol=i2m.dev.Protocol.Z2M,
+        state=_state_melody,
+    )
     # Define the state to set the Zigbee NEO Nas Alarm ON for 10 seconds
     _state_on = {
         "alarm": True,
@@ -91,7 +99,7 @@ def main():
     # Trigger the state change on the device
     _accessor.trigger_change_state(
         device_name="ALARM",
-        protocol=dev.Protocol.Z2M,
+        protocol=i2m.dev.Protocol.Z2M,
         state=_state_on,
     )
 
@@ -119,31 +127,31 @@ The following example demonstrates how to change the switch state for devices us
 
 ```python
 import time
-from iot2mqtt import dev, central, mqtthelper, setup
+import iot2mqtt as i2m
 
 TARGET = "localhost"
 
 def main():
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
     )
     _client.start()
 
-    _accessor = central.DeviceAccessor(mqtt_client=_client)
+    _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
     # Set switch ON for 5 sec.
     _accessor.switch_power_change(
         device_names="SWITCH_PLUG",
-        protocol=dev.Protocol.Z2M,
-        model=setup.Models.SN_SMART_PLUG,
+        protocol=i2m.dev.Protocol.Z2M,
+        model=i2m.setup.Models.SN_SMART_PLUG,
         power_on=True,
         on_time=5,
     )
 
 if __name__ == "__main__":
     main()
-    while True:
+    for pos in range(10):
+        helper.animate_cursor(pos)
         time.sleep(1)
-
 ```
 
 #### Explanation
@@ -160,22 +168,23 @@ Alternatively, you can change the switch state for multiple devices using the `s
 
 ```python
 import time
-from iot2mqtt import central, mqtthelper
+import iot2mqtt as i2m
 
 TARGET = "localhost"
+
 SWITCH1 = "0x00124b0024cb17d3" # Zigbee switch device
 SWITCH2 = "tasmota_577591" # Tasmota switch device
 
 def main():
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
     )
     _client.start()
     # Initialize the message pipe to discover devices
-    central.get_refined_data_queue(_client)
+    i2m.central.get_refined_data_queue(_client)
 
     time.sleep(2)  # Wait for the MQTT client to be discovered
-    _accessor = central.DeviceAccessor(mqtt_client=_client)
+    _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
     # Set switch ON for 5 sec.
     _accessor.switch_power_change_helper(
         device_names=f"{SWITCH1},{SWITCH2}",
@@ -183,12 +192,10 @@ def main():
         on_time=5,
     )
 
-
 if __name__ == "__main__":
     main()
     for pos in range(10):
         time.sleep(1)
-
 ```
 
 #### Explanation
@@ -214,7 +221,7 @@ The script integration allows users to specify a sequence of actions to be execu
 This example demonstrates how to create a script that changes the state of a switch when motion is detected. The switch will remain on for 15 seconds before turning off.
 
 ```python
-from iot2mqtt import (central, mqtthelper, processor)
+import iot2mqtt as i2m
 # Define the MQTT broker hostname
 TARGET = "localhost"
 
@@ -227,16 +234,16 @@ SHORT_TIME = 15
 
 def main():
     # Initialize the MQTT client helper with the specified context
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
     )
     _client.start()
 
     # Get the refined data queue from the central module
-    _refined_queue = central.get_refined_data_queue(_client)
+    _refined_queue = i2m.central.get_refined_data_queue(_client)
 
     # Create a device accessor to interact with the devices
-    _accessor = central.DeviceAccessor(mqtt_client=_client)
+    _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
 
     # Continuously process messages to find motion detection messages
     while True:
@@ -244,7 +251,7 @@ def main():
         _message = _refined_queue.get()
 
         # Check if the message indicates motion detection for the specified device
-        if processor.is_motion_detected(_message, MOTION_DEVICE):
+        if i2m.processor.is_motion_detected(_message, MOTION_DEVICE):
             print(
                 f'Motion detected, turning switches on for {SHORT_TIME} sec.')
 
@@ -273,7 +280,7 @@ The script performs the following steps:
 This example demonstrates how to create a script that changes the state of a switch when a button action is detected. The switch will remain on for a specified duration before turning off.
 
 ```python
-from iot2mqtt import (abstract, central, mqtthelper, processor)
+import iot2mqtt as i2m
 # Define the MQTT broker hostname
 TARGET = "localhost"
 
@@ -288,21 +295,19 @@ LONG_TIME = 60
 
 def main():
     # Initialize the MQTT client helper with the specified context
-    _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+    _client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
     )
     _client.start()
 
     # Get the refined data queue from the central module
-    _refined_queue = central.get_refined_data_queue(_client)
+    _refined_queue = i2m.central.get_refined_data_queue(_client)
 
     # Create a device accessor to interact with the devices
-    _accessor = central.DeviceAccessor(mqtt_client=_client)
+    _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
 
     def handle_button_action(message, device, action, switch, on_time=None, power_on=True):
-        # Handles the button action by turning the switch on or off based 
-        # on the action detected.
-        if processor.is_button_action_expected(message, device, action):
+        if i2m.processor.is_button_action_expected(message, device, action):
             action_desc = 'on' if power_on else 'off'
             print(f'Button {action} pressed, turning switches {action_desc} for {on_time} sec.')
             _accessor.switch_power_change_helper(
@@ -316,22 +321,20 @@ def main():
 
         # Check if the message indicates button press for the specified device
         if handle_button_action(
-            _message, BUTTON_DEVICE, abstract.ButtonValues.SINGLE_ACTION, SWITCH, MEDIUM_TIME
+            _message, BUTTON_DEVICE, i2m.abstract.ButtonValues.SINGLE_ACTION, SWITCH, MEDIUM_TIME
         ):
             continue
         if handle_button_action(
-            _message, BUTTON_DEVICE, abstract.ButtonValues.DOUBLE_ACTION, SWITCH, LONG_TIME
+            _message, BUTTON_DEVICE, i2m.abstract.ButtonValues.DOUBLE_ACTION, SWITCH, LONG_TIME
         ):
             continue
         if handle_button_action(
-            _message, BUTTON_DEVICE, abstract.ButtonValues.LONG_ACTION, SWITCH, power_on=False
+            _message, BUTTON_DEVICE, i2m.abstract.ButtonValues.LONG_ACTION, SWITCH, power_on=False
         ):
             continue
-
 
 if __name__ == "__main__":
     main()
-
 ```
 
 #### Explanation

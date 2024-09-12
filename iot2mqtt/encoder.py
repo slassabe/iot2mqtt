@@ -15,32 +15,6 @@ Functions
 
 - encode: Encodes the state of a device model into a dictionary format using the appropriate encoder.
 
-Examples
---------
-
-Here is an example of how to use the encoder module to encode a device state:
-
-.. code-block:: python
-
-    from iot2mqtt import (abstract, dev, encoder, setup)
-
-    TARGET = "localhost"
-
-    def main():
-        _state = abstract.Switch(power=abstract.POWER_ON)
-        _shelly_on = encoder.encode(
-            model=setup.Models.SHELLY_PLUGS,
-            state=_state,
-        )
-        print(_shelly_on) # Display {'POWER': 'ON'}
-        _sonoff_on = encoder.encode(
-            model=setup.Models.SN_SMART_PLUG,
-            state=_state,
-        )
-        print(_sonoff_on) # Display {'state': 'ON'}
-
-    if __name__ == "__main__":
-        main()
 """
 
 from typing import Any, Callable, Dict, List, Optional

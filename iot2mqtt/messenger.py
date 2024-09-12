@@ -32,24 +32,23 @@ dispatcher according to their message type:
 .. code-block:: python
 
     import time
-
-    from iot2mqtt import central, mqtthelper, messenger
+    import iot2mqtt as i2m
 
     TARGET = "localhost"
 
 
     def main():
-        _client = mqtthelper.ClientHelper(
-            mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()
+        _client = i2m.mqtthelper.ClientHelper(
+            i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
         )
         _client.start()
-        _refined_queue = central.get_refined_data_queue(_client)
+        _refined_queue = i2m.central.get_refined_data_queue(_client)
 
-        messenger.Dispatcher(
+        i2m.messenger.Dispatcher(
             input_queue=_refined_queue,
             output_queue=None,
             conditional_handlers=[
-                (messenger.is_type_availability, 
+                (i2m.messenger.is_type_availability, 
                 lambda msg: print(f"Availability: {msg.device_name} {msg.refined}")),
             ],
         )
