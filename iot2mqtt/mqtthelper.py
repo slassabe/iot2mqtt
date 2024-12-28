@@ -15,7 +15,7 @@ from typing import Any, Callable, List, Optional
 import certifi
 import paho.mqtt.client as mqtt
 
-from iot2mqtt import utils
+from iot2mqtt import utils, exceptions
 
 
 @dataclasses.dataclass
@@ -159,7 +159,7 @@ class ClientHelper(mqtt.Client):
             utils.i2m_log.fatal(
                 "[%s] cannot connect host %s", exp, self._context.hostname
             )
-            raise ConnectionException("[%s] connection refused") from exp
+            raise exceptions.ConnectionException("[%s] connection refused") from exp
 
     def stop(self) -> mqtt.MQTTErrorCode:
         """
@@ -206,7 +206,7 @@ class ClientHelper(mqtt.Client):
                 exp,
                 self._context.hostname,
             )
-            raise ConnectionException("connect failed") from exp
+            raise exceptions.ConnectionException("connect failed") from exp
 
     def _handle_on_connect(  # pylint: disable=too-many-arguments
         self,
@@ -391,16 +391,3 @@ class MQTTClientDeprecated(ClientHelper):
         self.on_subscribe_handlers.append(handler)
 
 
-class ConnectionException(Exception):
-    """
-    Exception raised for errors when connecting MQTT client.
-
-    Attributes:
-        message (str): The error message describing the exception.
-    """
-
-    def __init__(self, message: str):
-        self.message = message
-
-    def __str__(self):
-        return self.message

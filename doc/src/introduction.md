@@ -92,23 +92,25 @@ You should see output similar to the screenshot below, indicating that the comma
 
 Below is a table outlining the available codecs.
 
-|Protocol| Model           | Availability  | Description |
-| ------ | --------------- | ------------- | ------------|
-| Homie  | Miflora         | In progress   |             |
-| Z2M    | NAS-AB02B2      | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html)|
-| RING   | RingCamera      | In progress   |             |
-| TASMOTA| Shelly Plug S   | Release 0.9.0 | [Link](https://templates.blakadder.com/shelly_plug_S.html)|
-| SHELLY | Shelly Plug S   | In progress   |             |
-| TASMOTA| Shelly Uni      | Release 0.9.0 | [Link](https://templates.blakadder.com/shelly_UNI.html)|
-| SHELLY | Shelly Uni      | In progress   |             |
-| Z2M    | SRTS-A01        | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SRTS-A01.html)|
-| Z2M    | TS0601_soil     | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/TS0601_soil.html)|
-| Z2M    | SNZB-02         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html)|
-| Z2M    | SNZB-01         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
-| Z2M    | SNZB-03         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
-| Z2M    | ZBMINI-L        | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/ZBMINI.html) |
-| Z2M    | ZBMINIL2        | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/ZBMINIL2.html) |
-| Z2M    | S26R2ZB         | Release 0.9.0 | [Link](https://www.zigbee2mqtt.io/devices/S26R2ZB.html) |
+|Protocol| Model           | Availability   | Description |
+| ------ | --------------- | -------------- | ------------|
+| Z2M    | E3              | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/E3.html)|
+| Z2M    | HM1RC-2-E       | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html)|
+| Homie  | Miflora         | In progress    |             |
+| Z2M    | NAS-AB02B2      | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html)|
+| RING   | RingCamera      | In progress    |             |
+| TASMOTA| Shelly Plug S   | Release 0.9.0  | [Link](https://templates.blakadder.com/shelly_plug_S.html)|
+| SHELLY | Shelly Plug S   | In progress    |             |
+| TASMOTA| Shelly Uni      | Release 0.9.0  | [Link](https://templates.blakadder.com/shelly_UNI.html)|
+| SHELLY | Shelly Uni      | In progress    |             |
+| Z2M    | SRTS-A01        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SRTS-A01.html)|
+| Z2M    | TS0601_soil     | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/TS0601_soil.html)|
+| Z2M    | SNZB-02         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html)|
+| Z2M    | SNZB-01         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
+| Z2M    | SNZB-03         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
+| Z2M    | ZBMINI-L        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/ZBMINI.html) |
+| Z2M    | ZBMINIL2        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/ZBMINIL2.html) |
+| Z2M    | S26R2ZB         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/S26R2ZB.html) |
 
 ## Related projects
 

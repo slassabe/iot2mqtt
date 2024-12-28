@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Type
 
 from pydantic import ValidationError
 
-from iot2mqtt import abstract, dev, messenger, utils
+from iot2mqtt import abstract, dev, messenger, utils, exceptions
 
 
 class Processor(metaclass=ABCMeta):
@@ -40,23 +40,23 @@ class Processor(metaclass=ABCMeta):
         return message
 
 
-def _check_devices(msg: messenger.Message, device_names: str) -> bool:
+def _check_devices(msg: messenger.Message, device_ids: str) -> bool:
     """
     Checks if the given message is for one of the specified device names.
 
     Args:
         msg (messenger.Message): The message to check.
-        device_names (str): The device name, a comma-separated list of device names
+        device_ids (str): The device name, a comma-separated list of device ids
             or `*` for all to check for.
 
     Returns:
         bool: True if the message is for one of the specified device names, False otherwise.
     """
-    utils.check_parameter("device_names", device_names, str)
-    if "*" in device_names:
+    utils.check_parameter("device_ids", device_ids, str)
+    if "*" in device_ids:
         return True
-    device_name_list = device_names.split(",")
-    return msg.device_name in device_name_list
+    device_id_list = device_ids.split(",")
+    return msg.device_id in device_id_list
 
 
 def _check_message_typing(
@@ -73,20 +73,30 @@ def _check_message_typing(
         )
     return True
 
+def is_message_typing(msg: messenger.Message, expected_type: Type[abstract.DeviceState]) -> bool:
+    """
+    Checks if the given message is of the expected type.
+    """
+    utils.check_parameter("msg", msg, messenger.Message)
+    if msg.refined is None:
+        return False
+    if not messenger.is_type_state(msg):
+        return False
+    return isinstance(msg.refined, expected_type)
 
-def is_motion_detected(msg: messenger.Message, device_names: str) -> bool:
+def is_motion_detected(msg: messenger.Message, device_ids: str) -> bool:
     """
     Checks if motion is detected in the given message for the specified device.
 
     Args:
         msg (messenger.Message): The message to check for motion detection.
-        device_names (str): The device name, a comma-separated list of device names
+        device_ids (str): The device name, a comma-separated list of device ids
             or `*` for all to check for motion.
 
     Returns:
         bool: True if motion is detected, False otherwise.
     """
-    if _check_devices(msg, device_names) and _check_message_typing(
+    if _check_devices(msg, device_ids) and _check_message_typing(
         msg, abstract.Motion
     ):
         return msg.refined.occupancy
@@ -94,14 +104,14 @@ def is_motion_detected(msg: messenger.Message, device_names: str) -> bool:
 
 
 def is_button_action_expected(
-    msg: messenger.Message, device_names: str, action: dev.ButtonAction
+    msg: messenger.Message, device_ids: str, action: dev.ButtonAction
 ) -> bool:
     """
     Checks if the given message contains a button action for the specified device.
 
     Args:
         msg (messenger.Message): The message to check for a button action.
-        device_names (str): The device name, a comma-separated list of device names
+        device_ids (str): The device name, a comma-separated list of device ids
             or `*` for all to check for button press.
         action (dev.ButtonAction): The button action to check for.
 
@@ -109,7 +119,7 @@ def is_button_action_expected(
         bool: True if the message contains the specified button action, False otherwise.
     """
     utils.check_parameter("action", action, abstract.ButtonValues)
-    if _check_devices(msg, device_names) and _check_message_typing(
+    if _check_devices(msg, device_ids) and _check_message_typing(
         msg, abstract.Button
     ):
         return msg.refined.action == action
@@ -117,14 +127,14 @@ def is_button_action_expected(
 
 
 def is_switch_power_expected(
-    msg: messenger.Message, device_names: Optional[str], is_on: bool
+    msg: messenger.Message, device_ids: Optional[str], is_on: bool
 ) -> bool:
     """
     Checks if the power status of the switch is as expected.
 
     Args:
         msg (messenger.Message): The message containing the switch state.
-        device_names (str): The device name, a comma-separated list of device names
+        device_ids (str): The device name, a comma-separated list of device ids
                 or `*` for all to check for switch state.
         is_on (bool): The expected power status of the switch.
 
@@ -133,7 +143,7 @@ def is_switch_power_expected(
     """
     utils.check_parameter("is_on", is_on, bool)
 
-    if _check_devices(msg, device_names) and _check_message_typing(
+    if _check_devices(msg, device_ids) and _check_message_typing(
         msg, (abstract.Switch, abstract.Switch2Channels)
     ):
         return msg.refined.power == abstract.POWER_ON if is_on else abstract.POWER_OFF
@@ -215,16 +225,16 @@ class ModelResolver(Processor):
         """
         if message.message_type == messenger.MessageType.DISCO:
             _error_msg = f"Discovery message not allowed: {message}"
-            raise DecodingException(_error_msg)
-        _device_name = message.device_name
-        _device = Discoverer.directory.get_device(_device_name)
+            raise exceptions.DecodingException(_error_msg)
+        _device_id = message.device_id
+        _device = Discoverer.directory.get_device(_device_id)
         message.model = _device.model if _device else dev.ModelFactory.UNKNOWN
         if message.model == dev.ModelFactory.UNKNOWN:
             utils.i2m_log.debug(
                 "[%s]: message type: %s - unknown model for: %s",
                 self.__class__.__name__,
                 message.message_type,
-                _device_name,
+                _device_id,
             )
         return message
 
@@ -249,17 +259,17 @@ class DeviceDirectory:
         self._directory.update({device.name: device for device in devices})
 
     @staticmethod
-    def get_device(device_name: str) -> Optional[dev.Device]:
+    def get_device(device_id: str) -> Optional[dev.Device]:
         """
         Retrieves a device from the directory by its name.
 
         Args:
-            device_name (str): The name of the device to retrieve.
+            device_id (str): The id of the device to retrieve.
 
         Returns:
             Optional[dev.Device]: The device object if found, otherwise None.
         """
-        return DeviceDirectory._directory.get(device_name)
+        return DeviceDirectory._directory.get(device_id)
 
     @staticmethod
     def get_devices() -> List[dev.Device]:
@@ -272,12 +282,12 @@ class DeviceDirectory:
         return list(DeviceDirectory._directory.values())
 
     @staticmethod
-    def get_device_names() -> List[dev.Device]:
+    def get_device_ids() -> List[dev.Device]:
         """
-        Retrieves a list of all device names in the directory.
+        Retrieves a list of all device ids in the directory.
 
         Returns:
-            List[dev.Device]: A list of all device names in the directory.
+            List[dev.Device]: A list of all device ids in the directory.
         """
         return list(DeviceDirectory._directory.keys())
 
@@ -310,7 +320,7 @@ class Discoverer(Processor):
 
         if message.message_type != messenger.MessageType.DISCO:
             _error_msg = f"Not a discovery message: {message.message_type}"
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         if message.protocol == dev.Protocol.Z2M:
             return self._discover_z2m(message)
         if message.protocol == dev.Protocol.TASMOTA:
@@ -378,11 +388,11 @@ class Discoverer(Processor):
             _error_msg = (
                 f"Bad format: {message} - Expected list, got {type(_raw_data).__name__}"
             )
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         _discovery_result = _device_dict(_raw_data, device_type_list=_device_types)
         self.directory.update_devices(_discovery_result)
         _devices = _device_list(_raw_data, device_type_list=_device_types)
-        message.refined = abstract.Registry(device_names=_devices)
+        message.refined = abstract.Registry(device_ids=_devices)
         return message
 
     def _discover_tasmota(
@@ -395,21 +405,21 @@ class Discoverer(Processor):
         _raw_data = message.raw_item.data
         if not isinstance(_raw_data, dict):
             _error_msg = f"Expecting dict type for: {message}"
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         if not all(k in _raw_data for k in (_key_address, _key_name, _key_model)):
             _error_msg = f"Bad format for: {message}"
-            raise DecodingException(_error_msg)
-        _device_name = _raw_data.get(_key_name)
+            raise exceptions.DecodingException(_error_msg)
+        _device_id = _raw_data.get(_key_name)
         _device_address = _raw_data.get(_key_address)
         _device_model = _raw_data.get(_key_model)
         _device = dev.Device(
             address=_device_address,
-            name=_device_name,
+            name=_device_id,
             model=dev.ModelFactory.get(_device_model),
             protocol=dev.Protocol.TASMOTA,
         )
         self.directory.update_devices([_device])
-        message.refined = abstract.Registry(device_names=[_device_name])
+        message.refined = abstract.Registry(device_ids=[_device_id])
         return message
 
 
@@ -433,7 +443,7 @@ class AvailabilityNormalizer(Processor):
     def _decode_availability(self, value: str, on_token: str, off_token: str) -> bool:
         if value not in (on_token, off_token):
             _error_msg = f"Unknown availability value: {value}"
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         return value == on_token
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -455,7 +465,7 @@ class AvailabilityNormalizer(Processor):
         """
         if message.message_type != messenger.MessageType.AVAIL:
             _error_msg = f"Not an availability message: {message}"
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         _raw_data = message.raw_item.data
         if message.protocol == dev.Protocol.TASMOTA:
             _raw_avail_value = self._decode_availability(_raw_data, "Online", "Offline")
@@ -466,17 +476,17 @@ class AvailabilityNormalizer(Processor):
                 _avail_value = _raw_data
             else:
                 _error_msg = (
-                    f"Bad type {type(_raw_data)} for device {message.device_name}"
+                    f"Bad type {type(_raw_data)} for device {message.device_id}"
                 )
-                raise DecodingException(_error_msg)
+                raise exceptions.DecodingException(_error_msg)
             _raw_avail_value = self._decode_availability(
                 _avail_value, "online", "offline"
             )
         else:
             _error_msg = (
-                f"Protocol {message} not covered for device {message.device_name}"
+                f"Protocol {message} not covered for device {message.device_id}"
             )
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         message.refined = self.ONLINE if _raw_avail_value else self.OFFLINE
         return message
 
@@ -563,35 +573,35 @@ class StateNormalizer(Processor):
         """
         if message.message_type != messenger.MessageType.STATE:
             _error_msg = f"Not a state message: {message.message_type}"
-            raise DecodingException(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
         _raw_data = message.raw_item.data
         _tag = message.raw_item.tag
         _target_class = StateNormalizerFactory.get(message.model)
         if message.protocol == dev.Protocol.Z2M:
             if not _target_class:
                 _error_msg = (
-                    f"[{message.device_name}] Model {message.model} not supported"
+                    f"[{message.device_id}] Model {message.model} not supported"
                 )
                 utils.i2m_log.warning(_error_msg)
                 return None
             if not isinstance(_raw_data, dict):
                 _error_msg = f"Bad format: {message}"
-                raise DecodingException(_error_msg)
+                raise exceptions.DecodingException(_error_msg)
             try:
                 message.refined = _target_class(**_raw_data)
                 return message
             except ValidationError as exc:
                 _error_msg = f"Error when refining raw data: '{_raw_data}': {exc}"
                 utils.i2m_log.error(_error_msg)
-                raise DecodingException(_error_msg)  # Re-raise the exception
+                raise exceptions.DecodingException(_error_msg)  # Re-raise the exception
         if message.protocol == dev.Protocol.TASMOTA:
             if _tag == "STATE":
                 if _raw_data is None:
                     _error_msg = f"Bad format: {message}"
-                    raise DecodingException(_error_msg)
+                    raise exceptions.DecodingException(_error_msg)
                 if not _target_class:
                     _error_msg = (
-                        f"[{message.device_name}] Model {message.model} not supported"
+                        f"[{message.device_id}] Model {message.model} not supported"
                     )
                     utils.i2m_log.warning(_error_msg)
                     return None
@@ -605,23 +615,7 @@ class StateNormalizer(Processor):
                 if _energy is not None:
                     utils.i2m_log.debug("Energy: %s", _energy)
                 return message
-        utils.i2m_log.warning("No state normalizer for %s", message.device_name)
+        utils.i2m_log.warning("No state normalizer for %s", message.device_id)
         return None  # No refinement
 
 
-class DecodingException(Exception):
-    """
-    Exception raised for errors in the decoding process.
-
-    This exception is raised when a message is received on the wrong topic
-    or when there is an issue with decoding the message.
-
-    Attributes:
-        message (str): The error message describing the exception.
-    """
-
-    def __init__(self, message: str):
-        self.message = message
-
-    def __str__(self):
-        return self.message

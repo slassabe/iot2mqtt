@@ -6,7 +6,7 @@ import signal
 import sys
 import time
 
-from iot2mqtt import central, mqtthelper, messenger
+from iot2mqtt import central, mqtthelper, messenger, exceptions
 from iot2mqtt import __version__
 
 
@@ -73,7 +73,7 @@ def main():
     )
     try:
         _client.start()
-    except mqtthelper.ConnectionException:
+    except exceptions.ConnectionException:
         sys.exit(1)
 
     _refined_queue = central.get_refined_data_queue(_client)

@@ -352,7 +352,7 @@ class Scrutinizer:
         if _raw_payload is None:
             utils.i2m_log.info("Received empty message on topic %s", topic)
             return
-        _device_name = _InfoTopicManager().resolve_wildcards(
+        _device_id = _InfoTopicManager().resolve_wildcards(
             protocol=protocol, message_type=message_type, topic=topic
         )
         try:
@@ -372,7 +372,7 @@ class Scrutinizer:
         _incoming = messenger.Message(
             protocol=protocol,
             model=None,
-            device_name=_device_name,
+            device_id=_device_id,
             message_type=message_type,
             raw_item=_item,
         )
@@ -452,7 +452,7 @@ class _TimerManager:
 
     def create_timer(
         self,
-        device_name: str,
+        device_id: str,
         countdown: float,
         task: Callable[..., Any],
         args: tuple = (),
@@ -467,7 +467,7 @@ class _TimerManager:
         the countdown period.
 
         Args:
-            device_name (str): The name of the device for which the timer is being managed.
+            device_id (str): The id of the device for which the timer is being managed.
             countdown (float): The countdown period in seconds after which the `task` function
                 will be executed.
             task (Callable[..., Any]): The function to be called when the timer expires.
@@ -483,16 +483,16 @@ class _TimerManager:
             kwargs = {}
         try:
             with self._timer_registry_lock:
-                _previous_timer = self._timer_registry.get(device_name)
+                _previous_timer = self._timer_registry.get(device_id)
                 if _previous_timer is not None:
-                    utils.i2m_log.debug("Replace previous timer for %s", device_name)
+                    utils.i2m_log.debug("Replace previous timer for %s", device_id)
                     _previous_timer.cancel()
                 _timer = threading.Timer(countdown, task, args=args, kwargs=kwargs)
                 _timer.start()
-                self._timer_registry[device_name] = _timer
+                self._timer_registry[device_id] = _timer
         except Exception as e:
             utils.i2m_log.error(
-                "Failed to manage timer for %s: %s", device_name, str(e)
+                "Failed to manage timer for %s: %s", device_id, str(e)
             )
             raise
 
@@ -518,7 +518,7 @@ class DeviceAccessor:
         self._mqtt_client = mqtt_client
 
     def trigger_get_state(
-        self, device_name: str, protocol: dev.Protocol, model: dev.Model
+        self, device_id: str, protocol: dev.Protocol, model: dev.Model
     ) -> None:
         """
         Triggers the retrieval of the current state of a device via MQTT.
@@ -529,7 +529,7 @@ class DeviceAccessor:
         accordingly.
 
         Args:
-            device_name (str): The name of the device for which the state is being retrieved.
+            device_id (str): The id of the device for which the state is being retrieved.
             protocol (dev.Protocol): The communication protocol used by the device (e.g., Z2M, 
                 TASMOTA).
             model (dev.Model): The model of the device.
@@ -548,7 +548,7 @@ class DeviceAccessor:
             return
         _fields = _encoder.gettable_fields
         if protocol == dev.Protocol.Z2M:
-            _command_topic = f"{_command_base_topic}/{device_name}/get"
+            _command_topic = f"{_command_base_topic}/{device_id}/get"
             _pl = {_field: "" for _field in _fields}
             _command_payload = json.dumps(_pl)
             utils.i2m_log.debug(
@@ -562,7 +562,7 @@ class DeviceAccessor:
             return
         if protocol == dev.Protocol.TASMOTA:
             for _field in _fields:
-                _command_topic = f"{_command_base_topic}/{device_name}/{_field}"
+                _command_topic = f"{_command_base_topic}/{device_id}/{_field}"
                 utils.i2m_log.debug(
                     "Publishing state retrieval to %s - state : %s",
                     _command_topic,
@@ -576,13 +576,13 @@ class DeviceAccessor:
         raise NotImplementedError(_error_msg)
 
     def trigger_change_state(
-        self, device_name: str, protocol: dev.Protocol, state: Dict
+        self, device_id: str, protocol: dev.Protocol, state: Dict
     ) -> None:
         """
         Publish a state change message to the MQTT topic for the given device.
 
         Args:
-            device_name (str): The name of the device.
+            device_id (str): The id of the device.
             protocol (dev.Protocol): The communication protocol.
             state (Dict): The new state to be published.
 
@@ -594,7 +594,7 @@ class DeviceAccessor:
         _command_base_topic = _CommandTopicManager().get_command_base_topic(protocol)
         _json_state = json.dumps(state)
         if protocol == dev.Protocol.Z2M:
-            _command_topic = f"{_command_base_topic}/{device_name}/set"
+            _command_topic = f"{_command_base_topic}/{device_id}/set"
             utils.i2m_log.debug(
                 "Publishing state change to %s - state : %s",
                 _command_topic,
@@ -606,7 +606,7 @@ class DeviceAccessor:
             return
         if protocol == dev.Protocol.TASMOTA:
             for _key, _value in state.items():
-                _command_topic = f"{_command_base_topic}/{device_name}/{_key}"
+                _command_topic = f"{_command_base_topic}/{device_id}/{_key}"
                 utils.i2m_log.debug(
                     "Publishing state change to %s - state : %s", _command_topic, _value
                 )
@@ -619,14 +619,14 @@ class DeviceAccessor:
 
     def _do_switch_power(
         self,
-        device_name: str,
+        device_id: str,
         protocol: dev.Protocol,
         model: dev.Model,
         power_on: bool,
     ) -> None:
-        utils.i2m_log.debug("Switching power of %s to %s", device_name, power_on)
+        utils.i2m_log.debug("Switching power of %s to %s", device_id, power_on)
         self.trigger_change_state(
-            device_name=device_name,
+            device_id=device_id,
             protocol=protocol,
             state=encoder.encode(
                 model, abstract.SWITCH_ON if power_on else abstract.SWITCH_OFF
@@ -635,7 +635,7 @@ class DeviceAccessor:
 
     def _do_switch_power_change(
         self,
-        device_name: str,
+        device_id: str,
         protocol: dev.Protocol,
         model: dev.Model,
         power_on: bool,
@@ -656,13 +656,13 @@ class DeviceAccessor:
 
         def _manage_timer_helper(_power_on: bool, _countdown: bool) -> None:
             _params = {
-                "device_name": device_name,
+                "device_id": device_id,
                 "protocol": protocol,
                 "model": model,
                 "power_on": _power_on,
             }
             _timer_manager.create_timer(
-                device_name=device_name,
+                device_id=device_id,
                 countdown=_countdown,
                 task=self._do_switch_power,
                 kwargs=_params,
@@ -670,7 +670,7 @@ class DeviceAccessor:
 
         if countdown != 0:
             _params = {
-                "device_names": device_name,
+                "device_ids": device_id,
                 "protocol": protocol,
                 "model": model,
                 "power_on": power_on,
@@ -679,14 +679,14 @@ class DeviceAccessor:
                 "off_time": off_time,
             }
             _timer_manager.create_timer(
-                device_name=device_name,
+                device_id=device_id,
                 countdown=countdown,
                 task=self.switch_power_change,
                 kwargs=_params,
             )
         else:
             self._do_switch_power(
-                device_name=device_name,
+                device_id=device_id,
                 protocol=protocol,
                 model=model,
                 power_on=power_on,
@@ -698,7 +698,7 @@ class DeviceAccessor:
 
     def switch_power_change(
         self,
-        device_names: str,
+        device_ids: str,
         protocol: dev.Protocol,
         model: dev.Model,
         power_on: bool,
@@ -714,7 +714,7 @@ class DeviceAccessor:
         the devices on and off based on the provided on_time and off_time parameters.
 
         Args:
-            device_names (str): A comma-separated string of switch names.
+            device_ids (str): A comma-separated string of switch ids.
             protocol (dev.Protocol): The protocol used by the device.
             model (dev.Model): The model of the device.
             power_on (bool): The desired power state (True for ON, False for OFF).
@@ -733,9 +733,9 @@ class DeviceAccessor:
             model must be provided compared to :func:`switch_power_change_helper` function.
 
         """
-        for device_name in device_names.split(","):
+        for device_id in device_ids.split(","):
             self._do_switch_power_change(
-                device_name=device_name,
+                device_id=device_id,
                 protocol=protocol,
                 model=model,
                 power_on=power_on,
@@ -746,7 +746,7 @@ class DeviceAccessor:
 
     def switch_power_change_helper(
         self,
-        device_names: str,
+        device_ids: str,
         power_on: bool,
         countdown: float = 0,
         on_time: float = DEFAULT_ON_TIME,
@@ -760,7 +760,7 @@ class DeviceAccessor:
         power state.
 
         Args:
-            device_names (str): A comma-separated string of switch names.
+            device_ids (str): A comma-separated string of switch ids.
             power_on (bool): The desired power state. True to power on, False to power off.
             countdown (float, optional): The countdown period in seconds before changing
                 the power state. Defaults to 0.
@@ -776,18 +776,18 @@ class DeviceAccessor:
             The discovery step must be performed before calling this function.
 
         """
-        for device_name in device_names.split(","):
+        for device_id in device_ids.split(","):
             # Retrieve the device from the device directory
             _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(
-                device_name
+                device_id
             )
             if _device is None:
-                devices = processor.DeviceDirectory.get_device_names()
-                utils.i2m_log.warning("Device %s not found in %s", device_name, devices)
+                devices = processor.DeviceDirectory.get_device_ids()
+                utils.i2m_log.warning("Device %s not found in %s", device_id, devices)
                 return
             # Call the switch_power_change function with the retrieved device's protocol and model
             self._do_switch_power_change(
-                device_name=device_name,
+                device_id=device_id,
                 protocol=_device.protocol,
                 model=_device.model,
                 power_on=power_on,
@@ -863,13 +863,13 @@ def _get_device_state(
     message: messenger.Message, accessor: DeviceAccessor
 ) -> Optional[messenger.Message]:
     _registry = message.refined
-    for _device_name in _registry.device_names:
+    for _device_id in _registry.device_ids:
         _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(
-            _device_name
+            _device_id
         )
         _model = _device.model
         _protocol = _device.protocol
-        accessor.trigger_get_state(_device_name, protocol=_protocol, model=_model)
+        accessor.trigger_get_state(_device_id, protocol=_protocol, model=_model)
     return message
 
 

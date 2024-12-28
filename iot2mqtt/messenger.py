@@ -49,7 +49,7 @@ dispatcher according to their message type:
             output_queue=None,
             conditional_handlers=[
                 (i2m.messenger.is_type_availability, 
-                lambda msg: print(f"Availability: {msg.device_name} {msg.refined}")),
+                lambda msg: print(f"Availability: {msg.device_id} {msg.refined}")),
             ],
         )
 
@@ -76,7 +76,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
 
-from iot2mqtt import dev, utils
+from iot2mqtt import dev, utils, exceptions
 
 
 class MessageType(enum.Enum):
@@ -114,7 +114,7 @@ class Message(BaseModel):
     Attributes:
         protocol (dev.Protocol): The communication protocol used by the device.
         model (Optional[dev.Model]): The model of the device, if available.
-        device_name (str): The name of the device.
+        device_id (str): The id of the device.
         message_type (MessageType): The type of the message (e.g., discovery,
             availability, state).
         raw_item (Item): The raw data item associated with the message.
@@ -126,7 +126,7 @@ class Message(BaseModel):
 
     protocol: dev.Protocol
     model: Optional[dev.Model]
-    device_name: str
+    device_id: str
     message_type: MessageType
     raw_item: Item
     id: UUID = Field(default_factory=uuid4)
@@ -261,7 +261,7 @@ class Dispatcher(QueueManager):
         utils.i2m_log.debug(
             "No handler set for message with ID: %s, Device: %s, Type: %s",
             message.id,
-            message.device_name,
+            message.device_id,
             message.message_type,
         )
 
@@ -322,7 +322,7 @@ class Dispatcher(QueueManager):
                                 "[%s: Ignored] Id: %s - Device: %s - Type : %s - Refined: %s",
                                 self.name,
                                 _message.id,
-                                _message.device_name,
+                                _message.device_id,
                                 _message.message_type,
                                 _message.refined,
                             )
@@ -332,6 +332,12 @@ class Dispatcher(QueueManager):
 
                 if not _found:
                     self._process_and_put(self._default_handler, _message)
+            except exceptions.DecodingException:
+                utils.i2m_log.error(
+                    "Exception decoding message: %s",
+                    _message,
+                    exc_info=True,
+                )
             except TypeError as e:
                 utils.i2m_log.error(
                     "Exception evaluating conditional handler handler: %s",

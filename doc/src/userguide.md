@@ -87,7 +87,7 @@ def main():
         "melody": 9,
     }
     _accessor.trigger_change_state(
-        device_name="ALARM",
+        device_id="ALARM",
         protocol=i2m.dev.Protocol.Z2M,
         state=_state_melody,
     )
@@ -98,7 +98,7 @@ def main():
     }
     # Trigger the state change on the device
     _accessor.trigger_change_state(
-        device_name="ALARM",
+        device_id="ALARM",
         protocol=i2m.dev.Protocol.Z2M,
         state=_state_on,
     )
@@ -140,7 +140,7 @@ def main():
     _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
     # Set switch ON for 5 sec.
     _accessor.switch_power_change(
-        device_names="SWITCH_PLUG",
+        device_ids="SWITCH_PLUG",
         protocol=i2m.dev.Protocol.Z2M,
         model=i2m.setup.Models.SN_SMART_PLUG,
         power_on=True,
@@ -187,7 +187,7 @@ def main():
     _accessor = i2m.central.DeviceAccessor(mqtt_client=_client)
     # Set switch ON for 5 sec.
     _accessor.switch_power_change_helper(
-        device_names=f"{SWITCH1},{SWITCH2}",
+        device_ids=f"{SWITCH1},{SWITCH2}",
         power_on=True,
         on_time=5,
     )
@@ -257,7 +257,7 @@ def main():
 
             # Change the state of the switch to 'on' for the specified duration
             _accessor.switch_power_change_helper(
-                device_names=SWITCH, power_on=True, on_time=SHORT_TIME,
+                device_ids=SWITCH, power_on=True, on_time=SHORT_TIME,
             )
             # End loop
             return
@@ -311,7 +311,7 @@ def main():
             action_desc = 'on' if power_on else 'off'
             print(f'Button {action} pressed, turning switches {action_desc} for {on_time} sec.')
             _accessor.switch_power_change_helper(
-                device_names=switch, power_on=power_on, on_time=on_time)
+                device_ids=switch, power_on=power_on, on_time=on_time)
             return True
         return False
     # Continuously process messages from the refined data queue

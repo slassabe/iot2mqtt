@@ -6,23 +6,6 @@ This module defines various abstract representations of IoT device states and at
 It provides a set of Pydantic models and enumerations to represent the state and configuration
 of different types of IoT devices, such as switches, sensors, and alarms.
 
-Classes
--------
-
-- Availability: Represents the availability status of a device.
-- Registry: Represents a registry of discovered devices.
-- DeviceState: Root class for all device state classes.
-- AirSensor: Represents the state of an air sensor device.
-- Switch: Represents the state of a switch device.
-- Switch2Channels: Represents the state of a switch device with two channels.
-- Motion: Represents the state of a motion sensor device.
-- ButtonValues: Enumeration representing possible button actions.
-- Button: Represents the state of a button device.
-- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.
-- SrtsA01: Represents the state of a specific Zigbee thermostat device.
-- AlarmVolumes: Enumeration representing possible alarm volume levels.
-- Alarm: Represents the state of an alarm device.
-
 Constants
 ---------
 
@@ -46,6 +29,7 @@ BATTERY = "battery"
 BATTERY_LOW = "battery_low"
 CALIBRATED = "calibrated"
 CHILD_LOCK = "child_lock"
+CONTACT = "contact"
 DEVICE_TEMPERATURE = "device_temperature"
 DURATION = "duration"
 EXTERNAL_TEMPERATURE_INPUT = "external_temperature_input"
@@ -67,6 +51,7 @@ SCHEDULE = "schedule"
 SCHEDULE_SETTING = "schedule_setting"
 SENSOR = "sensor"
 SETUP = "setup"
+STATE = "state"
 SYSTEM_MODE = "system_mode"
 TAMPER = "tamper"
 TEMPERATURE = "temperature"
@@ -95,10 +80,10 @@ class Registry(BaseModel):
     Represents a registry of dicovered devices.
 
     Attributes:
-        device_names (List[str]): A list of device names.
+        device_ids (List[str]): A list of device ids.
     """
 
-    device_names: List[str] = []
+    device_ids: List[str] = []
 
 
 class DeviceState(BaseModel):
@@ -187,6 +172,66 @@ class Motion(DeviceState):
     occupancy: Optional[bool] = None
     tamper: Optional[bool] = None
 
+class DoorSensor(DeviceState):
+    """
+    Represents the state of a door sensor device.
+
+    This class models the state information for door/window contact sensors, including
+    contact status, battery information, tamper detection, and signal quality.
+
+    Attributes:
+        contact (Optional[bool]): Contact state of the sensor.
+            - True: Contact is closed (door/window closed)
+            - False: Contact is open (door/window open)
+            - None: Contact state unknown
+        battery (Optional[int]): Remaining battery percentage (0-100).
+        voltage (Optional[int]): Battery voltage in millivolts.
+        tamper (Optional[bool]): Tamper detection status.
+            - True: Device has been tampered 
+            - False: No tampering detected
+            - None: Tamper status unknown
+        battery_low (Optional[bool]): Low battery warning indicator.
+            - True: Battery is critically low
+            - False: Battery level is okay
+            - None: Battery status unknown
+        linkquality (Optional[int]): Signal strength/link quality indicator (0-255).
+    """
+    contact: Optional[bool] = None
+    battery: Optional[int] = None
+    voltage: Optional[int] = None
+    tamper: Optional[bool] = None
+    battery_low: Optional[bool] = None
+    linkquality: Optional[int] = None
+
+class AlarmButtonlValues(str, Enum):
+    """
+    Enumeration representing possible alarm controler actions.
+
+    Attributes:
+        EMERGENCY_ACTION: Represents an emergency alarm action.
+        DISARM_ACTION: Represents a disarm action.
+        ARM_DAYZONES_ACTION: Represents an arm day zones action.
+        ARM_ALL_ACTION: Represents an arm all zones action.
+    """
+
+    EMERGENCY_ACTION = "emergency"
+    DISARM_ACTION = "disarm"
+    ARM_DAYZONES_ACTION = "arm_day_zones"
+    ARM_ALL_ACTION = "arm_all_zones"
+
+class AlarmButton(DeviceState):
+    """
+    Represents the state of a alarm controler device.
+
+    Attributes:
+    battery (Optional[int]): The battery level of the device.
+    action (AlarmButtonlValues): The action performed by the alarm controler.
+    linkquality (Optional[int]): The link quality of the device.
+    """
+
+    battery: Optional[int] = None
+    action: AlarmButtonlValues = None
+    linkquality: Optional[int] = None
 
 class ButtonValues(str, Enum):
     """

@@ -51,7 +51,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-````
+```
 
 ## Processing pipeline
 
@@ -87,9 +87,11 @@ By providing a standardized way to serialize and deserialize state data, these c
 - **ADC**: Represents the state of an ADC (Analog-to-Digital Converter) device.
 - **AirSensor**: Represents the state of an air sensor device, such as temperature, humidity, or air quality sensors.
 - **Alarm**: Represents the state of an alarm device, indicating whether the alarm is triggered or not.
+- **AlarmButton**: Represents the state of an alarm button device, capturing button press events.
 - **Availability**: Represents the availability status of a device, indicating whether the device is online or offline.
 - **Button**: Represents the state of a button device, capturing button press events.
 - **ButtonValues**: Enumeration representing possible button actions, such as single press, double press, or long press.
+- **DoorSensor**: Represents the state of a door sensor device, indicating whether the door is open or closed.
 - **Motion**: Represents the state of a motion sensor device, indicating whether motion is detected or not.
 - **SrtsA01**: Represents the state of a specific Zigbee thermostat device, capturing temperature settings and modes.
 - **Switch**: Represents the state of a switch device, indicating whether the switch is on or off.
