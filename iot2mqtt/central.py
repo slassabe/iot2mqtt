@@ -24,7 +24,7 @@ import json
 import threading
 import time
 from queue import Queue
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 from pydantic import BaseModel, ValidationError
@@ -34,9 +34,14 @@ from iot2mqtt import (abstract, dev, encoder, messenger, mqtthelper, processor,
 
 Z2M_INFO_BASE_TOPIC = "zigbee2mqtt"
 Z2M_CMND_BASE_TOPIC = "zigbee2mqtt"
-TASMOTA_INFO_BASE_TOPIC = "tele"
+TASMOTA_INFO_BASE_TOPIC = "stat"
+TASMOTA_AVAIL_BASE_TOPIC = "tele"
 TASMOTA_CMND_BASE_TOPIC = "cmnd"
 TASMOTA_DISCOVERY_TOPIC = "tasmota/discovery"
+ESPSOMFY_AVAIL_BASE_TOPIC = "ESPSomfy"
+ESPSOMFY_INFO_BASE_TOPIC = "ESPSomfy/shades"
+ESPSOMFY_CMND_BASE_TOPIC = "ESPSomfy"
+ESPSOMFY_DISCOVERY_TOPIC = "homeassistant/cover"
 
 DEFAULT_ON_TIME = 5.0
 DEFAULT_OFF_TIME = 0.0
@@ -95,14 +100,18 @@ class _CommandTopicManager(_TopicManager):
         """
         Configure the topic registry.
         """
-        _prefix = "TEST/"
         _prefix = ""
         self.register(
-            protocol=dev.Protocol.Z2M, command_topic_base=_prefix + Z2M_INFO_BASE_TOPIC
+            protocol=dev.Protocol.Z2M, 
+            command_topic_base=_prefix + Z2M_CMND_BASE_TOPIC
         )
         self.register(
             protocol=dev.Protocol.TASMOTA,
             command_topic_base=_prefix + TASMOTA_CMND_BASE_TOPIC,
+        )
+        self.register(
+            protocol=dev.Protocol.ESPSOMFY,
+            command_topic_base=_prefix + ESPSOMFY_CMND_BASE_TOPIC,
         )
 
 
@@ -224,8 +233,14 @@ class _InfoTopicManager(_TopicManager):
         self.register(
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.AVAIL,
-            info_topic_base=TASMOTA_INFO_BASE_TOPIC,
+            info_topic_base=TASMOTA_AVAIL_BASE_TOPIC,
             info_topic_extension="/+/LWT",
+        )
+        self.register(
+            protocol=dev.Protocol.ESPSOMFY,
+            message_type=messenger.MessageType.AVAIL,
+            info_topic_base=ESPSOMFY_AVAIL_BASE_TOPIC,
+            info_topic_extension="/status",
         )
         self.register(
             protocol=dev.Protocol.Z2M,
@@ -237,7 +252,15 @@ class _InfoTopicManager(_TopicManager):
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.STATE,
             info_topic_base=TASMOTA_INFO_BASE_TOPIC,
-            info_topic_extension="/+/+",
+            #info_topic_extension="/+/+",
+            info_topic_extension="/+/RESULT",
+        )
+        self.register(
+            protocol=dev.Protocol.ESPSOMFY,
+            message_type=messenger.MessageType.STATE,
+            info_topic_base=ESPSOMFY_INFO_BASE_TOPIC,
+            info_topic_extension="/+/+", 
+
         )
         self.register(
             protocol=dev.Protocol.Z2M,
@@ -251,8 +274,15 @@ class _InfoTopicManager(_TopicManager):
             info_topic_base=TASMOTA_DISCOVERY_TOPIC,
             info_topic_extension="/+/config",
         )
+        self.register(
+            protocol=dev.Protocol.ESPSOMFY,
+            message_type=messenger.MessageType.DISCO,
+            info_topic_base=ESPSOMFY_DISCOVERY_TOPIC,
+            info_topic_extension="/+/config",
+        )
 
-
+type Parser = Callable[..., Optional[messenger.Item]]
+type DataItem = Union[Dict, str, int, List[Dict]]
 class Scrutinizer:
     """
     A class responsible for subscribing to MQTT topics and processing incoming messages.
@@ -291,50 +321,24 @@ class Scrutinizer:
 
         _z2m = dev.Protocol.Z2M
         _tasmota = dev.Protocol.TASMOTA
+        _espsomfy = dev.Protocol.ESPSOMFY
         _avail = messenger.MessageType.AVAIL
         _state = messenger.MessageType.STATE
         _disco = messenger.MessageType.DISCO
         # Set availability handlers
         _callback_add(_z2m, _avail, self._on_z2m_avail)
         _callback_add(_tasmota, _avail, self._on_tasmota_avail)
+        _callback_add(_espsomfy, _avail, self._on_espsomfy_avail)
         # Set state handlers
         _callback_add(_z2m, _state, self._on_z2m_state)
         _callback_add(_tasmota, _state, self._on_tasmota_state)
+        _callback_add(_espsomfy, _state, self._on_espsomfy_state)
         # Set discovery handlers
         _callback_add(_z2m, _disco, self._on_z2m_disco)
         _callback_add(_tasmota, _disco, self._on_tasmota_disco)
+        _callback_add(_espsomfy, _disco, self._on_espsomfy_disco)
         # Set connection handler
         self._mqtt_client.connect_handler_add(self._on_connect)
-
-    def _json_to_item(
-        self,
-        protocol: dev.Protocol,
-        message_type: messenger.MessageType,
-        topic: str,
-        payload: str,
-    ) -> messenger.Item:
-        """
-        Convert a JSON payload to a messenger.Item object.
-        """
-        try:
-            _payload = json.loads(payload)
-            _tag = None
-            if protocol == dev.Protocol.TASMOTA:
-                _tag = _InfoTopicManager().resolve_wildcards(
-                    protocol=protocol,
-                    message_type=message_type,
-                    topic=topic,
-                    position=1,
-                )
-            return messenger.Item(data=_payload, tag=_tag)
-        except ValidationError as exc:
-            utils.i2m_log.error(
-                "Failed to parse message: %s - data: %s - tag: %s",
-                repr(exc.errors()[0]["type"]),
-                _payload,
-                _tag,
-            )
-            return None
 
     def _process_message(
         self,
@@ -343,6 +347,7 @@ class Scrutinizer:
         mqtt_message: mqtt.MQTTMessage,
         protocol: dev.Protocol,
         message_type: messenger.MessageType,
+        parser: Parser,
     ) -> None:
         """
         Process an incoming MQTT message and put the result in the output queue.
@@ -353,22 +358,17 @@ class Scrutinizer:
             utils.i2m_log.info("Received empty message on topic %s", topic)
             return
         _device_id = _InfoTopicManager().resolve_wildcards(
-            protocol=protocol, message_type=message_type, topic=topic
+            protocol=protocol, message_type=message_type, topic=topic, position=0,
         )
-        try:
-            _item = self._json_to_item(
+        _data = parser(
                 protocol=protocol,
                 message_type=message_type,
                 topic=topic,
-                payload=_raw_payload,
+                raw_payload=_raw_payload,
             )
-        except json.JSONDecodeError:
-            _is_tasmota = protocol == dev.Protocol.TASMOTA
-            _is_state = message_type == messenger.MessageType.STATE
-            if _is_tasmota and _is_state:
-                utils.i2m_log.debug("[%s] dismissed topic", topic)
-                return
-            _item = messenger.Item(data=_raw_payload)
+        if _data is None:
+            return
+        _item = messenger.Item(data=_data)
         _incoming = messenger.Message(
             protocol=protocol,
             model=None,
@@ -378,52 +378,186 @@ class Scrutinizer:
         )
         self._output_queue.put(_incoming, block=True, timeout=self._queue_timeout)
 
+    def _parse_json_payload(self,
+                 protocol: dev.Protocol,
+                 message_type: messenger.MessageType,
+                 topic: str,
+                 raw_payload: str,
+                 ) -> Optional[DataItem]:
+        # Called by :
+        # - zigbee2mqtt state messages : _on_z2m_state
+        # - Tasmota state messages : _on_tasmota_state
+        # - zigbee2mqtt discovery messages : _on_z2m_disco
+        # - Tasmota discovery messages: _on_tasmota_disco
+        try:
+            _json_payload = json.loads(raw_payload)
+            return _json_payload
+        except json.JSONDecodeError:
+            # If the payload is not a valid JSON, we return the raw payload as a string
+            # case of legacy Zigbee2MQTT availability messages
+            return raw_payload
+            
+    def _parse_payload(self,
+                 protocol: dev.Protocol,
+                 message_type: messenger.MessageType,
+                 topic: str,
+                 raw_payload: str,
+                 ) -> Optional[DataItem]:
+        # Called by :
+        # - Tasmota availability messages: _on_tasmota_avail
+        return raw_payload
+
+    def _parse_topic_and_payload(self,
+                 protocol: dev.Protocol,
+                 message_type: messenger.MessageType,
+                 topic: str,
+                 raw_payload: object,
+                 ) -> Optional[DataItem]:
+        # Called by :
+        # - ESPSomfy state messages: _on_espsomfy_state
+        # - ESPSomfy discovery messages : _on_espsomfy_disco
+        _key = _InfoTopicManager().resolve_wildcards(
+                protocol=protocol,
+                message_type=message_type,
+                topic=topic,
+                position=1,
+                )
+        if message_type == messenger.MessageType.DISCO:
+            _value = json.loads(raw_payload)
+        else:
+            _value = raw_payload
+        return {_key: _value}
+
     def _on_z2m_avail(self, *argc, **kwargs) -> None:
+        """ 
+        Process zigbee2mqtt availability messages:
+        zigbee2mqtt/<device_id>/availability: <value>
+        """
         self._process_message(
             *argc,
             **kwargs,
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.AVAIL,
+            parser=self._parse_json_payload,
         )
 
     def _on_tasmota_avail(self, *argc, **kwargs) -> None:
+        """
+        Process Tasmota availability messages:
+        tele/<device_id>/LWT: <value>
+        """
         self._process_message(
             *argc,
             **kwargs,
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.AVAIL,
+            parser=self._parse_payload,
         )
 
+    def _on_espsomfy_avail(
+        self,
+        client: mqtt.Client,  # pylint: disable=unused-argument
+        userdata: Any,  # pylint: disable=unused-argument
+        mqtt_message: mqtt.MQTTMessage,
+    ) -> None:
+        """
+        Process ESPSomfy availability messages:
+        ESPSomfy/status: <value>
+        """
+        _topic = mqtt_message.topic
+        _raw_payload = str(mqtt_message.payload.decode("utf-8"))
+        utils.i2m_log.debug(
+            "Received message on topic %s: %s", _topic, _raw_payload
+        )
+        if _raw_payload is None:
+            utils.i2m_log.info("Received empty message on topic %s", _topic)
+            return
+        _item = messenger.Item(data=_raw_payload)
+        _incoming = messenger.Message(
+            protocol=dev.Protocol.ESPSOMFY,
+            model=None,
+            device_id='ESPSomfyRTS',
+            message_type=messenger.MessageType.AVAIL,
+            raw_item=_item,
+        )
+        self._output_queue.put(_incoming, block=True, timeout=self._queue_timeout)
+
     def _on_z2m_state(self, *argc, **kwargs) -> None:
+        """
+        Process zigbee2mqtt state messages:
+        zigbee2mqtt/<device_id>: {<property>: <value>}
+        """
         self._process_message(
             *argc,
             **kwargs,
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.STATE,
+            parser=self._parse_json_payload,
         )
 
     def _on_tasmota_state(self, *argc, **kwargs) -> None:
+        """
+        Process Tasmota state messages:
+        stat/<device_id>/RESULT: {<property>: <value>}
+        """
         self._process_message(
             *argc,
             **kwargs,
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.STATE,
+            parser=self._parse_json_payload,
+        )
+
+    def _on_espsomfy_state(self, *argc, **kwargs) -> None:
+        """
+        Process ESPSomfy state messages:
+        ESPSomfy/shades/<device_id>/<property>: <value>
+        """
+        self._process_message(
+            *argc,
+            **kwargs,
+            protocol=dev.Protocol.ESPSOMFY,
+            message_type=messenger.MessageType.STATE,
+            parser=self._parse_topic_and_payload,
         )
 
     def _on_z2m_disco(self, *argc, **kwargs) -> None:
+        """
+        Process zigbee2mqtt discovery messages:
+        zigbee2mqtt/bridge/devices: [{<property>: <value>}]
+        """
         self._process_message(
             *argc,
             **kwargs,
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.DISCO,
+            parser=self._parse_json_payload,
         )
 
     def _on_tasmota_disco(self, *argc, **kwargs) -> None:
+        """
+        Process Tasmota discovery messages:
+        tasmota/discovery/<device_id>/config: {<property>: <value>}
+        """
         self._process_message(
             *argc,
             **kwargs,
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.DISCO,
+            parser=self._parse_json_payload,
+        )
+
+    def _on_espsomfy_disco(self, *argc, **kwargs) -> None:
+        """
+        Process ESPSomfy discovery messages:
+        homeassistant/cover/<device_id>/config: {<property>: <value>}
+        """
+        self._process_message(
+            *argc,
+            **kwargs,
+            protocol=dev.Protocol.ESPSOMFY,
+            message_type=messenger.MessageType.DISCO,
+            parser=self._parse_topic_and_payload,
         )
 
     def _on_connect(  # pylint: disable=too-many-arguments
@@ -824,7 +958,7 @@ def get_refined_data_queue(mqtt_client: mqtthelper.ClientHelper) -> Queue:
         # copy Discovery message to output queue
         default_handler=processor.Processor.pass_through,
     )
-    time.sleep(2)  # Listen to receive all discovery messages
+    time.sleep(1)  # Listen to receive all discovery messages
     _accessor = DeviceAccessor(mqtt_client=mqtt_client)
     messenger.Dispatcher(
         name="pipeline-layer1",

@@ -99,12 +99,9 @@ class Item(BaseModel):
     Attributes:
         data (Union[Dict, str, List[Dict]]): The data associated with the item.
             It can be a dictionary, a string, or a list of dictionaries.
-        tag (Optional[str]): An optional tag for the item, which can be used
-            for additional metadata or categorization.
     """
 
-    data: Union[Dict, str, List[Dict]]
-    tag: Optional[str] = None
+    data: Union[Dict, str, int, List[Dict]]
 
 
 class Message(BaseModel):

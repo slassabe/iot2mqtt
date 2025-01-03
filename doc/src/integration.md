@@ -26,3 +26,7 @@ In file `iot2mqtt/setup.py`, you should define a new device model model name and
 ```python
 E3 = "E3"
 ```
+
+## How to integrate new protocols
+
+1) Define the new protocol in enumeration `Protocol` in file `iot2mqtt/dev.py`

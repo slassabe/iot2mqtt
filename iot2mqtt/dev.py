@@ -39,9 +39,6 @@ class ModelFactory:
 
     This class ensures that only one instance of each Model is created and provides a thread-safe
     mechanism for accessing these instances.
-
-    Attributes:
-        UNKNOWN (Model): A default model instance with the tag 'UNKNOWN'.
     """
 
     _model_instances: Dict[str, Model] = {}
@@ -79,6 +76,7 @@ class Protocol(Enum):
 
     Attributes:
         DEFAULT (str): Default protocol, used as a fallback.
+        ESPSOMFY (str): The protocol used by ESPHome Somfy RTS devices.
         HOMIE (str): The Homie IoT convention for MQTT.
         RING (str): The protocol used by Ring devices.
         SHELLY (str): The protocol used by Shelly smart home devices.
@@ -88,6 +86,7 @@ class Protocol(Enum):
     """
 
     DEFAULT = "default"
+    ESPSOMFY = "ESPSomfy"
     HOMIE = "Homie"
     RING = "Ring"
     SHELLY = "Shelly"

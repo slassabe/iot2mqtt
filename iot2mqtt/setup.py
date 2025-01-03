@@ -12,6 +12,7 @@ from iot2mqtt import abstract, dev, encoder, processor, utils
 
 # Supported model names
 E3 = "E3" # https://www.zigbee2mqtt.io/devices/E3.html
+SOMFY_SHADES = "ESPSomfy-RTS MQTT"
 HM_ALARM_BUTTON = "HM1RC-2-E" # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
@@ -35,6 +36,7 @@ class Models(metaclass=utils.Singleton):
     """
 
     E3 = dev.ModelFactory.get(E3)
+    SOMFY_SHADES = dev.ModelFactory.get(SOMFY_SHADES)
     HM_ALARM_BUTTON = dev.ModelFactory.get(HM_ALARM_BUTTON)
     MIFLORA = dev.ModelFactory.get(MIFLORA)
     NEO_ALARM = dev.ModelFactory.get(NEO_ALARM)
@@ -68,6 +70,7 @@ class Models(metaclass=utils.Singleton):
         processor.StateNormalizerFactory(
             initial_registry={
                 cls.E3: abstract.DoorSensor,
+                cls.SOMFY_SHADES: abstract.SomfyShade,
                 cls.HM_ALARM_BUTTON: abstract.AlarmButton,
                 cls.NEO_ALARM: abstract.Alarm,
                 cls.SHELLY_PLUGS: abstract.Switch,

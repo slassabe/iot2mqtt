@@ -8,9 +8,9 @@ implementations for handling different types of messages and device protocols.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type, TypedDict, NotRequired
 
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel, Field, computed_field, confloat
 
 from iot2mqtt import abstract, dev, messenger, utils, exceptions
 
@@ -69,9 +69,11 @@ def _check_message_typing(
         return False
     if not isinstance(msg.refined, expected_type):
         raise TypeError(
-            f"Message should refer to {expected_type}, got {msg.refined} of class {type(msg.refined).__name__}"
+            f"Message should refer to {expected_type}, got {
+                msg.refined} of class {type(msg.refined).__name__}"
         )
     return True
+
 
 def is_message_typing(msg: messenger.Message, expected_type: Type[abstract.DeviceState]) -> bool:
     """
@@ -83,6 +85,7 @@ def is_message_typing(msg: messenger.Message, expected_type: Type[abstract.Devic
     if not messenger.is_type_state(msg):
         return False
     return isinstance(msg.refined, expected_type)
+
 
 def is_motion_detected(msg: messenger.Message, device_ids: str) -> bool:
     """
@@ -292,6 +295,45 @@ class DeviceDirectory:
         return list(DeviceDirectory._directory.keys())
 
 
+# ESPSomfy discovery message example :
+#    {'config': {'~': 'ESPSomfy/shades/2',
+#                'device': {
+#                    'via_device': 'mqtt_espsomfyrts_ABCA6C',
+#                    'model': 'ESPSomfy-RTS MQTT'}}
+#    }
+
+class ESPSomfyDevice(BaseModel, frozen=True):
+    address: str = Field(alias="via_device", default=None)
+    model: str
+
+
+class ESPSomfyConfig(BaseModel, frozen=True):
+    path: str = Field(alias="~", default=None)
+    device: ESPSomfyDevice
+
+
+class ESPSomfyDiscovery(BaseModel, frozen=True):
+    """
+    A dictionary representing the discovery message configuration of an ESPSomfy device.
+    """
+    config: ESPSomfyConfig
+
+# Tasmota discovery message example :
+#    {'ip': '192.168.1.25', 
+#    'dn': 'ZbBridge', 
+#    'hn': 'tasmota-9F808B-0139', 
+#    'mac': 'E8DB849F808B', 
+#    'md': 'Sonoff ZbBridge', 
+#    't': 'tasmota_9F808B'}   
+
+class TasmotaDiscovery(BaseModel, frozen=True):
+    """
+    A dictionary representing the discovery message configuration of an Tasmota device.
+    """
+    address: str = Field(alias="hn", default=None)
+    model: str = Field(alias="md", default=None)
+    device_id: str = Field(alias="t", default=None)
+
 class Discoverer(Processor):
     """
     A processor that discovers and registers devices based on incoming discovery messages.
@@ -325,6 +367,8 @@ class Discoverer(Processor):
             return self._discover_z2m(message)
         if message.protocol == dev.Protocol.TASMOTA:
             return self._discover_tasmota(message)
+        if message.protocol == dev.Protocol.ESPSOMFY:
+            return self._discover_espsomfy(message)
 
         _error_msg = f"Unknown protocol: {message.protocol}"
         utils.i2m_log.info(_error_msg)
@@ -386,10 +430,13 @@ class Discoverer(Processor):
         _raw_data = message.raw_item.data
         if not isinstance(_raw_data, list):
             _error_msg = (
-                f"Bad format: {message} - Expected list, got {type(_raw_data).__name__}"
+                f"Bad format: {
+                    message} - Expected list, got {type(_raw_data).__name__}"
             )
             raise exceptions.DecodingException(_error_msg)
-        _discovery_result = _device_dict(_raw_data, device_type_list=_device_types)
+
+        _discovery_result = _device_dict(
+            _raw_data, device_type_list=_device_types)
         self.directory.update_devices(_discovery_result)
         _devices = _device_list(_raw_data, device_type_list=_device_types)
         message.refined = abstract.Registry(device_ids=_devices)
@@ -398,25 +445,46 @@ class Discoverer(Processor):
     def _discover_tasmota(
         self, message: messenger.Message
     ) -> Optional[messenger.Message]:
-        _key_name = "t"
-        _key_address = "hn"
-        _key_model = "md"
-
         _raw_data = message.raw_item.data
-        if not isinstance(_raw_data, dict):
-            _error_msg = f"Expecting dict type for: {message}"
-            raise exceptions.DecodingException(_error_msg)
-        if not all(k in _raw_data for k in (_key_address, _key_name, _key_model)):
-            _error_msg = f"Bad format for: {message}"
-            raise exceptions.DecodingException(_error_msg)
-        _device_id = _raw_data.get(_key_name)
-        _device_address = _raw_data.get(_key_address)
-        _device_model = _raw_data.get(_key_model)
+        if not _raw_data:
+            raise exceptions.DecodingException("Empty raw data received")
+        try:
+            _discovery = TasmotaDiscovery(**_raw_data)
+        except ValidationError as exc:
+            _error_msg = f"Error when refining raw data: '{_raw_data}': {exc}"
+            utils.i2m_log.error(_error_msg)
+            return None
+
         _device = dev.Device(
-            address=_device_address,
-            name=_device_id,
-            model=dev.ModelFactory.get(_device_model),
+            address=_discovery.address,
+            name=_discovery.device_id,
+            model=dev.ModelFactory.get(_discovery.model),
             protocol=dev.Protocol.TASMOTA,
+        )
+        self.directory.update_devices([_device])
+        message.refined = abstract.Registry(device_ids=[_discovery.device_id])
+        return message
+
+    def _discover_espsomfy(
+        self, message: messenger.Message
+    ) -> Optional[messenger.Message]:
+        _raw_data = message.raw_item.data
+        if not _raw_data:
+            raise exceptions.DecodingException("Empty raw data received")
+        try:
+            _discovery = ESPSomfyDiscovery(**_raw_data)
+        except ValidationError as exc:
+            _error_msg = f"Error when refining raw data: '{_raw_data}': {exc}"
+            utils.i2m_log.error(_error_msg)
+            return None
+        _path = str(_discovery.config.path)
+        _device_id = _path.split("/")[-1]
+
+        _device = dev.Device(
+            address=_discovery.config.device.address,
+            name=_device_id,
+            model=dev.ModelFactory.get(_discovery.config.device.model),
+            protocol=dev.Protocol.ESPSOMFY,
         )
         self.directory.update_devices([_device])
         message.refined = abstract.Registry(device_ids=[_device_id])
@@ -468,7 +536,11 @@ class AvailabilityNormalizer(Processor):
             raise exceptions.DecodingException(_error_msg)
         _raw_data = message.raw_item.data
         if message.protocol == dev.Protocol.TASMOTA:
-            _raw_avail_value = self._decode_availability(_raw_data, "Online", "Offline")
+            _raw_avail_value = self._decode_availability(
+                _raw_data, "Online", "Offline")
+        elif message.protocol == dev.Protocol.ESPSOMFY:
+            _raw_avail_value = self._decode_availability(
+                _raw_data, "online", "offline")
         elif message.protocol == dev.Protocol.Z2M:
             if isinstance(_raw_data, dict):
                 _avail_value = _raw_data.get("state")
@@ -476,7 +548,8 @@ class AvailabilityNormalizer(Processor):
                 _avail_value = _raw_data
             else:
                 _error_msg = (
-                    f"Bad type {type(_raw_data)} for device {message.device_id}"
+                    f"Bad type {type(_raw_data)} for device {
+                        message.device_id}"
                 )
                 raise exceptions.DecodingException(_error_msg)
             _raw_avail_value = self._decode_availability(
@@ -484,7 +557,8 @@ class AvailabilityNormalizer(Processor):
             )
         else:
             _error_msg = (
-                f"Protocol {message} not covered for device {message.device_id}"
+                f"Protocol {message} not covered for device {
+                    message.device_id}"
             )
             raise exceptions.DecodingException(_error_msg)
         message.refined = self.ONLINE if _raw_avail_value else self.OFFLINE
@@ -506,7 +580,8 @@ class StateNormalizerFactory:
 
     def __init__(
         self,
-        initial_registry: Optional[Dict[dev.Model, Type[abstract.DeviceState]]] = None,
+        initial_registry: Optional[Dict[dev.Model,
+                                        Type[abstract.DeviceState]]] = None,
     ) -> None:
         """
         Initialize the factory with an optional initial registry.
@@ -575,47 +650,20 @@ class StateNormalizer(Processor):
             _error_msg = f"Not a state message: {message.message_type}"
             raise exceptions.DecodingException(_error_msg)
         _raw_data = message.raw_item.data
-        _tag = message.raw_item.tag
+        if not isinstance(_raw_data, dict):
+            _error_msg = f"Bad format: {message}"
+            raise exceptions.DecodingException(_error_msg)
+
         _target_class = StateNormalizerFactory.get(message.model)
-        if message.protocol == dev.Protocol.Z2M:
-            if not _target_class:
-                _error_msg = (
-                    f"[{message.device_id}] Model {message.model} not supported"
-                )
-                utils.i2m_log.warning(_error_msg)
-                return None
-            if not isinstance(_raw_data, dict):
-                _error_msg = f"Bad format: {message}"
-                raise exceptions.DecodingException(_error_msg)
-            try:
-                message.refined = _target_class(**_raw_data)
-                return message
-            except ValidationError as exc:
-                _error_msg = f"Error when refining raw data: '{_raw_data}': {exc}"
-                utils.i2m_log.error(_error_msg)
-                raise exceptions.DecodingException(_error_msg)  # Re-raise the exception
-        if message.protocol == dev.Protocol.TASMOTA:
-            if _tag == "STATE":
-                if _raw_data is None:
-                    _error_msg = f"Bad format: {message}"
-                    raise exceptions.DecodingException(_error_msg)
-                if not _target_class:
-                    _error_msg = (
-                        f"[{message.device_id}] Model {message.model} not supported"
-                    )
-                    utils.i2m_log.warning(_error_msg)
-                    return None
-                message.refined = _target_class(**_raw_data)
-                return message
-            if _tag == "SENSOR":
-                _analog = _raw_data.get("ANALOG")
-                _energy = _raw_data.get("ENERGY")
-                if _analog is not None:
-                    utils.i2m_log.debug("Analog: %s", _analog)
-                if _energy is not None:
-                    utils.i2m_log.debug("Energy: %s", _energy)
-                return message
-        utils.i2m_log.warning("No state normalizer for %s", message.device_id)
-        return None  # No refinement
+        if not _target_class:
+            utils.i2m_log.warning("[%s] Model %s not supported",
+                                  message.device_id, message.model)
+            return None
+        try:
+            message.refined = _target_class(**_raw_data)
+        except ValidationError as exc:
+            utils.i2m_log.error("Error when refining raw data: '%s': %s",
+                                _raw_data, exc)
+            raise exceptions.DecodingException(_error_msg)  # Re-raise the exception
 
-
+        return message
