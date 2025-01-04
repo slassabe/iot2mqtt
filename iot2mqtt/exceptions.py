@@ -1,5 +1,3 @@
-
-
 class ConnectionException(Exception):
     """
     Exception raised for errors when connecting MQTT client.
@@ -13,6 +11,7 @@ class ConnectionException(Exception):
 
     def __str__(self):
         return self.message
+
 
 class DecodingException(Exception):
     """

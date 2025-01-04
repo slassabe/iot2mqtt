@@ -172,6 +172,7 @@ class Motion(DeviceState):
     occupancy: Optional[bool] = None
     tamper: Optional[bool] = None
 
+
 class DoorSensor(DeviceState):
     """
     Represents the state of a door sensor device.
@@ -187,7 +188,7 @@ class DoorSensor(DeviceState):
         battery (Optional[int]): Remaining battery percentage (0-100).
         voltage (Optional[int]): Battery voltage in millivolts.
         tamper (Optional[bool]): Tamper detection status.
-            - True: Device has been tampered 
+            - True: Device has been tampered
             - False: No tampering detected
             - None: Tamper status unknown
         battery_low (Optional[bool]): Low battery warning indicator.
@@ -196,12 +197,14 @@ class DoorSensor(DeviceState):
             - None: Battery status unknown
         linkquality (Optional[int]): Signal strength/link quality indicator (0-255).
     """
+
     contact: Optional[bool] = None
     battery: Optional[int] = None
     voltage: Optional[int] = None
     tamper: Optional[bool] = None
     battery_low: Optional[bool] = None
     linkquality: Optional[int] = None
+
 
 class AlarmButtonlValues(str, Enum):
     """
@@ -219,6 +222,7 @@ class AlarmButtonlValues(str, Enum):
     ARM_DAYZONES_ACTION = "arm_day_zones"
     ARM_ALL_ACTION = "arm_all_zones"
 
+
 class AlarmButton(DeviceState):
     """
     Represents the state of a alarm controler device.
@@ -232,6 +236,7 @@ class AlarmButton(DeviceState):
     battery: Optional[int] = None
     action: AlarmButtonlValues = None
     linkquality: Optional[int] = None
+
 
 class ButtonValues(str, Enum):
     """
@@ -340,28 +345,29 @@ class SrtsA01(DeviceState):
     # Indique si la fenêtre est ouverte
     window_open: Optional[bool] = None
 
+
 class SomfyShade(DeviceState):
     shadeId: Optional[int] = None
     name: Optional[str] = None
     remoteAddress: Optional[str] = None
     shadeType: Optional[int] = None
-    # The tilt type if the shade type is blind : 
+    # The tilt type if the shade type is blind :
     # 0 = None, 1 = Tilt Motor, 2 = Integrated Tilt, 3 = Tilt Only
     tiltType: Optional[int] = None
     # Indicates whether up is down and down is up.
-    flipCommands: Optional[bool] = None 
+    flipCommands: Optional[bool] = None
     # Indicates whether 100% is open or closed. Valid values are true or false
     flipPosition: Optional[bool] = None
     # The current lift position in percentage of the motor.
     position: Optional[int] = None
     # The current tilt position in percentage of the motor.
     tiltPosition: Optional[int] = None
-    #The current direction of the motor movement. This will be one of the following values :
+    # The current direction of the motor movement. This will be one of the following values :
     # -1 = The shade is moving up, 0 = The shade is stopped, 1 = The shade is moving down
     direction: Optional[int] = None
     # The lift position that the shade is seeking
     target: Optional[int] = None
-    # The tilt position that the shade is seeking 
+    # The tilt position that the shade is seeking
     tiltTarget: Optional[int] = None
     # The last rolling code that was used to send the last command from ESPSomfy RTS
     lastRollingCode: Optional[int] = None

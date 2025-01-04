@@ -11,9 +11,9 @@ registries.
 from iot2mqtt import abstract, dev, encoder, processor, utils
 
 # Supported model names
-E3 = "E3" # https://www.zigbee2mqtt.io/devices/E3.html
+E3 = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
 SOMFY_SHADES = "ESPSomfy-RTS MQTT"
-HM_ALARM_BUTTON = "HM1RC-2-E" # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
+HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
 RING_CAMERA = "RingCamera"
@@ -113,10 +113,12 @@ class Models(metaclass=utils.Singleton):
 
         encoder.EncoderRegistry(
             models=[cls.NEO_ALARM],
-            settable_fields=[abstract.ALARM, 
-                             abstract.DURATION, 
-                             abstract.MELODY, 
-                             abstract.VOLUME],
+            settable_fields=[
+                abstract.ALARM,
+                abstract.DURATION,
+                abstract.MELODY,
+                abstract.VOLUME,
+            ],
             gettable_fields=[],
         )
 
@@ -138,4 +140,3 @@ class Models(metaclass=utils.Singleton):
                 abstract.CHILD_LOCK,  # Just one field request get all fields
             ],
         )
-

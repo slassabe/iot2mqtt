@@ -15,7 +15,7 @@ from typing import Any, Callable, List, Optional
 import certifi
 import paho.mqtt.client as mqtt
 
-from iot2mqtt import utils, exceptions
+from iot2mqtt import exceptions, utils
 
 
 @dataclasses.dataclass
@@ -389,5 +389,3 @@ class MQTTClientDeprecated(ClientHelper):
             None
         """
         self.on_subscribe_handlers.append(handler)
-
-
