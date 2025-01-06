@@ -8,7 +8,7 @@ implementations for handling different types of messages and device protocols.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, NotRequired, Optional, Type, TypedDict
+from typing import Dict, List, Optional, Type
 
 from pydantic import (BaseModel, Field, ValidationError, computed_field,
                       confloat)
@@ -70,8 +70,8 @@ def _check_message_typing(
         return False
     if not isinstance(msg.refined, expected_type):
         raise TypeError(
-            f"Message should refer to {expected_type}, got {
-                msg.refined} of class {type(msg.refined).__name__}"
+            f"Message should refer to {expected_type},"
+            f" got {msg.refined} of class {type(msg.refined).__name__}"
         )
     return True
 
@@ -226,8 +226,9 @@ class ModelResolver(Processor):
 
         """
         if message.message_type == messenger.MessageType.DISCO:
-            _error_msg = f"Discovery message not allowed: {message}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Discovery message not allowed: {message}"
+            )
         _device_id = message.device_id
         _device = Discoverer.directory.get_device(_device_id)
         message.model = _device.model if _device else dev.ModelFactory.UNKNOWN
@@ -366,8 +367,9 @@ class Discoverer(Processor):
         """
 
         if message.message_type != messenger.MessageType.DISCO:
-            _error_msg = f"Not a discovery message: {message.message_type}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Not a discovery message: {message.message_type}"
+            )
         if message.protocol == dev.Protocol.Z2M:
             return self._discover_z2m(message)
         if message.protocol == dev.Protocol.TASMOTA:
@@ -375,8 +377,7 @@ class Discoverer(Processor):
         if message.protocol == dev.Protocol.ESPSOMFY:
             return self._discover_espsomfy(message)
 
-        _error_msg = f"Unknown protocol: {message.protocol}"
-        utils.i2m_log.info(_error_msg)
+        utils.i2m_log.info("Unknown protocol: %s", message.protocol)
         return message
 
     def _discover_z2m(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -434,11 +435,13 @@ class Discoverer(Processor):
 
         _raw_data = message.raw_item.data
         if not isinstance(_raw_data, list):
-            _error_msg = f"Bad format: {
-                    message} - Expected list, got {type(_raw_data).__name__}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Bad format: {message} - "
+                f"Expected list, got {type(_raw_data).__name__}"
+            )
 
-        _discovery_result = _device_dict(_raw_data, device_type_list=_device_types)
+        _discovery_result = _device_dict(
+            _raw_data, device_type_list=_device_types)
         self.directory.update_devices(_discovery_result)
         _devices = _device_list(_raw_data, device_type_list=_device_types)
         message.refined = abstract.Registry(device_ids=_devices)
@@ -453,8 +456,8 @@ class Discoverer(Processor):
         try:
             _discovery = TasmotaDiscovery(**_raw_data)
         except ValidationError as exc:
-            _error_msg = f"Error when refining raw data: '{_raw_data}': {exc}"
-            utils.i2m_log.error(_error_msg)
+            utils.i2m_log.error("Error when refining raw data: '%s': %s",
+                                _raw_data, exc)
             return None
 
         _device = dev.Device(
@@ -476,12 +479,12 @@ class Discoverer(Processor):
         try:
             _discovery = ESPSomfyDiscovery(**_raw_data)
         except ValidationError as exc:
-            _error_msg = f"Error when refining raw data: '{_raw_data}': {exc}"
-            utils.i2m_log.error(_error_msg)
+            utils.i2m_log.error("Error when refining raw data: '%s': %s",
+                                _raw_data, exc)
             return None
         _path = str(_discovery.config.path)
         _index = _path.split("/")[-1]
-        _device_id = f"shade#{_index}"
+        _device_id = _index
 
         _device = dev.Device(
             address=_discovery.config.device.address,
@@ -513,8 +516,9 @@ class AvailabilityNormalizer(Processor):
 
     def _decode_availability(self, value: str, on_token: str, off_token: str) -> bool:
         if value not in (on_token, off_token):
-            _error_msg = f"Unknown availability value: {value}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Unknown availability value: {value}"
+            )
         return value == on_token
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -535,29 +539,34 @@ class AvailabilityNormalizer(Processor):
             not supported, or the raw data format is incorrect.
         """
         if message.message_type != messenger.MessageType.AVAIL:
-            _error_msg = f"Not an availability message: {message}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                "Not an availability message: {message}"
+            )
         _raw_data = message.raw_item.data
         if message.protocol == dev.Protocol.TASMOTA:
-            _raw_avail_value = self._decode_availability(_raw_data, "Online", "Offline")
+            _raw_avail_value = self._decode_availability(
+                _raw_data, "Online", "Offline")
         elif message.protocol == dev.Protocol.ESPSOMFY:
-            _raw_avail_value = self._decode_availability(_raw_data, "online", "offline")
+            _raw_avail_value = self._decode_availability(
+                _raw_data, "online", "offline")
         elif message.protocol == dev.Protocol.Z2M:
             if isinstance(_raw_data, dict):
                 _avail_value = _raw_data.get("state")
             elif isinstance(_raw_data, str):
                 _avail_value = _raw_data
             else:
-                _error_msg = f"Bad type {type(_raw_data)} for device {
-                        message.device_id}"
-                raise exceptions.DecodingException(_error_msg)
+                raise exceptions.DecodingException(
+                    f"Bad type {type(_raw_data)}"
+                    f"for device {message.device_id}"
+                )
             _raw_avail_value = self._decode_availability(
                 _avail_value, "online", "offline"
             )
         else:
-            _error_msg = f"Protocol {message} not covered for device {
-                    message.device_id}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Protocol {message} not covered "
+                f"for device {message.device_id}"
+            )
         message.refined = self.ONLINE if _raw_avail_value else self.OFFLINE
         return message
 
@@ -577,7 +586,8 @@ class StateNormalizerFactory:
 
     def __init__(
         self,
-        initial_registry: Optional[Dict[dev.Model, Type[abstract.DeviceState]]] = None,
+        initial_registry: Optional[Dict[dev.Model,
+                                        Type[abstract.DeviceState]]] = None,
     ) -> None:
         """
         Initialize the factory with an optional initial registry.
@@ -643,12 +653,14 @@ class StateNormalizer(Processor):
                 is incorrect, or an error occurs during the refinement process.
         """
         if message.message_type != messenger.MessageType.STATE:
-            _error_msg = f"Not a state message: {message.message_type}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Not a state message: {message.message_type}"
+            )
         _raw_data = message.raw_item.data
         if not isinstance(_raw_data, dict):
-            _error_msg = f"Bad format: {message}"
-            raise exceptions.DecodingException(_error_msg)
+            raise exceptions.DecodingException(
+                f"Bad format: {message}"
+            )
 
         _target_class = StateNormalizerFactory.get(message.model)
         if not _target_class:
@@ -659,9 +671,10 @@ class StateNormalizer(Processor):
         try:
             message.refined = _target_class(**_raw_data)
         except ValidationError as exc:
-            utils.i2m_log.error(
-                "Error when refining raw data: '%s': %s", _raw_data, exc
+            _error_msg = (
+                f"Error when refining raw data: {_raw_data}: {exc}"
             )
-            raise exceptions.DecodingException(_error_msg)  # Re-raise the exception
+            utils.i2m_log.error(_error_msg)
+            raise exceptions.DecodingException(_error_msg)
 
         return message

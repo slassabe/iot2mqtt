@@ -31,6 +31,7 @@ CALIBRATED = "calibrated"
 CHILD_LOCK = "child_lock"
 CONTACT = "contact"
 DEVICE_TEMPERATURE = "device_temperature"
+DIRECTION = "direction"
 DURATION = "duration"
 EXTERNAL_TEMPERATURE_INPUT = "external_temperature_input"
 HUMIDITY = "humidity"
@@ -38,8 +39,11 @@ INTERNAL_HEATING_SETPOINT = "internal_heating_setpoint"
 LINKQUALITY = "linkquality"
 LOCAL_TEMPERATURE = "local_temperature"
 MELODY = "melody"
+MYPOS = "mypos"
+MYTILTPOS = "myTiltPos"
 OCCUPIED_HEATING_SETPOINT = "occupied_heating_setpoint"
 OCCUPANCY = "occupancy"
+POSITION = "position"
 POWER = "power"
 POWER1 = "power1"
 POWER2 = "power2"
@@ -52,9 +56,14 @@ SCHEDULE_SETTING = "schedule_setting"
 SENSOR = "sensor"
 SETUP = "setup"
 STATE = "state"
+SUNFLAG = "sunFlag"
+SUNNY = "sunny"
 SYSTEM_MODE = "system_mode"
+TARGET = "target"
 TAMPER = "tamper"
 TEMPERATURE = "temperature"
+TILTPOSITION = "tiltPosition"
+TILTTARGET = "tiltTarget"
 UPDATE = "update"
 VALVE_ALARM = "valve_alarm"
 VALVE_DETECTION = "valve_detection"
@@ -62,6 +71,7 @@ VOLTAGE = "voltage"
 VOLUME = "volume"
 WINDOW_DETECTION = "window_detection"
 WINDOW_OPEN = "window_open"
+WINDY = "windy"
 
 
 class Availability(BaseModel):
@@ -345,8 +355,57 @@ class SrtsA01(DeviceState):
     # Indique si la fenêtre est ouverte
     window_open: Optional[bool] = None
 
+class SomfyDevice(DeviceState):
+    name: Optional[str] = None
+    remoteAddress: Optional[str] = None
+    # The current direction of the motor movement. This will be one of the following values :
+    # -1 = The shade is moving up, 0 = The shade is stopped, 1 = The shade is moving down
+    direction: Optional[int] = None
+    # The last rolling code that was used to send the last command from ESPSomfy RTS
+    lastRollingCode: Optional[int] = None
+    # Indicates the existence of a sun sensor. Valid values are true or false
+    sunSensor: Optional[bool] = None
+    # Indicates whether the sun sensor is enabled or not. Valid values are 0 or 1
+    sunFlag: Optional[int] = None
+    # Indicates whether the shade thinks it is sunny or not. Valid values are 0 or 1
+    sunny: Optional[int] = None
+    # Indicates whether the shade thinks it is windy or calm. Valid values are 0 or 1
+    windy: Optional[int] = None
 
-class SomfyShade(DeviceState):
+class SomfyGroup(SomfyDevice):
+    groupId: Optional[int] = None
+
+class SomfyShade(SomfyDevice):
+    shadeId: Optional[int] = None
+    shadeType: Optional[int] = None
+    # The tilt type if the shade type is blind :
+    # 0 = None, 1 = Tilt Motor, 2 = Integrated Tilt, 3 = Tilt Only
+    tiltType: Optional[int] = None
+    # Indicates whether up is down and down is up.
+    flipCommands: Optional[bool] = None
+    # Indicates whether 100% is open or closed. Valid values are true or false
+    flipPosition: Optional[bool] = None
+    # The current lift position in percentage of the motor.
+    position: Optional[int] = None
+    # The current tilt position in percentage of the motor.
+    tiltPosition: Optional[int] = None
+    # The lift position that the shade is seeking
+    target: Optional[int] = None
+    # The tilt position that the shade is seeking
+    tiltTarget: Optional[int] = None
+    # The current favorite lift position. -1 is unset
+    mypos: Optional[int] = None
+    # The current favorite tilt position. -1 is unset
+    myTiltPos: Optional[int] = None
+
+    # Undocumented
+    cmd: Optional[str] = None
+    cmdAddress: Optional[str] = None
+    cmdSource: Optional[str] = None
+    # Not standard
+    channel: Optional[int] = None
+
+class SomfyShadeOLD(DeviceState):
     shadeId: Optional[int] = None
     name: Optional[str] = None
     remoteAddress: Optional[str] = None

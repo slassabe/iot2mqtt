@@ -12,7 +12,6 @@ from iot2mqtt import abstract, dev, encoder, processor, utils
 
 # Supported model names
 E3 = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
-SOMFY_SHADES = "ESPSomfy-RTS MQTT"
 HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
@@ -26,6 +25,7 @@ SN_MINI_L2 = "ZBMINIL2"  # https://www.zigbee2mqtt.io/devices/ZBMINIL2.html
 SN_MOTION = "SNZB-03"  # https://www.zigbee2mqtt.io/devices/SNZB-03.html
 SN_SMART_PLUG = "S26R2ZB"  # https://www.zigbee2mqtt.io/devices/S26R2ZB.html
 SN_ZBBRIDGE = "Sonoff ZbBridge"  # Tasmota signature for Sonoff ZbBridge
+SOMFY_SHADES = "ESPSomfy-RTS MQTT"
 SRTS_A01 = "SRTS-A01"  # https://www.zigbee2mqtt.io/devices/SRTS-A01.html
 TUYA_SOIL = "TS0601_soil"  # https://www.zigbee2mqtt.io/devices/TS0601_soil.html
 
@@ -36,7 +36,6 @@ class Models(metaclass=utils.Singleton):
     """
 
     E3 = dev.ModelFactory.get(E3)
-    SOMFY_SHADES = dev.ModelFactory.get(SOMFY_SHADES)
     HM_ALARM_BUTTON = dev.ModelFactory.get(HM_ALARM_BUTTON)
     MIFLORA = dev.ModelFactory.get(MIFLORA)
     NEO_ALARM = dev.ModelFactory.get(NEO_ALARM)
@@ -50,6 +49,7 @@ class Models(metaclass=utils.Singleton):
     SN_MOTION = dev.ModelFactory.get(SN_MOTION)
     SN_SMART_PLUG = dev.ModelFactory.get(SN_SMART_PLUG)
     SN_ZBBRIDGE = dev.ModelFactory.get(SN_ZBBRIDGE)
+    SOMFY_SHADES = dev.ModelFactory.get(SOMFY_SHADES)
     SRTS_A01 = dev.ModelFactory.get(SRTS_A01)
     TUYA_SOIL = dev.ModelFactory.get(TUYA_SOIL)
 
@@ -70,7 +70,6 @@ class Models(metaclass=utils.Singleton):
         processor.StateNormalizerFactory(
             initial_registry={
                 cls.E3: abstract.DoorSensor,
-                cls.SOMFY_SHADES: abstract.SomfyShade,
                 cls.HM_ALARM_BUTTON: abstract.AlarmButton,
                 cls.NEO_ALARM: abstract.Alarm,
                 cls.SHELLY_PLUGS: abstract.Switch,
@@ -81,6 +80,7 @@ class Models(metaclass=utils.Singleton):
                 cls.SN_MINI_L2: abstract.Switch,
                 cls.SN_MOTION: abstract.Motion,
                 cls.SN_SMART_PLUG: abstract.Switch,
+                cls.SOMFY_SHADES: abstract.SomfyShade,
                 cls.SRTS_A01: abstract.SrtsA01,
             }
         )
@@ -139,4 +139,21 @@ class Models(metaclass=utils.Singleton):
             gettable_fields=[
                 abstract.CHILD_LOCK,  # Just one field request get all fields
             ],
+        )
+
+        encoder.EncoderRegistry(
+            models=[cls.SOMFY_SHADES],
+            settable_fields=[
+                abstract.DIRECTION,
+                abstract.MYPOS,
+                abstract.MYTILTPOS,
+                abstract.POSITION,
+                abstract.SUNFLAG,
+                abstract.SUNNY,
+                abstract.TARGET,
+                abstract.TILTPOSITION,
+                abstract.TILTTARGET,
+                abstract.WINDY,
+            ],
+            gettable_fields=[],
         )
