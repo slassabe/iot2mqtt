@@ -1,4 +1,3 @@
-
 #!/usr/local/bin/python3
 # coding=utf-8
 
@@ -11,19 +10,24 @@ as well as functions for retrieving topic configurations and generating MQTT top
 """
 
 from typing import List
+
 from pydantic import BaseModel
-from iot2mqtt import (dev, messenger, utils)
+
+from iot2mqtt import dev, messenger, utils
 
 Z2M_INFO_BASE_TOPIC = "zigbee2mqtt"
 Z2M_CMND_BASE_TOPIC = "zigbee2mqtt"
+
 TASMOTA_INFO_BASE_TOPIC = "stat"
 TASMOTA_AVAIL_BASE_TOPIC = "tele"
 TASMOTA_CMND_BASE_TOPIC = "cmnd"
 TASMOTA_DISCOVERY_TOPIC = "tasmota/discovery"
+
 ESPSOMFY_AVAIL_BASE_TOPIC = "ESPSomfy"
 ESPSOMFY_INFO_BASE_TOPIC = "ESPSomfy/shades"
 ESPSOMFY_CMND_BASE_TOPIC = "ESPSomfy/shades"
 ESPSOMFY_DISCOVERY_TOPIC = "homeassistant/cover"
+
 
 class TopicManager(metaclass=utils.Singleton):
     """

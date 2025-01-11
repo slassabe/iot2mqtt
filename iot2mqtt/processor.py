@@ -8,10 +8,9 @@ implementations for handling different types of messages and device protocols.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
-from pydantic import (BaseModel, Field, ValidationError, computed_field,
-                      confloat)
+from pydantic import BaseModel, Field, ValidationError
 
 from iot2mqtt import abstract, dev, exceptions, messenger, utils
 
@@ -210,6 +209,20 @@ class ModelResolver(Processor):
     by looking it up in the device directory. If the model is unknown, it logs a warning.
     """
 
+    _notified_devices = {}
+
+    def _notify_once(self, message: messenger.Message) -> None:
+        _device_id = message.device_id
+        if _device_id in self._notified_devices:
+            return
+        utils.i2m_log.debug(
+            '[%s] "%s" is unable to resolve model: message type: %s',
+            _device_id,
+            self.__class__.__name__,
+            message.message_type,
+        )
+        self._notified_devices[_device_id] = True
+
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
         """
         Resolves the model of the device in the given message.
@@ -233,12 +246,7 @@ class ModelResolver(Processor):
         _device = Discoverer.directory.get_device(_device_id)
         message.model = _device.model if _device else dev.ModelFactory.UNKNOWN
         if message.model == dev.ModelFactory.UNKNOWN:
-            utils.i2m_log.debug(
-                "[%s]: message type: %s - unknown model for: %s",
-                self.__class__.__name__,
-                message.message_type,
-                _device_id,
-            )
+            self._notify_once(message)
         return message
 
 
@@ -440,8 +448,7 @@ class Discoverer(Processor):
                 f"Expected list, got {type(_raw_data).__name__}"
             )
 
-        _discovery_result = _device_dict(
-            _raw_data, device_type_list=_device_types)
+        _discovery_result = _device_dict(_raw_data, device_type_list=_device_types)
         self.directory.update_devices(_discovery_result)
         _devices = _device_list(_raw_data, device_type_list=_device_types)
         message.refined = abstract.Registry(device_ids=_devices)
@@ -456,8 +463,9 @@ class Discoverer(Processor):
         try:
             _discovery = TasmotaDiscovery(**_raw_data)
         except ValidationError as exc:
-            utils.i2m_log.error("Error when refining raw data: '%s': %s",
-                                _raw_data, exc)
+            utils.i2m_log.error(
+                "Error when refining raw data: '%s': %s", _raw_data, exc
+            )
             return None
 
         _device = dev.Device(
@@ -479,8 +487,9 @@ class Discoverer(Processor):
         try:
             _discovery = ESPSomfyDiscovery(**_raw_data)
         except ValidationError as exc:
-            utils.i2m_log.error("Error when refining raw data: '%s': %s",
-                                _raw_data, exc)
+            utils.i2m_log.error(
+                "Error when refining raw data: '%s': %s", _raw_data, exc
+            )
             return None
         _path = str(_discovery.config.path)
         _index = _path.split("/")[-1]
@@ -516,9 +525,7 @@ class AvailabilityNormalizer(Processor):
 
     def _decode_availability(self, value: str, on_token: str, off_token: str) -> bool:
         if value not in (on_token, off_token):
-            raise exceptions.DecodingException(
-                f"Unknown availability value: {value}"
-            )
+            raise exceptions.DecodingException(f"Unknown availability value: {value}")
         return value == on_token
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -539,16 +546,12 @@ class AvailabilityNormalizer(Processor):
             not supported, or the raw data format is incorrect.
         """
         if message.message_type != messenger.MessageType.AVAIL:
-            raise exceptions.DecodingException(
-                "Not an availability message: {message}"
-            )
+            raise exceptions.DecodingException("Not an availability message: {message}")
         _raw_data = message.raw_item.data
         if message.protocol == dev.Protocol.TASMOTA:
-            _raw_avail_value = self._decode_availability(
-                _raw_data, "Online", "Offline")
+            _raw_avail_value = self._decode_availability(_raw_data, "Online", "Offline")
         elif message.protocol == dev.Protocol.ESPSOMFY:
-            _raw_avail_value = self._decode_availability(
-                _raw_data, "online", "offline")
+            _raw_avail_value = self._decode_availability(_raw_data, "online", "offline")
         elif message.protocol == dev.Protocol.Z2M:
             if isinstance(_raw_data, dict):
                 _avail_value = _raw_data.get("state")
@@ -556,16 +559,14 @@ class AvailabilityNormalizer(Processor):
                 _avail_value = _raw_data
             else:
                 raise exceptions.DecodingException(
-                    f"Bad type {type(_raw_data)}"
-                    f"for device {message.device_id}"
+                    f"Bad type {type(_raw_data)}" f"for device {message.device_id}"
                 )
             _raw_avail_value = self._decode_availability(
                 _avail_value, "online", "offline"
             )
         else:
             raise exceptions.DecodingException(
-                f"Protocol {message} not covered "
-                f"for device {message.device_id}"
+                f"Protocol {message} not covered " f"for device {message.device_id}"
             )
         message.refined = self.ONLINE if _raw_avail_value else self.OFFLINE
         return message
@@ -586,8 +587,7 @@ class StateNormalizerFactory:
 
     def __init__(
         self,
-        initial_registry: Optional[Dict[dev.Model,
-                                        Type[abstract.DeviceState]]] = None,
+        initial_registry: Optional[Dict[dev.Model, Type[abstract.DeviceState]]] = None,
     ) -> None:
         """
         Initialize the factory with an optional initial registry.
@@ -637,6 +637,21 @@ class StateNormalizer(Processor):
     device state representations. It supports different device models and protocols.
     """
 
+    _notified_devices = {}
+
+    def _notify_once(self, message: messenger.Message) -> None:
+        _device_id = message.device_id
+        if _device_id in self._notified_devices:
+            return
+        utils.i2m_log.warning(
+            '[%s] "%s" is unable to normalyse message type: %s - value: %s',
+            _device_id,
+            self.__class__.__name__,
+            message.message_type.value,
+            message.raw_item.data,
+        )
+        self._notified_devices[_device_id] = True
+
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
         """
         Processes a message to normalize its state based on the device model and protocol.
@@ -658,23 +673,20 @@ class StateNormalizer(Processor):
             )
         _raw_data = message.raw_item.data
         if not isinstance(_raw_data, dict):
-            raise exceptions.DecodingException(
-                f"Bad format: {message}"
-            )
+            raise exceptions.DecodingException(f"Bad format: {message}")
 
         _target_class = StateNormalizerFactory.get(message.model)
         if not _target_class:
-            utils.i2m_log.warning(
-                "[%s] Model %s not supported", message.device_id, message.model
-            )
+            self._notify_once(message)
             return None
         try:
             message.refined = _target_class(**_raw_data)
         except ValidationError as exc:
-            _error_msg = (
-                f"Error when refining raw data: {_raw_data}: {exc}"
-            )
-            utils.i2m_log.error(_error_msg)
-            raise exceptions.DecodingException(_error_msg)
+            utils.i2m_log.error("Error refining raw data: %s \n %s", exc, _raw_data)
+            return None
+        except exceptions.NoValueException as exc:
+            # Silently ignore empty values
+            utils.i2m_log.debug("[%s] Exception: %s", message.device_id, exc)
+            return None
 
         return message
