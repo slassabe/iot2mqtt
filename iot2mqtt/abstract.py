@@ -431,6 +431,46 @@ class SomfyShade(SomfyDevice):
     cmdSource: Optional[str] = None
 
 
+class MagicCube(DeviceState):
+    """
+    Represents the state of a Cube T1 Pro device from Aquara.
+    """
+
+    # Batterie restante en %
+    battery: Optional[int] = None
+    # Tension de la batterie en millivolts
+    voltage: Optional[int] = None
+    # Nombre de pannes de courant (depuis le dernier couplage)
+    power_outage_count: Optional[int] = None
+
+    operation_mode: Optional[Literal["action_mode", "scene_mode"]] = None
+    # Face du cube
+    side: Optional[int] = None
+    # Action depuis face du cube
+    action_from_side: Optional[int] = None
+    # Angle en degrès
+    action_angle: Optional[float] = None
+    # Action déclenchée (par ex : un clic sur un bouton)
+    action: Optional[
+        Literal[
+            "shake",
+            "throw",
+            "tap",
+            "slide",
+            "flip180",
+            "flip90",
+            "hold",
+            "side_up",
+            "rotate_left",
+            "rotate_right",
+            "1_min_inactivity",
+            "flip_to_side",
+        ]
+    ] = None
+    # Qualité du lien (force du signal)
+    linkquality: Optional[int] = None
+
+
 class AlarmVolumes(str, Enum):
     """
     Enumeration representing possible alarm volume levels.

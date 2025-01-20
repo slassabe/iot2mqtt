@@ -11,6 +11,7 @@ registries.
 from iot2mqtt import abstract, dev, encoder, processor, utils
 
 # Supported model names
+CTP_R01 = "CTP-R01"  # https://www.zigbee2mqtt.io/devices/CTP-R01.html
 E3 = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
 HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
 MIFLORA = "Miflora"
@@ -35,6 +36,7 @@ class Models(metaclass=utils.Singleton):
     Default configuration values for the iot2mqtt application.
     """
 
+    CTP_R01 = dev.ModelFactory.get(CTP_R01)
     E3 = dev.ModelFactory.get(E3)
     HM_ALARM_BUTTON = dev.ModelFactory.get(HM_ALARM_BUTTON)
     MIFLORA = dev.ModelFactory.get(MIFLORA)
@@ -69,6 +71,7 @@ class Models(metaclass=utils.Singleton):
         """
         processor.StateNormalizerFactory(
             initial_registry={
+                cls.CTP_R01: abstract.MagicCube,
                 cls.E3: abstract.DoorSensor,
                 cls.HM_ALARM_BUTTON: abstract.AlarmButton,
                 cls.NEO_ALARM: abstract.Alarm,

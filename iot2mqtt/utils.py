@@ -16,16 +16,15 @@ Constants
 - DEBUG: Boolean flag indicating whether debugging is enabled.
 
 """
+import functools
+import logging
 import os
 import sys
+import threading
 import time
 import traceback
-import logging
-import threading
-import functools
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, Type, TypeVar
-
 
 i2m_log = logging.getLogger("iot2mqtt")
 DEBUG = True
@@ -83,13 +82,15 @@ LOGIT = True
 if LOGIT:
     TIMEIT_INDENT = 1
 
+
 def logit():
     """
     Decorator to log the function call and its parameters.
     """
+
     def decorator(func):
         # caller = getframeinfo(_stack[1][0])
-        #_caller_frame = currentframe().f_back
+        # _caller_frame = currentframe().f_back
         _caller_frame = sys._getframe().f_back
         _caller = _caller_frame.f_code.co_name
         _caller_info = traceback.extract_stack(f=_caller_frame, limit=1)[0]
@@ -100,51 +101,64 @@ def logit():
             kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
             signature = ", ".join(args_repr + kwargs_repr)
             global TIMEIT_INDENT
-            #mes = f'{"-" * _TIMEIT_INDENT}> params: ({signature})'
+            # mes = f'{"-" * _TIMEIT_INDENT}> params: ({signature})'
             mes = f'{"-" * TIMEIT_INDENT}> caller: {_caller} - params: ({signature})'
 
             _name = func.__name__
             _filename = os.path.basename(_caller_info[0])
             _lineno = _caller_info[1]
 
-            i2m_log.debug(mes, extra={
-                'name_override': _name,
-                'file_override': _filename,
-                'line_override': _lineno
-            })
+            i2m_log.debug(
+                mes,
+                extra={
+                    "name_override": _name,
+                    "file_override": _filename,
+                    "line_override": _lineno,
+                },
+            )
             _exc_start = time.perf_counter()
             TIMEIT_INDENT += 1
             result = func(*args, **kwargs)
             TIMEIT_INDENT -= 1
             _exc_end = time.perf_counter()
-            i2m_log.debug(f'<{"-"*TIMEIT_INDENT} [elapsed : {(_exc_end - _exc_start) * 1000:.2f} ms.]', extra={
-                'name_override': _name,
-                'file_override': _filename,
-                'line_override': _lineno
-            })
+            i2m_log.debug(
+                f'<{"-"*TIMEIT_INDENT} {result} [elapsed : {(_exc_end - _exc_start) * 1000:.2f} ms.]',
+                extra={
+                    "name_override": _name,
+                    "file_override": _filename,
+                    "line_override": _lineno,
+                },
+            )
             return result
+
         return wrapper
 
     def no_decorator(func):
         return func
+
     return decorator if LOGIT else no_decorator
 
 
-STACK_INDENT = 4*' '
+STACK_INDENT = 4 * " "
+
 
 def stacktrace(func):
     """
     Decorator to print the stack trace of the function call.
     """
+
     @functools.wraps(func)
     def wrapped(*args, **kwds):
-        callstack = '\n'.join([STACK_INDENT+line.strip() for line in traceback.format_stack()][:-1])
+        callstack = "\n".join(
+            [STACK_INDENT + line.strip() for line in traceback.format_stack()][:-1]
+        )
         i2m_log.debug("---> %s:\n%s", func.__name__, callstack)
         return func(*args, **kwds)
+
     return wrapped
 
 
-class TimerManager():
+class TimerManager:
     """
     A class to manage timers for devices, ensuring thread safety and preventing multiple timers
     from being active for the same device in case of bouncing messages
@@ -192,7 +206,11 @@ class TimerManager():
                     i2m_log.debug("Replace previous timer for %s", device_id)
                     _previous_timer.cancel()
                 else:
-                    i2m_log.debug("No timer found for device '%s' in: %s", device_id, self._timer_registry)
+                    i2m_log.debug(
+                        "No timer found for device '%s' in: %s",
+                        device_id,
+                        self._timer_registry,
+                    )
                 _timer = threading.Timer(countdown, task, args=args, kwargs=kwargs)
                 _timer.start()
                 self._timer_registry[device_id] = _timer

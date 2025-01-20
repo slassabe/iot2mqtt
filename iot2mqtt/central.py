@@ -24,8 +24,7 @@ import json
 import time
 from abc import ABC, abstractmethod
 from enum import Enum
-from queue import Full
-from queue import Queue
+from queue import Full, Queue
 from typing import Any, Callable, Dict, List, Optional, TypeAlias, Union
 
 import paho.mqtt.client as mqtt
@@ -147,6 +146,7 @@ class Scrutinizer:
     Args:
         mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance.
         output_queue (Queue): The queue where the raw data is placed.
+        protocols_expected (List[dev.Protocol], optional): List of expected protocols. None for all.
         queue_timeout (int, optional): Timeout for queue operations in seconds. Defaults to 1.
     """
 
@@ -156,19 +156,21 @@ class Scrutinizer:
         self,
         mqtt_client: mqtthelper.ClientHelper,
         output_queue: Queue,
+        protocols_expected: List[dev.Protocol] = None,
         queue_timeout: int = QUEUE_TIMEOUT,  # timeout in sec.
     ) -> None:
         self._mqtt_client = mqtt_client
         self._output_queue = output_queue
         self._queue_timeout = queue_timeout
-        self._subscribe_to_topics()
+        _protocols = protocols_expected or [dev.Protocol.Z2M, dev.Protocol.TASMOTA, dev.Protocol.ESPSOMFY]
+        self._subscribe_to_topics(_protocols)
         self._parsers = {
             MessageStructure.JSON: JsonMessageParser.parse,
             MessageStructure.RAW: RawMessageParser.parse,
             MessageStructure.ESPSOMFY: ESPSomfyMessageParser.parse,
         }
 
-    def _subscribe_to_topics(self) -> None:
+    def _subscribe_to_topics(self, protocols_expected) -> None:
         def _callback_add(
             protocol: dev.Protocol,
             message_type: messenger.MessageType,
@@ -179,24 +181,27 @@ class Scrutinizer:
             )
             self._mqtt_client.message_callback_add(_topic, callback)
 
-        _z2m = dev.Protocol.Z2M
-        _tasmota = dev.Protocol.TASMOTA
-        _espsomfy = dev.Protocol.ESPSOMFY
         _avail = messenger.MessageType.AVAIL
         _state = messenger.MessageType.STATE
         _disco = messenger.MessageType.DISCO
-        # Set discovery handlers
-        _callback_add(_z2m, _disco, self._on_z2m_disco)
-        _callback_add(_tasmota, _disco, self._on_tasmota_disco)
-        _callback_add(_espsomfy, _disco, self._on_espsomfy_disco)
-        # Set availability handlers
-        _callback_add(_z2m, _avail, self._on_z2m_avail)
-        _callback_add(_tasmota, _avail, self._on_tasmota_avail)
-        _callback_add(_espsomfy, _avail, self._on_espsomfy_avail)
-        # Set state handlers
-        _callback_add(_z2m, _state, self._on_z2m_state)
-        _callback_add(_tasmota, _state, self._on_tasmota_state)
-        _callback_add(_espsomfy, _state, self._on_espsomfy_state)
+        _z2m_proto = dev.Protocol.Z2M
+        _tasmota_proto = dev.Protocol.TASMOTA
+        _espsomfy_proto = dev.Protocol.ESPSOMFY
+
+        if _z2m_proto in protocols_expected:
+            _callback_add(_z2m_proto, _disco, self._on_z2m_disco)
+            _callback_add(_z2m_proto, _avail, self._on_z2m_avail)
+            _callback_add(_z2m_proto, _state, self._on_z2m_state)
+
+        if _tasmota_proto in protocols_expected:
+            _callback_add(_tasmota_proto, _disco, self._on_tasmota_disco)
+            _callback_add(_tasmota_proto, _avail, self._on_tasmota_avail)
+            _callback_add(_tasmota_proto, _state, self._on_tasmota_state)
+
+        if _espsomfy_proto in protocols_expected:
+            _callback_add(_espsomfy_proto, _disco, self._on_espsomfy_disco)
+            _callback_add(_espsomfy_proto, _avail, self._on_espsomfy_avail)
+            _callback_add(_espsomfy_proto, _state, self._on_espsomfy_state)
         # Set connection handler
         self._mqtt_client.connect_handler_add(self._on_connect)
 
@@ -241,13 +246,10 @@ class Scrutinizer:
             raw_item=_item,
         )
         try:
-            self._output_queue.put(
-                _incoming, block=True, timeout=self._queue_timeout
-            )
+            self._output_queue.put(_incoming, block=True, timeout=self._queue_timeout)
         except Full:
             utils.i2m_log.error(
-                "Output queue is full. Dropping message for topic %s",
-                topic
+                "Output queue is full. Dropping message for topic %s", topic
             )
 
     def _get_device_id(
@@ -449,13 +451,12 @@ class DeviceAccessor:
             If the encoder for the given device model is not found, a debug message is logged
             and the method returns without publishing any messages.
         """
+
         def _publish_it(topic: str, payload: str) -> None:
             utils.i2m_log.debug(
                 "Publishing state retrieval to %s - state : %s", topic, payload
             )
-            self._mqtt_client.publish(
-                topic, payload=payload, qos=1, retain=False
-            )
+            self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
             return
 
         _command_base_topic = topics.CommandTopicManager().get_command_base_topic(
@@ -497,13 +498,12 @@ class DeviceAccessor:
             by the use of the `model_dump` method.
 
         """
+
         def _publish_it(topic: str, payload: str) -> None:
             utils.i2m_log.debug(
                 "Publishing state change to %s - state : %s", topic, payload
             )
-            self._mqtt_client.publish(
-                topic, payload=payload, qos=1, retain=False
-            )
+            self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
             return
 
         _command_base_topic = topics.CommandTopicManager().get_command_base_topic(
@@ -511,23 +511,17 @@ class DeviceAccessor:
         )
         _json_state = json.dumps(state)
         if protocol == dev.Protocol.Z2M:
-            _command_topic = (
-                f"{_command_base_topic}/{device_id}/set"
-            )
+            _command_topic = f"{_command_base_topic}/{device_id}/set"
             _publish_it(_command_topic, _json_state)
             return
         if protocol == dev.Protocol.TASMOTA:
             for _key, _value in state.items():
-                _command_topic = (
-                    f"{_command_base_topic}/{device_id}/{_key}"
-                )
+                _command_topic = f"{_command_base_topic}/{device_id}/{_key}"
                 _publish_it(_command_topic, _value)
             return
         if protocol == dev.Protocol.ESPSOMFY:
             for _key, _value in state.items():
-                _command_topic = (
-                    f"{_command_base_topic}/{device_id}/{_key}/set"
-                )
+                _command_topic = f"{_command_base_topic}/{device_id}/{_key}/set"
                 _publish_it(_command_topic, _value)
             return
         _error_msg = f"Unknown protocol {protocol}"
@@ -698,8 +692,7 @@ class DeviceAccessor:
             )
             if _device is None:
                 devices = processor.DeviceDirectory.get_device_ids()
-                utils.i2m_log.warning(
-                    "Device %s not found in %s", device_id, devices)
+                utils.i2m_log.warning("Device %s not found in %s", device_id, devices)
                 return
             # Call the switch_power_change function with the retrieved device's protocol and model
             self._do_switch_power_change(
@@ -713,21 +706,22 @@ class DeviceAccessor:
             )
 
 
-def is_message_expected(message: messenger.Message,
-                        types_expected: List[messenger.MessageType] = None,
-                        protocols_expected: List[dev.Protocol] = None,
-                        models_expected: List[dev.Model] = None,
-                        devices_expected: List[str] = None,
-                        ) -> bool:
+def is_message_expected(
+    message: messenger.Message,
+    types_expected: List[messenger.MessageType] = None,
+    protocols_expected: List[dev.Protocol] = None,
+    models_expected: List[dev.Model] = None,
+    devices_expected: List[str] = None,
+) -> bool:
     """
-    Validates if a message matches the expected criteria for message type, 
+    Validates if a message matches the expected criteria for message type,
     protocol, model and device.
 
     Args:
         message: The messenger.Message object to validate
         types_expected: List of allowed message types
         protocols_expected: List of allowed protocols
-        models_expected: List of allowed device models  
+        models_expected: List of allowed device models
         devices_expected: List of allowed device IDs
 
     Returns:
@@ -737,97 +731,137 @@ def is_message_expected(message: messenger.Message,
         If any of the expected lists are None, that criteria is not checked.
         The message must have non-None values for message_type, protocol and model.
     """
-    if not any([types_expected, protocols_expected, models_expected, devices_expected]):
-        return True
 
-    def _validate_list_membership(value: Any, expected_list, error_msg: str) -> bool:
+    def _validate_list_membership(value: Any, expected_list) -> bool:
         if value is None:
-            utils.i2m_log.error(error_msg)
             return False
         return value in expected_list
 
-    if types_expected:
-        return _validate_list_membership(
-            message.message_type, types_expected, "Message type is None"
-        )
-    if protocols_expected:
-        return _validate_list_membership(
-            message.protocol, protocols_expected, "Message protocol is None"
-        )
-    if models_expected:
-        return _validate_list_membership(
-            message.model, models_expected, "Message model is None"
-        )
-    if devices_expected:
-        return _validate_list_membership(
-            message.device_id, devices_expected, "Message device_id is None"
-        )
+    if not any([types_expected, protocols_expected, models_expected, devices_expected]):
+        return True
+
+    if types_expected and not _validate_list_membership(
+        message.message_type,
+        types_expected,
+    ):
+        return False
+    if protocols_expected and not _validate_list_membership(
+        message.protocol,
+        protocols_expected,
+    ):
+        return False
+    if models_expected and not _validate_list_membership(
+        message.model,
+        models_expected,
+    ):
+        return False
+    if devices_expected and not _validate_list_membership(
+        message.device_id,
+        devices_expected,
+    ):
+        return False
     return True
 
 
 def get_refined_data_queue(
-        mqtt_client: mqtthelper.ClientHelper,
-        protocols_expected: List[dev.Protocol] = None,
-        models_expected: List[dev.Model] = None,
-        devices_expected: List[str] = None,
+    mqtt_client: mqtthelper.ClientHelper,
+    protocols_expected: List[dev.Protocol] = None,
+    models_expected: List[dev.Model] = None,
+    devices_expected: List[str] = None,
 ) -> Queue:
     """
     Creates and returns a queue of refined messages by processing raw messages from MQTT.
 
+    This function sets up a message processing pipeline that:
+    1. Captures raw MQTT messages via a Scrutinizer
+    2. Processes discovery messages to identify devices
+    3. Resolves device models and processes availability/state messages
+    4. Normalizes messages into standardized formats
+
     Args:
-        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance.
+        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance
+        protocols_expected (List[dev.Protocol], optional): List of protocols to filter messages by
+        models_expected (List[dev.Model], optional): List of device models to filter messages by
+        devices_expected (List[str], optional): List of device IDs to filter messages by
 
     Returns:
-        Queue: The queue containing the refined (processed) messages.
+        Queue: A queue containing the refined (processed) messages that match the specified filters
 
+    Note:
+        The pipeline includes a 1-second delay after discovery messages to ensure all devices
+        are properly identified before processing state messages.
     """
     _raw_data_queue = Queue()
     _layer1_queue = Queue()
     _layer2_queue = Queue()
     _refined_queue = Queue()
-    Scrutinizer(mqtt_client=mqtt_client, output_queue=_raw_data_queue)
+    Scrutinizer(mqtt_client=mqtt_client, output_queue=_raw_data_queue, protocols_expected=protocols_expected)
+    _accessor = DeviceAccessor(mqtt_client=mqtt_client)
 
     messenger.Dispatcher(
         name="pipeline-discovery",
         input_queue=_raw_data_queue,
         output_queue=_layer1_queue,
         conditional_handlers=[
+            # 1) Protocol Filtering
             (
-                lambda msg: is_message_expected(msg,
-                                                [messenger.MessageType.DISCO],
-                                                protocols_expected),
-                processor.Discoverer().process
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[messenger.MessageType.DISCO],
+                    protocols_expected=protocols_expected,
+                ),
+                processor.Discoverer().process,
+            ),
+            (
+                # copy NON Discovery messages to output queue
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[
+                        messenger.MessageType.AVAIL,
+                        messenger.MessageType.STATE,
+                    ],
+                    protocols_expected=protocols_expected,
+                ),
+                processor.Processor.pass_through,
             ),
         ],
-        # copy Discovery message to output queue
-        default_handler=processor.Processor.pass_through,
+        # Remove non matching protocol messages
+        default_handler=processor.Processor.no_op,
     )
     time.sleep(1)  # Listen to receive all discovery messages
-    _accessor = DeviceAccessor(mqtt_client=mqtt_client)
+
     messenger.Dispatcher(
         name="pipeline-layer1",
         input_queue=_layer1_queue,
         output_queue=_layer2_queue,
         conditional_handlers=[
+            # Device filtering
             (
-                lambda msg: is_message_expected(msg,
-                                                [messenger.MessageType.AVAIL],
-                                                protocols_expected,
-                                                # models_expected,
-                                                devices_expected),
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[messenger.MessageType.DISCO],
+                ),
+                lambda msg: _get_device_state(msg, _accessor),
+            ),
+            (
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[messenger.MessageType.STATE],
+                    devices_expected=devices_expected,
+                ),
                 processor.ModelResolver().process,
             ),
             (
-                lambda msg: is_message_expected(msg,
-                                                [messenger.MessageType.STATE],
-                                                protocols_expected,
-                                                models_expected,
-                                                devices_expected),
-                processor.ModelResolver().process,
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[messenger.MessageType.AVAIL],
+                    devices_expected=devices_expected,
+                ),
+                processor.Processor.pass_through,
             ),
         ],
-        # copy Discovery message to output queue
-        default_handler=lambda msg: _get_device_state(msg, _accessor),
+        # Remove non matching messages
+        default_handler=processor.Processor.no_op,
     )
     messenger.Dispatcher(
         name="normalizer",
@@ -835,24 +869,33 @@ def get_refined_data_queue(
         output_queue=_refined_queue,
         conditional_handlers=[
             (
-                lambda msg: is_message_expected(msg,
-                                                [messenger.MessageType.AVAIL],
-                                                protocols_expected,
-                                                models_expected,
-                                                devices_expected),
+                lambda msg: is_message_expected(
+                    msg,
+                    [messenger.MessageType.AVAIL],
+                    models_expected=models_expected,  # Remove availability if model is expected
+                ),
                 processor.AvailabilityNormalizer().process,
             ),
             (
-                lambda msg: is_message_expected(msg,
-                                                [messenger.MessageType.STATE],
-                                                protocols_expected,
-                                                models_expected,
-                                                devices_expected),
+                lambda msg: is_message_expected(
+                    msg,
+                    [messenger.MessageType.STATE],
+                    models_expected=models_expected,
+                ),
                 processor.StateNormalizer().process,
             ),
+            (
+                lambda msg: is_message_expected(
+                    msg,
+                    [messenger.MessageType.DISCO],
+                    models_expected=models_expected,
+                    devices_expected=devices_expected,
+                ),
+                processor.Processor.pass_through,
+            ),
         ],
-        # copy Discovery message to output queue
-        default_handler=processor.Processor.pass_through,
+        # Remove non matching messages
+        default_handler=processor.Processor.no_op,
     )
     return _refined_queue
 
@@ -860,14 +903,21 @@ def get_refined_data_queue(
 def _get_device_state(
     message: messenger.Message, accessor: DeviceAccessor
 ) -> Optional[messenger.Message]:
+    """
+    Ask for state device
+    """
     _registry = message.refined
+    if message.message_type != messenger.MessageType.DISCO:
+        utils.i2m_log.error("Must be DISCOVERY message, not: %s", message)
+        return message
+    if _registry is None:
+        utils.i2m_log.error("No refined message found for: %s", message)
+        return message
     for _device_id in _registry.device_ids:
-        _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(
-            _device_id)
+        _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(_device_id)
         _model = _device.model
         _protocol = _device.protocol
-        accessor.trigger_get_state(
-            _device_id, protocol=_protocol, model=_model)
+        accessor.trigger_get_state(_device_id, protocol=_protocol, model=_model)
     return message
 
 

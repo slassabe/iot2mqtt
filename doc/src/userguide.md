@@ -212,6 +212,141 @@ if __name__ == "__main__":
 - `switch_power_change()` : Use this method when you know the protocol and model of the device. It is easier to use because it does not require launching the pipeline and waiting for the devices to be discovered.
 - `switch_power_change_helper()` : Use this method when you need more flexibility, such as changing the state of multiple devices with different protocols or models. This method requires initializing the message pipe to discover devices.
 
+## How to control SOMFY shades
+
+This section provides examples of how to control SOMFY upon ESPSomfy RTS protocol.
+
+### Example: Opening and Closing a Shade
+
+The following example demonstrates how to open and close a shade using the `trigger_change_state()` method.
+
+```python
+import iot2mqtt as i2m
+
+def _shade_move(
+    accessor: i2m.central.DeviceAccessor, device_id: str, direction: int, to: int
+):
+    """ Moves the shade to the specified position. """
+    _states = [
+        {i2m.abstract.DIRECTION: direction},
+        {i2m.abstract.TARGET: to},
+    ]
+    for _state in _states:
+        accessor.trigger_change_state(
+            device_id=device_id,
+            protocol=i2m.dev.Protocol.ESPSOMFY,
+            state=_state,
+        )
+
+def _shade_up(accessor: i2m.central.DeviceAccessor, device_id: str, to: int = 100):
+    """Move the shade up to the specified position."""
+    _shade_move(accessor, device_id, direction=-1, to=to)
+
+def _shade_down(accessor: i2m.central.DeviceAccessor, device_id: str, to: int = 0):
+    """Move the shade down to the specified position."""
+    _shade_move(accessor, device_id, direction=1, to=to)
+
+```
+
+#### Explanation
+
+- ***_shade_move*** : This function is a helper function that moves the shade to the specified position. It takes the following parameters:
+- `accessor` (i2m.central.DeviceAccessor): The device accessor object used to trigger the state change.
+- `device_id` (str): The ID of the device to which the state change should be applied.
+- `direction` (int): The direction of the shade movement.
+  - `-1` means the shade is moving up
+  - `0` means the shade is stopped
+  - `1` means the shade is moving down
+- `to` (int): The target position for the shade, as a percentage of the full range.
+- ***_shade_up*** : This function moves the shade up to the specified position.
+- ***_shade_down*** : This function moves the shade down to the specified position.
+
+### Example: Managing the Event Loop
+
+```python
+import time
+
+# Define the MQTT broker hostname
+TARGET = "localhost"
+SHADE_ID = "2"
+
+def main():
+    def _print_shade_position(message: i2m.messenger.Message) -> None:
+        """Print the current position of the shade."""
+        _to_print = {k: v for k, v in message.refined if v is not None}
+        print(f">>> [{message.device_id}] {message.message_type.value}: {_to_print}")
+    def _message_filter(message: i2m.messenger.Message) -> bool:
+        return message.message_type == i2m.messenger.MessageType.STATE
+
+    # Initialize the MQTT client helper with the specified context
+    _app_client = i2m.mqtthelper.ClientHelper(
+        i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()
+    )
+    _app_client.start()
+    # Initialize the refined data queue restricted to ESPSomfy devices
+    _refined_queue = i2m.central.get_refined_data_queue(
+        _app_client, protocols_expected=[i2m.dev.Protocol.ESPSOMFY]
+    )
+    _accessor = i2m.central.DeviceAccessor(mqtt_client=_app_client)
+    # Initialize the main loop queue, waiting for messages
+    i2m.messenger.Dispatcher(
+        input_queue=_refined_queue,
+        output_queue=None,
+        conditional_handlers=[
+            # Display shade position
+            (_message_filter, _print_shade_position),
+        ],
+        default_handler=i2m.processor.Processor.no_op,
+    )
+    while True:
+        # Loop moving the shade up and down
+        print("Shade Down ...")
+        _shade_up(_accessor, device_id=SHADE_ID, to=0)
+        time.sleep(30)
+        print("Shade Up ...")
+        _shade_down(_accessor, device_id=SHADE_ID, to=50)
+        time.sleep(30)
+
+if __name__ == "__main__":
+    main()
+```
+
+The script execution displays the following output:
+
+```text
+Shade Down ...
+>>> [2] state: {'target': 0}    # Target position set to 0% (fully closed)
+>>> [2] state: {'direction': -1}# Movement direction set to up (-1)
+>>> [2] state: {'position': 49} # Current position updates as shade moves
+...
+>>> [2] state: {'position': 1} # Position approaching target
+>>> [2] state: {'position': 0} # Final position reached
+```
+
+#### Explanation
+
+The script performs the following steps:
+
+1) Initializes the MQTT client with the security context and hostname.
+2) Starts the MQTT client.
+3) Create the message data queue restricted to ESPSomfy devices.
+4) Initialize the main loop, waiting for processing messages:
+   - Just printing the shade position found in the refined data queue.
+5) Loop moving the shade up and down every 30 seconds.
+
+#### Understanding the Event Loop Output
+
+Each message shows:
+
+- Device ID in brackets [2]
+- Message type (state)
+- Current shade parameters as key-value pairs:
+  - target: Desired position (0-100%)
+  - direction: Movement direction (-1=up, 0=stop, 1=down)
+  - position: Current position as percentage
+  
+The position updates provide real-time feedback as the shade moves toward its target position.
+
 ## Script customization
 
 The script integration allows users to specify a sequence of actions to be executed according to the state of the devices. The following sections provide examples of how to customize the script.
