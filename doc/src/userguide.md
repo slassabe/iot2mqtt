@@ -251,13 +251,13 @@ def _shade_down(accessor: i2m.central.DeviceAccessor, device_id: str, to: int = 
 #### Explanation
 
 - ***_shade_move*** : This function is a helper function that moves the shade to the specified position. It takes the following parameters:
-- `accessor` (i2m.central.DeviceAccessor): The device accessor object used to trigger the state change.
-- `device_id` (str): The ID of the device to which the state change should be applied.
-- `direction` (int): The direction of the shade movement.
-  - `-1` means the shade is moving up
-  - `0` means the shade is stopped
-  - `1` means the shade is moving down
-- `to` (int): The target position for the shade, as a percentage of the full range.
+  - `accessor` (i2m.central.DeviceAccessor): The device accessor object used to trigger the state change.
+  - `device_id` (str): The ID of the device to which the state change should be applied.
+  - `direction` (int): The direction of the shade movement.
+    - `-1` means the shade is moving up
+    - `0` means the shade is stopped
+    - `1` means the shade is moving down
+  - `to` (int): The target position for the shade, as a percentage of the full range.
 - ***_shade_up*** : This function moves the shade up to the specified position.
 - ***_shade_down*** : This function moves the shade down to the specified position.
 
