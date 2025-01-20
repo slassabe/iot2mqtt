@@ -77,6 +77,15 @@ iot2mqtt.setup module
    :undoc-members:
    :show-inheritance:
 
+iot2mqtt.topics module
+-----------------------
+
+.. automodule:: iot2mqtt.topics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: model_computed_fields, model_fields, model_config
+
 Module contents
 ---------------
 

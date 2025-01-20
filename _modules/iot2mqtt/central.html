@@ -97,236 +97,145 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">queue</span> <span class="kn">import</span> <span class="n">Full</span><span class="p">,</span> <span class="n">Queue</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">paho.mqtt.client</span> <span class="k">as</span> <span class="nn">mqtt</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ValidationError</span>
 
 <span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">messenger</span><span class="p">,</span> <span class="n">mqtthelper</span><span class="p">,</span> <span class="n">processor</span><span class="p">,</span>
-                      <span class="n">setup</span><span class="p">,</span> <span class="n">utils</span><span class="p">)</span>
+                      <span class="n">topics</span><span class="p">,</span> <span class="n">utils</span><span class="p">)</span>
 
-<span class="n">Z2M_INFO_BASE_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;zigbee2mqtt&quot;</span>
-<span class="n">Z2M_CMND_BASE_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;zigbee2mqtt&quot;</span>
-<span class="n">TASMOTA_INFO_BASE_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;tele&quot;</span>
-<span class="n">TASMOTA_CMND_BASE_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;cmnd&quot;</span>
-<span class="n">TASMOTA_DISCOVERY_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;tasmota/discovery&quot;</span>
-
-<span class="n">DEFAULT_ON_TIME</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">DEFAULT_ON_TIME</span> <span class="o">=</span> <span class="mf">0.0</span>
 <span class="n">DEFAULT_OFF_TIME</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">QUEUE_TIMEOUT</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># write on queue timeout in seconds</span>
+
+<span class="n">Parser</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">Item</span><span class="p">]]</span>
+<span class="n">DataItem</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]</span>
 
 
-<span class="k">class</span> <span class="nc">_TopicManager</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">Singleton</span><span class="p">):</span>
+<div class="viewcode-block" id="MessageStructure">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.MessageStructure">[docs]</a>
+<span class="k">class</span> <span class="nc">MessageStructure</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A registry for managing topic configurations based on protocol and message type.</span>
-
-<span class="sd">    This class provides a centralized way to store and retrieve topic configurations</span>
-<span class="sd">    for different combinations of protocol and message type. It acts as a registry</span>
-<span class="sd">    for topic configurations, allowing easy access to the topic base, topic extension,</span>
-<span class="sd">    and device name offset for a given protocol and message type.</span>
+<span class="sd">    Incoming MQTT message determining the parsing of the messages.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">JSON</span> <span class="o">=</span> <span class="s2">&quot;json&quot;</span>
+    <span class="n">RAW</span> <span class="o">=</span> <span class="s2">&quot;raw&quot;</span>
+    <span class="n">ESPSOMFY</span> <span class="o">=</span> <span class="s2">&quot;espsomfy&quot;</span></div>
 
 
-<span class="k">class</span> <span class="nc">_CommandTopicManager</span><span class="p">(</span><span class="n">_TopicManager</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MessageParser">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.MessageParser">[docs]</a>
+<span class="k">class</span> <span class="nc">MessageParser</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Manages command topics for different protocols.</span>
-
-<span class="sd">    This class provides methods to register and retrieve command base topics</span>
-<span class="sd">    for various protocols. It acts as a registry for command topic configurations,</span>
-<span class="sd">    allowing easy access to the command base topic for a given protocol.</span>
+<span class="sd">    Abstract base class for parsing incoming MQTT messages.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
-        <span class="n">command_topic_base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Register a command topic base for a given protocol.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            protocol (dev.Protocol): The protocol for which the command topic base is</span>
-<span class="sd">                being registered.</span>
-<span class="sd">            command_topic_base (str): The base topic for commands of the given protocol.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the protocol is already registered.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">protocol</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Protocol is already registered&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="p">[</span><span class="n">protocol</span><span class="p">]</span> <span class="o">=</span> <span class="n">command_topic_base</span>
-
-    <span class="k">def</span> <span class="nf">get_command_base_topic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the command base topic for a given protocol.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="p">[</span><span class="n">protocol</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">configure_topic_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Configure the topic registry.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_prefix</span> <span class="o">=</span> <span class="s2">&quot;TEST/&quot;</span>
-        <span class="n">_prefix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span> <span class="n">command_topic_base</span><span class="o">=</span><span class="n">_prefix</span> <span class="o">+</span> <span class="n">Z2M_INFO_BASE_TOPIC</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
-            <span class="n">command_topic_base</span><span class="o">=</span><span class="n">_prefix</span> <span class="o">+</span> <span class="n">TASMOTA_CMND_BASE_TOPIC</span><span class="p">,</span>
-        <span class="p">)</span>
-
-
-<span class="k">class</span> <span class="nc">_InfoTopicRegistryKey</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A key used to uniquely identify a topic configuration based on the</span>
-<span class="sd">    protocol and message type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span>
-    <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span>
-
-    <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
-        <span class="s2">&quot;Pydantic configuration for the InfoTopicRegistryKey class.&quot;</span>
-        <span class="n">frozen</span> <span class="o">=</span> <span class="kc">True</span>
-
-
-<span class="k">class</span> <span class="nc">_InfoTopicRegistry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Registered values for a given protocol and message type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">info_topic_base</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">topic_to_subscribe</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">device_name_offset</span><span class="p">:</span> <span class="nb">int</span>
-
-
-<span class="k">class</span> <span class="nc">_InfoTopicManager</span><span class="p">(</span><span class="n">_TopicManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Manages topic configurations for different protocols and message types.</span>
-
-<span class="sd">    This class provides methods to register, retrieve, and resolve MQTT topics</span>
-<span class="sd">    based on protocol and message type. It acts as a registry for topic configurations,</span>
-<span class="sd">    allowing easy access to the topic base, topic extension, and device name offset.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">resolve_wildcards</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
+<div class="viewcode-block" id="MessageParser.parse">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.MessageParser.parse">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span>
         <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
         <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
         <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">position</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">raw_payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataItem</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Resolve wildcards in the topic based on the protocol and message type.</span>
+<span class="sd">        Parse the incoming MQTT message according to the specified protocol and message type.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_registry_key</span> <span class="o">=</span> <span class="n">_InfoTopicRegistryKey</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span>
-        <span class="p">)</span>
-        <span class="n">_registry_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_registry_key</span><span class="p">)</span>
-        <span class="n">_offset</span> <span class="o">=</span> <span class="n">_registry_value</span><span class="o">.</span><span class="n">device_name_offset</span>
-        <span class="n">_result</span> <span class="o">=</span> <span class="n">topic</span><span class="p">[</span><span class="n">_offset</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="n">position</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">_result</span>
+        <span class="k">pass</span></div>
+</div>
 
-    <span class="k">def</span> <span class="nf">get_sub_topic</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the sub-topic from the given topic based on the protocol and message type.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_registry_key</span> <span class="o">=</span> <span class="n">_InfoTopicRegistryKey</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span>
-        <span class="p">)</span>
-        <span class="n">_registry_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_registry_key</span><span class="p">)</span>
-        <span class="n">_offset</span> <span class="o">=</span> <span class="n">_registry_value</span><span class="o">.</span><span class="n">device_name_offset</span>
-        <span class="n">_sub_topic</span> <span class="o">=</span> <span class="n">topic</span><span class="p">[</span><span class="n">_offset</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">_sub_topic</span>
 
-    <span class="k">def</span> <span class="nf">get_topic_to_subscribe</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the topic to subscribe to based on the protocol and message type.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_registry_key</span> <span class="o">=</span> <span class="n">_InfoTopicRegistryKey</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span>
-        <span class="p">)</span>
-        <span class="n">_registry_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_registry_key</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_registry_value</span><span class="o">.</span><span class="n">topic_to_subscribe</span>
 
-    <span class="k">def</span> <span class="nf">get_all_topics_to_subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get a list of all topics to subscribe to.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">topic_to_subscribe</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+<div class="viewcode-block" id="JsonMessageParser">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.JsonMessageParser">[docs]</a>
+<span class="k">class</span> <span class="nc">JsonMessageParser</span><span class="p">(</span><span class="n">MessageParser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses incoming MQTT messages in JSON format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
+<div class="viewcode-block" id="JsonMessageParser.parse">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.JsonMessageParser.parse">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span>
         <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
         <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
-        <span class="n">info_topic_base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">info_topic_extension</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Register a topic configuration.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_registry_key</span> <span class="o">=</span> <span class="n">_InfoTopicRegistryKey</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">_registry_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Key is already registered&quot;</span><span class="p">)</span>
-        <span class="n">_registry_value</span> <span class="o">=</span> <span class="n">_InfoTopicRegistry</span><span class="p">(</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">info_topic_base</span><span class="p">,</span>
-            <span class="n">topic_to_subscribe</span><span class="o">=</span><span class="n">info_topic_base</span> <span class="o">+</span> <span class="n">info_topic_extension</span><span class="p">,</span>
-            <span class="n">device_name_offset</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">info_topic_base</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_topic_registry</span><span class="p">[</span><span class="n">_registry_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_registry_value</span>
+        <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">raw_payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataItem</span><span class="p">]:</span>
+        <span class="c1"># Called by :</span>
+        <span class="c1"># - zigbee2mqtt state messages : _on_z2m_state</span>
+        <span class="c1"># - Tasmota state messages : _on_tasmota_state</span>
+        <span class="c1"># - zigbee2mqtt discovery messages : _on_z2m_disco</span>
+        <span class="c1"># - Tasmota discovery messages: _on_tasmota_disco</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw_payload</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">raw_payload</span></div>
+</div>
 
-    <span class="k">def</span> <span class="nf">configure_topic_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Configure the topic registry.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
-            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">,</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">Z2M_INFO_BASE_TOPIC</span><span class="p">,</span>
-            <span class="n">info_topic_extension</span><span class="o">=</span><span class="s2">&quot;/+/availability&quot;</span><span class="p">,</span>
+
+
+<div class="viewcode-block" id="RawMessageParser">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.RawMessageParser">[docs]</a>
+<span class="k">class</span> <span class="nc">RawMessageParser</span><span class="p">(</span><span class="n">MessageParser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses incoming MQTT messages in raw format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RawMessageParser.parse">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.RawMessageParser.parse">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span>
+        <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
+        <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
+        <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">raw_payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataItem</span><span class="p">]:</span>
+        <span class="c1"># Called by :</span>
+        <span class="c1"># - Tasmota availability messages: _on_tasmota_avail</span>
+        <span class="c1"># - ESPSomfy availability messages: _on_espsomfy_avail</span>
+        <span class="k">return</span> <span class="n">raw_payload</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ESPSomfyMessageParser">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.ESPSomfyMessageParser">[docs]</a>
+<span class="k">class</span> <span class="nc">ESPSomfyMessageParser</span><span class="p">(</span><span class="n">MessageParser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses incoming ESPSomfy messages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ESPSomfyMessageParser.parse">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.ESPSomfyMessageParser.parse">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span>
+        <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
+        <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
+        <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">raw_payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataItem</span><span class="p">]:</span>
+        <span class="c1"># Called by :</span>
+        <span class="c1"># - ESPSomfy state messages: _on_espsomfy_state</span>
+        <span class="c1"># - ESPSomfy discovery messages : _on_espsomfy_disco</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">topics</span><span class="o">.</span><span class="n">InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">resolve_wildcards</span><span class="p">(</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span> <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="mi">1</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
-            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">,</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">TASMOTA_INFO_BASE_TOPIC</span><span class="p">,</span>
-            <span class="n">info_topic_extension</span><span class="o">=</span><span class="s2">&quot;/+/LWT&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
-            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">Z2M_INFO_BASE_TOPIC</span><span class="p">,</span>
-            <span class="n">info_topic_extension</span><span class="o">=</span><span class="s2">&quot;/+&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
-            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">TASMOTA_INFO_BASE_TOPIC</span><span class="p">,</span>
-            <span class="n">info_topic_extension</span><span class="o">=</span><span class="s2">&quot;/+/+&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
-            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">,</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">Z2M_INFO_BASE_TOPIC</span><span class="p">,</span>
-            <span class="n">info_topic_extension</span><span class="o">=</span><span class="s2">&quot;/bridge/devices&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
-            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">,</span>
-            <span class="n">info_topic_base</span><span class="o">=</span><span class="n">TASMOTA_DISCOVERY_TOPIC</span><span class="p">,</span>
-            <span class="n">info_topic_extension</span><span class="o">=</span><span class="s2">&quot;/+/config&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">message_type</span> <span class="o">==</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw_payload</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">raw_payload</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="Scrutinizer">
@@ -342,6 +251,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance.</span>
 <span class="sd">        output_queue (Queue): The queue where the raw data is placed.</span>
+<span class="sd">        protocols_expected (List[dev.Protocol], optional): List of expected protocols. None for all.</span>
 <span class="sd">        queue_timeout (int, optional): Timeout for queue operations in seconds. Defaults to 1.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -351,68 +261,54 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">mqtt_client</span><span class="p">:</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">,</span>
         <span class="n">output_queue</span><span class="p">:</span> <span class="n">Queue</span><span class="p">,</span>
-        <span class="n">queue_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># timeout in sec.</span>
+        <span class="n">protocols_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">queue_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">QUEUE_TIMEOUT</span><span class="p">,</span>  <span class="c1"># timeout in sec.</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span> <span class="o">=</span> <span class="n">mqtt_client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span> <span class="o">=</span> <span class="n">output_queue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_queue_timeout</span> <span class="o">=</span> <span class="n">queue_timeout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_subscribe_to_topics</span><span class="p">()</span>
+        <span class="n">_protocols</span> <span class="o">=</span> <span class="n">protocols_expected</span> <span class="ow">or</span> <span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subscribe_to_topics</span><span class="p">(</span><span class="n">_protocols</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">MessageStructure</span><span class="o">.</span><span class="n">JSON</span><span class="p">:</span> <span class="n">JsonMessageParser</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span>
+            <span class="n">MessageStructure</span><span class="o">.</span><span class="n">RAW</span><span class="p">:</span> <span class="n">RawMessageParser</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span>
+            <span class="n">MessageStructure</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">:</span> <span class="n">ESPSomfyMessageParser</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span>
+        <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">_subscribe_to_topics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_subscribe_to_topics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocols_expected</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">def</span> <span class="nf">_callback_add</span><span class="p">(</span>
             <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
             <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
             <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
         <span class="p">):</span>
-            <span class="n">_topic</span> <span class="o">=</span> <span class="n">_InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_topic_to_subscribe</span><span class="p">(</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="p">)</span>
+            <span class="n">_topic</span> <span class="o">=</span> <span class="n">topics</span><span class="o">.</span><span class="n">InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_topic_to_subscribe</span><span class="p">(</span>
+                <span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">message_callback_add</span><span class="p">(</span><span class="n">_topic</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
 
-        <span class="n">_z2m</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span>
-        <span class="n">_tasmota</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span>
         <span class="n">_avail</span> <span class="o">=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span>
         <span class="n">_state</span> <span class="o">=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span>
         <span class="n">_disco</span> <span class="o">=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span>
-        <span class="c1"># Set availability handlers</span>
-        <span class="n">_callback_add</span><span class="p">(</span><span class="n">_z2m</span><span class="p">,</span> <span class="n">_avail</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_z2m_avail</span><span class="p">)</span>
-        <span class="n">_callback_add</span><span class="p">(</span><span class="n">_tasmota</span><span class="p">,</span> <span class="n">_avail</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_tasmota_avail</span><span class="p">)</span>
-        <span class="c1"># Set state handlers</span>
-        <span class="n">_callback_add</span><span class="p">(</span><span class="n">_z2m</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_z2m_state</span><span class="p">)</span>
-        <span class="n">_callback_add</span><span class="p">(</span><span class="n">_tasmota</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_tasmota_state</span><span class="p">)</span>
-        <span class="c1"># Set discovery handlers</span>
-        <span class="n">_callback_add</span><span class="p">(</span><span class="n">_z2m</span><span class="p">,</span> <span class="n">_disco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_z2m_disco</span><span class="p">)</span>
-        <span class="n">_callback_add</span><span class="p">(</span><span class="n">_tasmota</span><span class="p">,</span> <span class="n">_disco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_tasmota_disco</span><span class="p">)</span>
+        <span class="n">_z2m_proto</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span>
+        <span class="n">_tasmota_proto</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span>
+        <span class="n">_espsomfy_proto</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span>
+
+        <span class="k">if</span> <span class="n">_z2m_proto</span> <span class="ow">in</span> <span class="n">protocols_expected</span><span class="p">:</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_z2m_proto</span><span class="p">,</span> <span class="n">_disco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_z2m_disco</span><span class="p">)</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_z2m_proto</span><span class="p">,</span> <span class="n">_avail</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_z2m_avail</span><span class="p">)</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_z2m_proto</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_z2m_state</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_tasmota_proto</span> <span class="ow">in</span> <span class="n">protocols_expected</span><span class="p">:</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_tasmota_proto</span><span class="p">,</span> <span class="n">_disco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_tasmota_disco</span><span class="p">)</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_tasmota_proto</span><span class="p">,</span> <span class="n">_avail</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_tasmota_avail</span><span class="p">)</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_tasmota_proto</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_tasmota_state</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_espsomfy_proto</span> <span class="ow">in</span> <span class="n">protocols_expected</span><span class="p">:</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_espsomfy_proto</span><span class="p">,</span> <span class="n">_disco</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_espsomfy_disco</span><span class="p">)</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_espsomfy_proto</span><span class="p">,</span> <span class="n">_avail</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_espsomfy_avail</span><span class="p">)</span>
+            <span class="n">_callback_add</span><span class="p">(</span><span class="n">_espsomfy_proto</span><span class="p">,</span> <span class="n">_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_espsomfy_state</span><span class="p">)</span>
         <span class="c1"># Set connection handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">connect_handler_add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_connect</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_json_to_item</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
-        <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
-        <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Item</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert a JSON payload to a messenger.Item object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">_payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-            <span class="n">_tag</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">:</span>
-                <span class="n">_tag</span> <span class="o">=</span> <span class="n">_InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">resolve_wildcards</span><span class="p">(</span>
-                    <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
-                    <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span>
-                    <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
-                    <span class="n">position</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">return</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Item</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">_payload</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">_tag</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">&quot;Failed to parse message: </span><span class="si">%s</span><span class="s2"> - data: </span><span class="si">%s</span><span class="s2"> - tag: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="nb">repr</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]),</span>
-                <span class="n">_payload</span><span class="p">,</span>
-                <span class="n">_tag</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">_process_message</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -421,6 +317,7 @@
         <span class="n">mqtt_message</span><span class="p">:</span> <span class="n">mqtt</span><span class="o">.</span><span class="n">MQTTMessage</span><span class="p">,</span>
         <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
         <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
+        <span class="n">parser</span><span class="p">:</span> <span class="n">Parser</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process an incoming MQTT message and put the result in the output queue.</span>
@@ -430,78 +327,177 @@
         <span class="k">if</span> <span class="n">_raw_payload</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Received empty message on topic </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">topic</span><span class="p">)</span>
             <span class="k">return</span>
-        <span class="n">_device_name</span> <span class="o">=</span> <span class="n">_InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">resolve_wildcards</span><span class="p">(</span>
-            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span> <span class="n">topic</span><span class="o">=</span><span class="n">topic</span>
+        <span class="n">_device_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_device_id</span><span class="p">(</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+            <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span>
+            <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">_item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_json_to_item</span><span class="p">(</span>
-                <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
-                <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span>
-                <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
-                <span class="n">payload</span><span class="o">=</span><span class="n">_raw_payload</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
-            <span class="n">_is_tasmota</span> <span class="o">=</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span>
-            <span class="n">_is_state</span> <span class="o">=</span> <span class="n">message_type</span> <span class="o">==</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span>
-            <span class="k">if</span> <span class="n">_is_tasmota</span> <span class="ow">and</span> <span class="n">_is_state</span><span class="p">:</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] dismissed topic&quot;</span><span class="p">,</span> <span class="n">topic</span><span class="p">)</span>
-                <span class="k">return</span>
-            <span class="n">_item</span> <span class="o">=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Item</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">_raw_payload</span><span class="p">)</span>
+
+        <span class="n">_data</span> <span class="o">=</span> <span class="n">parser</span><span class="p">(</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+            <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span>
+            <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
+            <span class="n">raw_payload</span><span class="o">=</span><span class="n">_raw_payload</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">_item</span> <span class="o">=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Item</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">_data</span><span class="p">)</span>
         <span class="n">_incoming</span> <span class="o">=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
             <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">device_name</span><span class="o">=</span><span class="n">_device_name</span><span class="p">,</span>
+            <span class="n">device_id</span><span class="o">=</span><span class="n">_device_id</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span>
             <span class="n">raw_item</span><span class="o">=</span><span class="n">_item</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">_incoming</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue_timeout</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">_incoming</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue_timeout</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">Full</span><span class="p">:</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;Output queue is full. Dropping message for topic </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">topic</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_device_id</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
+        <span class="n">message_type</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">,</span>
+        <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the device ID from the topic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">PREFIX</span> <span class="o">=</span> <span class="s2">&quot;shade&quot;</span>
+        <span class="n">_index</span> <span class="o">=</span> <span class="n">topics</span><span class="o">.</span><span class="n">InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">resolve_wildcards</span><span class="p">(</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+            <span class="n">message_type</span><span class="o">=</span><span class="n">message_type</span><span class="p">,</span>
+            <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
+            <span class="n">position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">message_type</span> <span class="o">==</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">PREFIX</span>
+            <span class="k">if</span> <span class="n">message_type</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">,</span>
+                <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
+            <span class="p">]:</span>
+                <span class="k">return</span> <span class="n">_index</span>
+        <span class="k">return</span> <span class="n">_index</span>
 
     <span class="k">def</span> <span class="nf">_on_z2m_avail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process zigbee2mqtt availability messages:</span>
+<span class="sd">        zigbee2mqtt/&lt;device_id&gt;/availability: &lt;value&gt;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
             <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">JSON</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_tasmota_avail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process Tasmota availability messages:</span>
+<span class="sd">        tele/&lt;device_id&gt;/LWT: &lt;value&gt;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
             <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">RAW</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_espsomfy_avail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process ESPSomfy availability messages:</span>
+<span class="sd">        ESPSomfy/status: &lt;value&gt;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">,</span>
+            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">RAW</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_z2m_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process zigbee2mqtt state messages:</span>
+<span class="sd">        zigbee2mqtt/&lt;device_id&gt;: {&lt;property&gt;: &lt;value&gt;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
             <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">JSON</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_tasmota_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process Tasmota state messages:</span>
+<span class="sd">        stat/&lt;device_id&gt;/RESULT: {&lt;property&gt;: &lt;value&gt;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
             <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">JSON</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_espsomfy_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process ESPSomfy state messages:</span>
+<span class="sd">        ESPSomfy/shades/&lt;device_id&gt;/&lt;property&gt;: &lt;value&gt;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">,</span>
+            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_z2m_disco</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process zigbee2mqtt discovery messages:</span>
+<span class="sd">        zigbee2mqtt/bridge/devices: [{&lt;property&gt;: &lt;value&gt;}]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
             <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">JSON</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_tasmota_disco</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process Tasmota discovery messages:</span>
+<span class="sd">        tasmota/discovery/&lt;device_id&gt;/config: {&lt;property&gt;: &lt;value&gt;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
             <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span>
             <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">JSON</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_espsomfy_disco</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">argc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process ESPSomfy discovery messages:</span>
+<span class="sd">        homeassistant/cover/&lt;device_id&gt;/config: {&lt;property&gt;: &lt;value&gt;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_message</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">argc</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">,</span>
+            <span class="n">message_type</span><span class="o">=</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">,</span>
+            <span class="n">parser</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_parsers</span><span class="p">[</span><span class="n">MessageStructure</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_on_connect</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
@@ -513,75 +509,16 @@
         <span class="n">properties</span><span class="p">:</span> <span class="n">mqtt</span><span class="o">.</span><span class="n">Properties</span><span class="p">,</span>  <span class="c1"># pylint: disable=unused-argument</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Subscribes to MQTT topics on connection.&quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">_topic</span> <span class="ow">in</span> <span class="n">_InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_all_topics_to_subscribe</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_topic</span> <span class="ow">in</span> <span class="n">topics</span><span class="o">.</span><span class="n">InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_all_topics_to_subscribe</span><span class="p">():</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Subscribing to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_topic</span><span class="p">)</span>
             <span class="n">client</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">_topic</span><span class="p">)</span></div>
 
 
 
-<span class="k">class</span> <span class="nc">_TimerManager</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A class to manage timers for devices, ensuring thread safety and preventing multiple timers</span>
-<span class="sd">    from being active for the same device in case of bouncing messages</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_timer_registry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_timer_registry_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">create_timer</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">countdown</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">task</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(),</span>
-        <span class="n">kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Manages a timer for a specific device, ensuring that only one timer is active per device.</span>
-
-<span class="sd">        This method creates and starts a new timer for the given device. If a timer for the device</span>
-<span class="sd">        already exists, it cancels the existing timer before starting a new one. The timer will call</span>
-<span class="sd">        the specified function (`task`) with the provided arguments (`args` and `kwargs`) after</span>
-<span class="sd">        the countdown period.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            device_name (str): The name of the device for which the timer is being managed.</span>
-<span class="sd">            countdown (float): The countdown period in seconds after which the `task` function</span>
-<span class="sd">                will be executed.</span>
-<span class="sd">            task (Callable[..., Any]): The function to be called when the timer expires.</span>
-<span class="sd">            args (tuple, optional): Positional arguments to be passed to the `task` function.</span>
-<span class="sd">                Defaults to ().</span>
-<span class="sd">            kwargs (Optional[Dict[str, Any]], optional): Keyword arguments to be passed to the</span>
-<span class="sd">                `task` function. Defaults to None.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            threading.Thread: The newly created and started timer thread.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timer_registry_lock</span><span class="p">:</span>
-                <span class="n">_previous_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timer_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">device_name</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">_previous_timer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Replace previous timer for </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">device_name</span><span class="p">)</span>
-                    <span class="n">_previous_timer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
-                <span class="n">_timer</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="n">countdown</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="n">_timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_timer_registry</span><span class="p">[</span><span class="n">device_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_timer</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                <span class="s2">&quot;Failed to manage timer for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">device_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">raise</span>
-
-
-<span class="n">_timer_manager</span> <span class="o">=</span> <span class="n">_TimerManager</span><span class="p">()</span>
-
-
 <div class="viewcode-block" id="DeviceAccessor">
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.DeviceAccessor">[docs]</a>
 <span class="k">class</span> <span class="nc">DeviceAccessor</span><span class="p">:</span>
+    <span class="n">_timer_mgr</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">TimerManager</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A class responsible for accessing device state via MQTT.</span>
 
@@ -601,7 +538,7 @@
 <div class="viewcode-block" id="DeviceAccessor.trigger_get_state">
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.DeviceAccessor.trigger_get_state">[docs]</a>
     <span class="k">def</span> <span class="nf">trigger_get_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Model</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Model</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Triggers the retrieval of the current state of a device via MQTT.</span>
@@ -612,8 +549,9 @@
 <span class="sd">        accordingly.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device_name (str): The name of the device for which the state is being retrieved.</span>
-<span class="sd">            protocol (dev.Protocol): The communication protocol used by the device (e.g., Z2M, TASMOTA).</span>
+<span class="sd">            device_id (str): The id of the device for which the state is being retrieved.</span>
+<span class="sd">            protocol (dev.Protocol): The communication protocol used by the device (e.g., Z2M,</span>
+<span class="sd">                TASMOTA).</span>
 <span class="sd">            model (dev.Model): The model of the device.</span>
 
 <span class="sd">        Raises:</span>
@@ -623,36 +561,33 @@
 <span class="sd">            If the encoder for the given device model is not found, a debug message is logged</span>
 <span class="sd">            and the method returns without publishing any messages.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_command_base_topic</span> <span class="o">=</span> <span class="n">_CommandTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_command_base_topic</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_publish_it</span><span class="p">(</span><span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Publishing state retrieval to </span><span class="si">%s</span><span class="s2"> - state : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">topic</span><span class="p">,</span> <span class="n">payload</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">_command_base_topic</span> <span class="o">=</span> <span class="n">topics</span><span class="o">.</span><span class="n">CommandTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_command_base_topic</span><span class="p">(</span>
+            <span class="n">protocol</span>
+        <span class="p">)</span>
         <span class="n">_encoder</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">EncoderRegistry</span><span class="o">.</span><span class="n">get_encoder</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">_encoder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Cannot get state for model: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="n">_fields</span> <span class="o">=</span> <span class="n">_encoder</span><span class="o">.</span><span class="n">gettable_fields</span>
         <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">:</span>
-            <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">/get&quot;</span>
+            <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">/get&quot;</span>
             <span class="n">_pl</span> <span class="o">=</span> <span class="p">{</span><span class="n">_field</span><span class="p">:</span> <span class="s2">&quot;&quot;</span> <span class="k">for</span> <span class="n">_field</span> <span class="ow">in</span> <span class="n">_fields</span><span class="p">}</span>
             <span class="n">_command_payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">_pl</span><span class="p">)</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="s2">&quot;Publishing state retrieval to </span><span class="si">%s</span><span class="s2"> - state : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">_command_topic</span><span class="p">,</span>
-                <span class="n">_command_payload</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
-                <span class="n">_command_topic</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">_command_payload</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span>
-            <span class="p">)</span>
+            <span class="n">_publish_it</span><span class="p">(</span><span class="n">_command_topic</span><span class="p">,</span> <span class="n">_command_payload</span><span class="p">)</span>
             <span class="k">return</span>
-        <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">protocol</span> <span class="ow">in</span> <span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">,</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">]:</span>
             <span class="k">for</span> <span class="n">_field</span> <span class="ow">in</span> <span class="n">_fields</span><span class="p">:</span>
-                <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">_field</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;Publishing state retrieval to </span><span class="si">%s</span><span class="s2"> - state : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">_command_topic</span><span class="p">,</span>
-                    <span class="s1">&#39;&quot;&quot;&#39;</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
-                    <span class="n">_command_topic</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span>
-                <span class="p">)</span>
+                <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">_field</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">_command_payload</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">_publish_it</span><span class="p">(</span><span class="n">_command_topic</span><span class="p">,</span> <span class="n">_command_payload</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="n">_error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Unknown protocol </span><span class="si">{</span><span class="n">protocol</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">_error_msg</span><span class="p">)</span></div>
@@ -661,13 +596,13 @@
 <div class="viewcode-block" id="DeviceAccessor.trigger_change_state">
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.DeviceAccessor.trigger_change_state">[docs]</a>
     <span class="k">def</span> <span class="nf">trigger_change_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">Dict</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Publish a state change message to the MQTT topic for the given device.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device_name (str): The name of the device.</span>
+<span class="sd">            device_id (str): The id of the device.</span>
 <span class="sd">            protocol (dev.Protocol): The communication protocol.</span>
 <span class="sd">            state (Dict): The new state to be published.</span>
 
@@ -676,28 +611,31 @@
 <span class="sd">            by the use of the `model_dump` method.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_command_base_topic</span> <span class="o">=</span> <span class="n">_CommandTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_command_base_topic</span><span class="p">(</span><span class="n">protocol</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_publish_it</span><span class="p">(</span><span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Publishing state change to </span><span class="si">%s</span><span class="s2"> - state : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">topic</span><span class="p">,</span> <span class="n">payload</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">_command_base_topic</span> <span class="o">=</span> <span class="n">topics</span><span class="o">.</span><span class="n">CommandTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">get_command_base_topic</span><span class="p">(</span>
+            <span class="n">protocol</span>
+        <span class="p">)</span>
         <span class="n">_json_state</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">:</span>
-            <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">/set&quot;</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="s2">&quot;Publishing state change to </span><span class="si">%s</span><span class="s2"> - state : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">_command_topic</span><span class="p">,</span>
-                <span class="n">_json_state</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
-                <span class="n">_command_topic</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="n">_json_state</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span>
-            <span class="p">)</span>
+            <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">/set&quot;</span>
+            <span class="n">_publish_it</span><span class="p">(</span><span class="n">_command_topic</span><span class="p">,</span> <span class="n">_json_state</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">TASMOTA</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">_value</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">_key</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="s2">&quot;Publishing state change to </span><span class="si">%s</span><span class="s2"> - state : </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_command_topic</span><span class="p">,</span> <span class="n">_value</span>
-                <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
-                    <span class="n">_command_topic</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">_value</span><span class="p">),</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span>
-                <span class="p">)</span>
+                <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">_key</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">_publish_it</span><span class="p">(</span><span class="n">_command_topic</span><span class="p">,</span> <span class="n">_value</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">protocol</span> <span class="o">==</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">_value</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">_command_topic</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_command_base_topic</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">device_id</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">_key</span><span class="si">}</span><span class="s2">/set&quot;</span>
+                <span class="n">_publish_it</span><span class="p">(</span><span class="n">_command_topic</span><span class="p">,</span> <span class="n">_value</span><span class="p">)</span>
             <span class="k">return</span>
         <span class="n">_error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Unknown protocol </span><span class="si">{</span><span class="n">protocol</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">_error_msg</span><span class="p">)</span></div>
@@ -705,14 +643,13 @@
 
     <span class="k">def</span> <span class="nf">_do_switch_power</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
         <span class="n">power_on</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Switching power of </span><span class="si">%s</span><span class="s2"> to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">device_name</span><span class="p">,</span> <span class="n">power_on</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trigger_change_state</span><span class="p">(</span>
-            <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+            <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
             <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
             <span class="n">state</span><span class="o">=</span><span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
                 <span class="n">model</span><span class="p">,</span> <span class="n">abstract</span><span class="o">.</span><span class="n">SWITCH_ON</span> <span class="k">if</span> <span class="n">power_on</span> <span class="k">else</span> <span class="n">abstract</span><span class="o">.</span><span class="n">SWITCH_OFF</span>
@@ -721,7 +658,7 @@
 
     <span class="k">def</span> <span class="nf">_do_switch_power_change</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
         <span class="n">power_on</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
@@ -742,13 +679,13 @@
 
         <span class="k">def</span> <span class="nf">_manage_timer_helper</span><span class="p">(</span><span class="n">_power_on</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">_countdown</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_params</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;device_name&quot;</span><span class="p">:</span> <span class="n">device_name</span><span class="p">,</span>
+                <span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="n">device_id</span><span class="p">,</span>
                 <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
                 <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
                 <span class="s2">&quot;power_on&quot;</span><span class="p">:</span> <span class="n">_power_on</span><span class="p">,</span>
             <span class="p">}</span>
-            <span class="n">_timer_manager</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
-                <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_timer_mgr</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
+                <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
                 <span class="n">countdown</span><span class="o">=</span><span class="n">_countdown</span><span class="p">,</span>
                 <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_do_switch_power</span><span class="p">,</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="n">_params</span><span class="p">,</span>
@@ -756,7 +693,7 @@
 
         <span class="k">if</span> <span class="n">countdown</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">_params</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;device_names&quot;</span><span class="p">:</span> <span class="n">device_name</span><span class="p">,</span>
+                <span class="s2">&quot;device_ids&quot;</span><span class="p">:</span> <span class="n">device_id</span><span class="p">,</span>
                 <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
                 <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
                 <span class="s2">&quot;power_on&quot;</span><span class="p">:</span> <span class="n">power_on</span><span class="p">,</span>
@@ -764,15 +701,15 @@
                 <span class="s2">&quot;on_time&quot;</span><span class="p">:</span> <span class="n">on_time</span><span class="p">,</span>
                 <span class="s2">&quot;off_time&quot;</span><span class="p">:</span> <span class="n">off_time</span><span class="p">,</span>
             <span class="p">}</span>
-            <span class="n">_timer_manager</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
-                <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_timer_mgr</span><span class="o">.</span><span class="n">create_timer</span><span class="p">(</span>
+                <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
                 <span class="n">countdown</span><span class="o">=</span><span class="n">countdown</span><span class="p">,</span>
                 <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">switch_power_change</span><span class="p">,</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="n">_params</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_do_switch_power</span><span class="p">(</span>
-                <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+                <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
                 <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
                 <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">power_on</span><span class="o">=</span><span class="n">power_on</span><span class="p">,</span>
@@ -786,7 +723,7 @@
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.DeviceAccessor.switch_power_change">[docs]</a>
     <span class="k">def</span> <span class="nf">switch_power_change</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">device_names</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">device_ids</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
         <span class="n">power_on</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
@@ -802,7 +739,7 @@
 <span class="sd">        the devices on and off based on the provided on_time and off_time parameters.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device_names (str): A comma-separated string of switch names.</span>
+<span class="sd">            device_ids (str): A comma-separated string of switch ids.</span>
 <span class="sd">            protocol (dev.Protocol): The protocol used by the device.</span>
 <span class="sd">            model (dev.Model): The model of the device.</span>
 <span class="sd">            power_on (bool): The desired power state (True for ON, False for OFF).</span>
@@ -821,9 +758,9 @@
 <span class="sd">            model must be provided compared to :func:`switch_power_change_helper` function.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">device_name</span> <span class="ow">in</span> <span class="n">device_names</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">device_id</span> <span class="ow">in</span> <span class="n">device_ids</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_do_switch_power_change</span><span class="p">(</span>
-                <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+                <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
                 <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
                 <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">power_on</span><span class="o">=</span><span class="n">power_on</span><span class="p">,</span>
@@ -837,7 +774,7 @@
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.DeviceAccessor.switch_power_change_helper">[docs]</a>
     <span class="k">def</span> <span class="nf">switch_power_change_helper</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">device_names</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">device_ids</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">power_on</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">countdown</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">on_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_ON_TIME</span><span class="p">,</span>
@@ -851,7 +788,7 @@
 <span class="sd">        power state.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device_names (str): A comma-separated string of switch names.</span>
+<span class="sd">            device_ids (str): A comma-separated string of switch ids.</span>
 <span class="sd">            power_on (bool): The desired power state. True to power on, False to power off.</span>
 <span class="sd">            countdown (float, optional): The countdown period in seconds before changing</span>
 <span class="sd">                the power state. Defaults to 0.</span>
@@ -867,18 +804,18 @@
 <span class="sd">            The discovery step must be performed before calling this function.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">device_name</span> <span class="ow">in</span> <span class="n">device_names</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">device_id</span> <span class="ow">in</span> <span class="n">device_ids</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
             <span class="c1"># Retrieve the device from the device directory</span>
             <span class="n">_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">DeviceDirectory</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span>
-                <span class="n">device_name</span>
+                <span class="n">device_id</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">_device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">devices</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">DeviceDirectory</span><span class="o">.</span><span class="n">get_device_names</span><span class="p">()</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Device </span><span class="si">%s</span><span class="s2"> not found in </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">device_name</span><span class="p">,</span> <span class="n">devices</span><span class="p">)</span>
+                <span class="n">devices</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">DeviceDirectory</span><span class="o">.</span><span class="n">get_device_ids</span><span class="p">()</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Device </span><span class="si">%s</span><span class="s2"> not found in </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">device_id</span><span class="p">,</span> <span class="n">devices</span><span class="p">)</span>
                 <span class="k">return</span>
             <span class="c1"># Call the switch_power_change function with the retrieved device&#39;s protocol and model</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_do_switch_power_change</span><span class="p">(</span>
-                <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+                <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
                 <span class="n">protocol</span><span class="o">=</span><span class="n">_device</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span>
                 <span class="n">model</span><span class="o">=</span><span class="n">_device</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
                 <span class="n">power_on</span><span class="o">=</span><span class="n">power_on</span><span class="p">,</span>
@@ -890,49 +827,167 @@
 
 
 
+<div class="viewcode-block" id="is_message_expected">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.is_message_expected">[docs]</a>
+<span class="k">def</span> <span class="nf">is_message_expected</span><span class="p">(</span>
+    <span class="n">message</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">,</span>
+    <span class="n">types_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">protocols_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">models_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">devices_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validates if a message matches the expected criteria for message type,</span>
+<span class="sd">    protocol, model and device.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        message: The messenger.Message object to validate</span>
+<span class="sd">        types_expected: List of allowed message types</span>
+<span class="sd">        protocols_expected: List of allowed protocols</span>
+<span class="sd">        models_expected: List of allowed device models</span>
+<span class="sd">        devices_expected: List of allowed device IDs</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: True if message matches all specified criteria, False otherwise</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        If any of the expected lists are None, that criteria is not checked.</span>
+<span class="sd">        The message must have non-None values for message_type, protocol and model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_validate_list_membership</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">expected_list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">expected_list</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="n">types_expected</span><span class="p">,</span> <span class="n">protocols_expected</span><span class="p">,</span> <span class="n">models_expected</span><span class="p">,</span> <span class="n">devices_expected</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">types_expected</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_validate_list_membership</span><span class="p">(</span>
+        <span class="n">message</span><span class="o">.</span><span class="n">message_type</span><span class="p">,</span>
+        <span class="n">types_expected</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">protocols_expected</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_validate_list_membership</span><span class="p">(</span>
+        <span class="n">message</span><span class="o">.</span><span class="n">protocol</span><span class="p">,</span>
+        <span class="n">protocols_expected</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">models_expected</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_validate_list_membership</span><span class="p">(</span>
+        <span class="n">message</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">models_expected</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">devices_expected</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_validate_list_membership</span><span class="p">(</span>
+        <span class="n">message</span><span class="o">.</span><span class="n">device_id</span><span class="p">,</span>
+        <span class="n">devices_expected</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+
 <div class="viewcode-block" id="get_refined_data_queue">
 <a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.central.get_refined_data_queue">[docs]</a>
-<span class="k">def</span> <span class="nf">get_refined_data_queue</span><span class="p">(</span><span class="n">mqtt_client</span><span class="p">:</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Queue</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">get_refined_data_queue</span><span class="p">(</span>
+    <span class="n">mqtt_client</span><span class="p">:</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">,</span>
+    <span class="n">protocols_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">models_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">devices_expected</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Queue</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates and returns a queue of refined messages by processing raw messages from MQTT.</span>
 
+<span class="sd">    This function sets up a message processing pipeline that:</span>
+<span class="sd">    1. Captures raw MQTT messages via a Scrutinizer</span>
+<span class="sd">    2. Processes discovery messages to identify devices</span>
+<span class="sd">    3. Resolves device models and processes availability/state messages</span>
+<span class="sd">    4. Normalizes messages into standardized formats</span>
+
 <span class="sd">    Args:</span>
-<span class="sd">        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance.</span>
+<span class="sd">        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance</span>
+<span class="sd">        protocols_expected (List[dev.Protocol], optional): List of protocols to filter messages by</span>
+<span class="sd">        models_expected (List[dev.Model], optional): List of device models to filter messages by</span>
+<span class="sd">        devices_expected (List[str], optional): List of device IDs to filter messages by</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Queue: The queue containing the refined (processed) messages.</span>
+<span class="sd">        Queue: A queue containing the refined (processed) messages that match the specified filters</span>
 
+<span class="sd">    Note:</span>
+<span class="sd">        The pipeline includes a 1-second delay after discovery messages to ensure all devices</span>
+<span class="sd">        are properly identified before processing state messages.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_raw_data_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
     <span class="n">_layer1_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
     <span class="n">_layer2_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
     <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
-    <span class="n">Scrutinizer</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">mqtt_client</span><span class="p">,</span> <span class="n">output_queue</span><span class="o">=</span><span class="n">_raw_data_queue</span><span class="p">)</span>
+    <span class="n">Scrutinizer</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">mqtt_client</span><span class="p">,</span> <span class="n">output_queue</span><span class="o">=</span><span class="n">_raw_data_queue</span><span class="p">,</span> <span class="n">protocols_expected</span><span class="o">=</span><span class="n">protocols_expected</span><span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">mqtt_client</span><span class="p">)</span>
 
     <span class="n">messenger</span><span class="o">.</span><span class="n">Dispatcher</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pipeline-discovery&quot;</span><span class="p">,</span>
         <span class="n">input_queue</span><span class="o">=</span><span class="n">_raw_data_queue</span><span class="p">,</span>
         <span class="n">output_queue</span><span class="o">=</span><span class="n">_layer1_queue</span><span class="p">,</span>
         <span class="n">conditional_handlers</span><span class="o">=</span><span class="p">[</span>
-            <span class="p">(</span><span class="n">messenger</span><span class="o">.</span><span class="n">is_type_discovery</span><span class="p">,</span> <span class="n">processor</span><span class="o">.</span><span class="n">Discoverer</span><span class="p">()</span><span class="o">.</span><span class="n">process</span><span class="p">),</span>
+            <span class="c1"># 1) Protocol Filtering</span>
+            <span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">types_expected</span><span class="o">=</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">],</span>
+                    <span class="n">protocols_expected</span><span class="o">=</span><span class="n">protocols_expected</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">processor</span><span class="o">.</span><span class="n">Discoverer</span><span class="p">()</span><span class="o">.</span><span class="n">process</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="c1"># copy NON Discovery messages to output queue</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">types_expected</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">,</span>
+                        <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">protocols_expected</span><span class="o">=</span><span class="n">protocols_expected</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">pass_through</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">],</span>
-        <span class="c1"># copy Discovery message to output queue</span>
-        <span class="n">default_handler</span><span class="o">=</span><span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">pass_through</span><span class="p">,</span>
+        <span class="c1"># Remove non matching protocol messages</span>
+        <span class="n">default_handler</span><span class="o">=</span><span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">no_op</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Listen to receive all discovery messages</span>
-    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">mqtt_client</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Listen to receive all discovery messages</span>
+
     <span class="n">messenger</span><span class="o">.</span><span class="n">Dispatcher</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pipeline-layer1&quot;</span><span class="p">,</span>
         <span class="n">input_queue</span><span class="o">=</span><span class="n">_layer1_queue</span><span class="p">,</span>
         <span class="n">output_queue</span><span class="o">=</span><span class="n">_layer2_queue</span><span class="p">,</span>
         <span class="n">conditional_handlers</span><span class="o">=</span><span class="p">[</span>
+            <span class="c1"># Device filtering</span>
             <span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="ow">not</span> <span class="n">messenger</span><span class="o">.</span><span class="n">is_type_discovery</span><span class="p">(</span><span class="n">msg</span><span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">types_expected</span><span class="o">=</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">],</span>
+                <span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">_get_device_state</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">_accessor</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">types_expected</span><span class="o">=</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">],</span>
+                    <span class="n">devices_expected</span><span class="o">=</span><span class="n">devices_expected</span><span class="p">,</span>
+                <span class="p">),</span>
                 <span class="n">processor</span><span class="o">.</span><span class="n">ModelResolver</span><span class="p">()</span><span class="o">.</span><span class="n">process</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="n">types_expected</span><span class="o">=</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">],</span>
+                    <span class="n">devices_expected</span><span class="o">=</span><span class="n">devices_expected</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">pass_through</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">],</span>
-        <span class="c1"># copy Discovery message to output queue</span>
-        <span class="n">default_handler</span><span class="o">=</span><span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">_get_device_state</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">_accessor</span><span class="p">),</span>
+        <span class="c1"># Remove non matching messages</span>
+        <span class="n">default_handler</span><span class="o">=</span><span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">no_op</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">messenger</span><span class="o">.</span><span class="n">Dispatcher</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">&quot;normalizer&quot;</span><span class="p">,</span>
@@ -940,16 +995,33 @@
         <span class="n">output_queue</span><span class="o">=</span><span class="n">_refined_queue</span><span class="p">,</span>
         <span class="n">conditional_handlers</span><span class="o">=</span><span class="p">[</span>
             <span class="p">(</span>
-                <span class="n">messenger</span><span class="o">.</span><span class="n">is_type_availability</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">AVAIL</span><span class="p">],</span>
+                    <span class="n">models_expected</span><span class="o">=</span><span class="n">models_expected</span><span class="p">,</span>  <span class="c1"># Remove availability if model is expected</span>
+                <span class="p">),</span>
                 <span class="n">processor</span><span class="o">.</span><span class="n">AvailabilityNormalizer</span><span class="p">()</span><span class="o">.</span><span class="n">process</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span>
-                <span class="n">messenger</span><span class="o">.</span><span class="n">is_type_state</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span><span class="p">],</span>
+                    <span class="n">models_expected</span><span class="o">=</span><span class="n">models_expected</span><span class="p">,</span>
+                <span class="p">),</span>
                 <span class="n">processor</span><span class="o">.</span><span class="n">StateNormalizer</span><span class="p">()</span><span class="o">.</span><span class="n">process</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">is_message_expected</span><span class="p">(</span>
+                    <span class="n">msg</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">],</span>
+                    <span class="n">models_expected</span><span class="o">=</span><span class="n">models_expected</span><span class="p">,</span>
+                    <span class="n">devices_expected</span><span class="o">=</span><span class="n">devices_expected</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">pass_through</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">],</span>
-        <span class="c1"># copy Discovery message to output queue</span>
-        <span class="n">default_handler</span><span class="o">=</span><span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">pass_through</span><span class="p">,</span>
+        <span class="c1"># Remove non matching messages</span>
+        <span class="n">default_handler</span><span class="o">=</span><span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">no_op</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">_refined_queue</span></div>
 
@@ -958,19 +1030,26 @@
 <span class="k">def</span> <span class="nf">_get_device_state</span><span class="p">(</span>
     <span class="n">message</span><span class="p">:</span> <span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="n">DeviceAccessor</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ask for state device</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_registry</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">refined</span>
-    <span class="k">for</span> <span class="n">_device_name</span> <span class="ow">in</span> <span class="n">_registry</span><span class="o">.</span><span class="n">device_names</span><span class="p">:</span>
-        <span class="n">_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">DeviceDirectory</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span>
-            <span class="n">_device_name</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">message_type</span> <span class="o">!=</span> <span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">DISCO</span><span class="p">:</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Must be DISCOVERY message, not: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">message</span>
+    <span class="k">if</span> <span class="n">_registry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No refined message found for: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">message</span>
+    <span class="k">for</span> <span class="n">_device_id</span> <span class="ow">in</span> <span class="n">_registry</span><span class="o">.</span><span class="n">device_ids</span><span class="p">:</span>
+        <span class="n">_device</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Device</span><span class="p">]</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">DeviceDirectory</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="n">_device_id</span><span class="p">)</span>
         <span class="n">_model</span> <span class="o">=</span> <span class="n">_device</span><span class="o">.</span><span class="n">model</span>
         <span class="n">_protocol</span> <span class="o">=</span> <span class="n">_device</span><span class="o">.</span><span class="n">protocol</span>
-        <span class="n">accessor</span><span class="o">.</span><span class="n">trigger_get_state</span><span class="p">(</span><span class="n">_device_name</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">_protocol</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">_model</span><span class="p">)</span>
+        <span class="n">accessor</span><span class="o">.</span><span class="n">trigger_get_state</span><span class="p">(</span><span class="n">_device_id</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">_protocol</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">_model</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">message</span>
 
 
-<span class="n">_InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">configure_topic_registry</span><span class="p">()</span>
-<span class="n">_CommandTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">configure_topic_registry</span><span class="p">()</span>
+<span class="n">topics</span><span class="o">.</span><span class="n">InfoTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">configure_topic_registry</span><span class="p">()</span>
+<span class="n">topics</span><span class="o">.</span><span class="n">CommandTopicManager</span><span class="p">()</span><span class="o">.</span><span class="n">configure_topic_registry</span><span class="p">()</span>
 </pre></div>
 
            </div>

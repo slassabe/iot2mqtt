@@ -131,19 +131,20 @@
 <section id="example-usage">
 <h3>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h3>
 <p>Below is an example demonstrating how to use the ClientHelper class to connect to an MQTT broker and process messages from the refined data queue.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
+
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="c1"># Initialize the MQTT client helper with the broker&#39;s hostname and security context</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> 
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="c1"># Start the MQTT client to establish a connection with the broker</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
     <span class="c1"># Get the refined data queue which will contain processed MQTT messages</span>
-    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
     <span class="c1"># Get and print the 10 next messages from refined queue</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="n">_refined_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
@@ -151,6 +152,7 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
+
 </pre></div>
 </div>
 </section>
@@ -192,9 +194,11 @@
 <li><p><strong>ADC</strong>: Represents the state of an ADC (Analog-to-Digital Converter) device.</p></li>
 <li><p><strong>AirSensor</strong>: Represents the state of an air sensor device, such as temperature, humidity, or air quality sensors.</p></li>
 <li><p><strong>Alarm</strong>: Represents the state of an alarm device, indicating whether the alarm is triggered or not.</p></li>
+<li><p><strong>AlarmButton</strong>: Represents the state of an alarm button device, capturing button press events.</p></li>
 <li><p><strong>Availability</strong>: Represents the availability status of a device, indicating whether the device is online or offline.</p></li>
 <li><p><strong>Button</strong>: Represents the state of a button device, capturing button press events.</p></li>
 <li><p><strong>ButtonValues</strong>: Enumeration representing possible button actions, such as single press, double press, or long press.</p></li>
+<li><p><strong>DoorSensor</strong>: Represents the state of a door sensor device, indicating whether the door is open or closed.</p></li>
 <li><p><strong>Motion</strong>: Represents the state of a motion sensor device, indicating whether motion is detected or not.</p></li>
 <li><p><strong>SrtsA01</strong>: Represents the state of a specific Zigbee thermostat device, capturing temperature settings and modes.</p></li>
 <li><p><strong>Switch</strong>: Represents the state of a switch device, indicating whether the switch is on or off.</p></li>
@@ -208,17 +212,17 @@
 <section id="id1">
 <h3>Example Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <p>Below is an example demonstrating how to use the abstract device state classes in your application. This example shows how to create Switch state objects by deserializing state values from different device protocols (Sonoff and TASMOTA).</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">abstract</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 
 <span class="c1"># Creating a Switch state object deserializing Sonoff state values.</span>
 <span class="n">_SONOFF_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;state&quot;</span><span class="p">:</span> <span class="s2">&quot;ON&quot;</span><span class="p">}</span>
-<span class="n">abstract_switch1</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_SONOFF_VALUES</span><span class="p">)</span>
+<span class="n">abstract_switch1</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_SONOFF_VALUES</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sonoff Switch power is: </span><span class="si">{</span><span class="n">abstract_switch1</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="c1"># Output: Sonoff Switch power is: ON</span>
 
 <span class="c1"># Creating a Switch state object deserializing TASMOTA state values.</span>
 <span class="n">_TASMOTA_VALUES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;POWER&quot;</span><span class="p">:</span> <span class="s2">&quot;ON&quot;</span><span class="p">}</span>
-<span class="n">abstract_switch2</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_TASMOTA_VALUES</span><span class="p">)</span>
+<span class="n">abstract_switch2</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="o">**</span><span class="n">_TASMOTA_VALUES</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tasmota Switch power is: </span><span class="si">{</span><span class="n">abstract_switch2</span><span class="o">.</span><span class="n">power</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="c1"># Output: Tasmota Switch power is: ON</span>
 </pre></div>
@@ -246,27 +250,27 @@
 <section id="id3">
 <h3>Example Usage<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <p>Below is an example of how to encode an abstract <code class="docutils literal notranslate"><span class="pre">Switch</span></code> state into device-specific states for a Shelly Plug and a Sonoff Smart Plug.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">setup</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 
 <span class="c1"># Define the abstract state for a Switch</span>
-<span class="n">_state</span> <span class="o">=</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">abstract</span><span class="o">.</span><span class="n">POWER_ON</span><span class="p">)</span>
+<span class="n">_state</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">POWER_ON</span><span class="p">)</span>
 
 <span class="c1"># Encode the state for a Shelly Plug-in</span>
-<span class="n">_shelly_on</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">,</span>
+<span class="n">_shelly_on</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">,</span>
     <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">_shelly_on</span><span class="p">)</span>  
 <span class="c1"># Output: {&#39;POWER&#39;: &#39;ON&#39;}</span>
 
 <span class="c1"># Encode the state for a Sonoff Smart Plug</span>
-<span class="n">_sonoff_on</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
+<span class="n">_sonoff_on</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
     <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">_sonoff_on</span><span class="p">)</span> 
 <span class="c1"># Output: {&#39;state&#39;: &#39;ON&#39;}</span>
+
 </pre></div>
 </div>
 </section>

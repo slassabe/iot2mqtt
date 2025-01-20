@@ -76,13 +76,25 @@
 <li class="toctree-l3"><a class="reference internal" href="#wrapup">Wrapup</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#script-customization">Script customization</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#example-changing-the-state-of-a-switch-on-motion-detection">Example: Changing the State of a Switch on Motion Detection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-control-somfy-shades">How to control SOMFY shades</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-opening-and-closing-a-shade">Example: Opening and Closing a Shade</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id4">Explanation</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#example-changing-the-state-of-a-switch-on-button-action">Example: Changing the State of a Switch on Button Action</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-managing-the-event-loop">Example: Managing the Event Loop</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id5">Explanation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#understanding-the-event-loop-output">Understanding the Event Loop Output</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#script-customization">Script customization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-changing-the-state-of-a-switch-on-motion-detection">Example: Changing the State of a Switch on Motion Detection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id6">Explanation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#example-changing-the-state-of-a-switch-on-button-action">Example: Changing the State of a Switch on Button Action</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id7">Explanation</a></li>
 </ul>
 </li>
 </ul>
@@ -131,20 +143,20 @@
 <section id="example-display-air-sensor-temperature-and-humidity">
 <h3>Example: Display Air Sensor Temperature and Humidity<a class="headerlink" href="#example-display-air-sensor-temperature-and-humidity" title="Link to this heading"></a></h3>
 <p>The following example demonstrates how to use the <code class="docutils literal notranslate"><span class="pre">iot2mqtt</span></code> library to connect to an MQTT broker, retrieve messages from an air sensor, and display its temperature and humidity.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span><span class="p">,</span> <span class="n">messenger</span><span class="p">,</span> <span class="n">setup</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 
 <span class="c1"># Define the MQTT broker hostname</span>
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="c1"># Initialize the MQTT client helper with the specified context</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="c1"># Get the refined data queue from the central module</span>
-    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
 
     <span class="c1"># Get and print the next 3 Airsensor messages from the refined data queue</span>
     <span class="n">_nb_messages</span> <span class="o">=</span> <span class="mi">0</span>
@@ -153,8 +165,8 @@
         <span class="n">_message</span> <span class="o">=</span> <span class="n">_refined_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 
         <span class="c1"># Check if the message was issued by the specified Airsensor Model</span>
-        <span class="k">if</span> <span class="n">messenger</span><span class="o">.</span><span class="n">is_type_state</span><span class="p">(</span><span class="n">_message</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_message</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_AIRSENSOR</span><span class="p">:</span>
-            <span class="n">_instance</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">AirSensor</span> <span class="o">=</span> <span class="n">_message</span><span class="o">.</span><span class="n">refined</span>
+        <span class="k">if</span> <span class="n">i2m</span><span class="o">.</span><span class="n">messenger</span><span class="o">.</span><span class="n">is_type_state</span><span class="p">(</span><span class="n">_message</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_message</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="n">i2m</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_AIRSENSOR</span><span class="p">:</span>
+            <span class="n">_instance</span><span class="p">:</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">AirSensor</span> <span class="o">=</span> <span class="n">_message</span><span class="o">.</span><span class="n">refined</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Air sensor state changed to: </span><span class="si">{</span><span class="n">_instance</span><span class="o">.</span><span class="n">temperature</span><span class="si">}</span><span class="s1"> °C - </span><span class="si">{</span><span class="n">_instance</span><span class="o">.</span><span class="n">humidity</span><span class="si">}</span><span class="s1"> %&#39;</span><span class="p">)</span>
             <span class="n">_nb_messages</span> <span class="o">+=</span> <span class="mi">1</span>
 
@@ -188,20 +200,28 @@
 <h3>Example: Changing the State of a NEO Nas Alarm<a class="headerlink" href="#example-changing-the-state-of-a-neo-nas-alarm" title="Link to this heading"></a></h3>
 <p>The following example demonstrates how to set the NEO Nas Alarm to ON for 10 seconds.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">dev</span><span class="p">,</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span>
+<span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="c1"># Initialize the MQTT client helper with the target hostname</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="c1"># Create a DeviceAccessor instance with the MQTT client</span>
-    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
 
+    <span class="c1"># Set Zigbee NEO Nas Alarm melody</span>
+    <span class="n">_state_melody</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;melody&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">_accessor</span><span class="o">.</span><span class="n">trigger_change_state</span><span class="p">(</span>
+        <span class="n">device_id</span><span class="o">=</span><span class="s2">&quot;ALARM&quot;</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="n">_state_melody</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="c1"># Define the state to set the Zigbee NEO Nas Alarm ON for 10 seconds</span>
     <span class="n">_state_on</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;alarm&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
@@ -209,8 +229,8 @@
     <span class="p">}</span>
     <span class="c1"># Trigger the state change on the device</span>
     <span class="n">_accessor</span><span class="o">.</span><span class="n">trigger_change_state</span><span class="p">(</span>
-        <span class="n">device_name</span><span class="o">=</span><span class="s2">&quot;ALARM&quot;</span><span class="p">,</span>
-        <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
+        <span class="n">device_id</span><span class="o">=</span><span class="s2">&quot;ALARM&quot;</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
         <span class="n">state</span><span class="o">=</span><span class="n">_state_on</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -238,31 +258,31 @@
 <h3>Example: Changing the Switch State Knowing the Protocol and Model<a class="headerlink" href="#example-changing-the-switch-state-knowing-the-protocol-and-model" title="Link to this heading"></a></h3>
 <p>The following example demonstrates how to change the switch state for devices using the <code class="docutils literal notranslate"><span class="pre">switch_power_change()</span></code> method. This method is straightforward as it does not require launching the pipeline and waiting for the devices to be discovered.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">dev</span><span class="p">,</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span><span class="p">,</span> <span class="n">setup</span>
+<span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
-    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
     <span class="c1"># Set switch ON for 5 sec.</span>
     <span class="n">_accessor</span><span class="o">.</span><span class="n">switch_power_change</span><span class="p">(</span>
-        <span class="n">device_names</span><span class="o">=</span><span class="s2">&quot;SWITCH_PLUG&quot;</span><span class="p">,</span>
-        <span class="n">protocol</span><span class="o">=</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
-        <span class="n">model</span><span class="o">=</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
+        <span class="n">device_ids</span><span class="o">=</span><span class="s2">&quot;SWITCH_PLUG&quot;</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">Z2M</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">Models</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">,</span>
         <span class="n">power_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">on_time</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="p">)</span>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">helper</span><span class="o">.</span><span class="n">animate_cursor</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
 </pre></div>
 </div>
 <section id="id2">
@@ -279,35 +299,34 @@
 <h3>Example: Changing the Switch State by Names<a class="headerlink" href="#example-changing-the-switch-state-by-names" title="Link to this heading"></a></h3>
 <p>Alternatively, you can change the switch state for multiple devices using the <code class="docutils literal notranslate"><span class="pre">switch_power_change_helper()</span></code> method. This method is more flexible as it allows changing the state of multiple devices with different protocols or models. It requires initializing the message pipe to discover devices.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span>
+<span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+
 <span class="n">SWITCH1</span> <span class="o">=</span> <span class="s2">&quot;0x00124b0024cb17d3&quot;</span> <span class="c1"># Zigbee switch device</span>
 <span class="n">SWITCH2</span> <span class="o">=</span> <span class="s2">&quot;tasmota_577591&quot;</span> <span class="c1"># Tasmota switch device</span>
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
     <span class="c1"># Initialize the message pipe to discover devices</span>
-    <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
 
     <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Wait for the MQTT client to be discovered</span>
-    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
     <span class="c1"># Set switch ON for 5 sec.</span>
     <span class="n">_accessor</span><span class="o">.</span><span class="n">switch_power_change_helper</span><span class="p">(</span>
-        <span class="n">device_names</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SWITCH1</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">SWITCH2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">device_ids</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SWITCH1</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">SWITCH2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="n">power_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">on_time</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="p">)</span>
-
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
 </pre></div>
 </div>
 <section id="id3">
@@ -330,13 +349,160 @@
 </ul>
 </section>
 </section>
+<section id="how-to-control-somfy-shades">
+<h2>How to control SOMFY shades<a class="headerlink" href="#how-to-control-somfy-shades" title="Link to this heading"></a></h2>
+<p>This section provides examples of how to control SOMFY upon ESPSomfy RTS protocol.</p>
+<section id="example-opening-and-closing-a-shade">
+<h3>Example: Opening and Closing a Shade<a class="headerlink" href="#example-opening-and-closing-a-shade" title="Link to this heading"></a></h3>
+<p>The following example demonstrates how to open and close a shade using the <code class="docutils literal notranslate"><span class="pre">trigger_change_state()</span></code> method.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
+
+<span class="k">def</span> <span class="nf">_shade_move</span><span class="p">(</span>
+    <span class="n">accessor</span><span class="p">:</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">,</span> <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Moves the shade to the specified position. &quot;&quot;&quot;</span>
+    <span class="n">_states</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">DIRECTION</span><span class="p">:</span> <span class="n">direction</span><span class="p">},</span>
+        <span class="p">{</span><span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">TARGET</span><span class="p">:</span> <span class="n">to</span><span class="p">},</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">_state</span> <span class="ow">in</span> <span class="n">_states</span><span class="p">:</span>
+        <span class="n">accessor</span><span class="o">.</span><span class="n">trigger_change_state</span><span class="p">(</span>
+            <span class="n">device_id</span><span class="o">=</span><span class="n">device_id</span><span class="p">,</span>
+            <span class="n">protocol</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">_state</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_shade_up</span><span class="p">(</span><span class="n">accessor</span><span class="p">:</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">,</span> <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the shade up to the specified position.&quot;&quot;&quot;</span>
+    <span class="n">_shade_move</span><span class="p">(</span><span class="n">accessor</span><span class="p">,</span> <span class="n">device_id</span><span class="p">,</span> <span class="n">direction</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="n">to</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_shade_down</span><span class="p">(</span><span class="n">accessor</span><span class="p">:</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">,</span> <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">to</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Move the shade down to the specified position.&quot;&quot;&quot;</span>
+    <span class="n">_shade_move</span><span class="p">(</span><span class="n">accessor</span><span class="p">,</span> <span class="n">device_id</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="n">to</span><span class="p">)</span>
+
+</pre></div>
+</div>
+<section id="id4">
+<h4>Explanation<a class="headerlink" href="#id4" title="Link to this heading"></a></h4>
+<ul class="simple">
+<li><p><em><strong>_shade_move</strong></em> : This function is a helper function that moves the shade to the specified position. It takes the following parameters:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">accessor</span></code> (i2m.central.DeviceAccessor): The device accessor object used to trigger the state change.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">device_id</span></code> (str): The ID of the device to which the state change should be applied.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">direction</span></code> (int): The direction of the shade movement.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">-1</span></code> means the shade is moving up</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code> means the shade is stopped</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code> means the shade is moving down</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">to</span></code> (int): The target position for the shade, as a percentage of the full range.</p></li>
+</ul>
+</li>
+<li><p><em><strong>_shade_up</strong></em> : This function moves the shade up to the specified position.</p></li>
+<li><p><em><strong>_shade_down</strong></em> : This function moves the shade down to the specified position.</p></li>
+</ul>
+</section>
+</section>
+<section id="example-managing-the-event-loop">
+<h3>Example: Managing the Event Loop<a class="headerlink" href="#example-managing-the-event-loop" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c1"># Define the MQTT broker hostname</span>
+<span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+<span class="n">SHADE_ID</span> <span class="o">=</span> <span class="s2">&quot;2&quot;</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">_print_shade_position</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">i2m</span><span class="o">.</span><span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print the current position of the shade.&quot;&quot;&quot;</span>
+        <span class="n">_to_print</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">refined</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&gt;&gt;&gt; [</span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">device_id</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">message</span><span class="o">.</span><span class="n">message_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">_to_print</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_message_filter</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">i2m</span><span class="o">.</span><span class="n">messenger</span><span class="o">.</span><span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">message_type</span> <span class="o">==</span> <span class="n">i2m</span><span class="o">.</span><span class="n">messenger</span><span class="o">.</span><span class="n">MessageType</span><span class="o">.</span><span class="n">STATE</span>
+
+    <span class="c1"># Initialize the MQTT client helper with the specified context</span>
+    <span class="n">_app_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">_app_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="c1"># Initialize the refined data queue restricted to ESPSomfy devices</span>
+    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span>
+        <span class="n">_app_client</span><span class="p">,</span> <span class="n">protocols_expected</span><span class="o">=</span><span class="p">[</span><span class="n">i2m</span><span class="o">.</span><span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span><span class="o">.</span><span class="n">ESPSOMFY</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_app_client</span><span class="p">)</span>
+    <span class="c1"># Initialize the main loop queue, waiting for messages</span>
+    <span class="n">i2m</span><span class="o">.</span><span class="n">messenger</span><span class="o">.</span><span class="n">Dispatcher</span><span class="p">(</span>
+        <span class="n">input_queue</span><span class="o">=</span><span class="n">_refined_queue</span><span class="p">,</span>
+        <span class="n">output_queue</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">conditional_handlers</span><span class="o">=</span><span class="p">[</span>
+            <span class="c1"># Display shade position</span>
+            <span class="p">(</span><span class="n">_message_filter</span><span class="p">,</span> <span class="n">_print_shade_position</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">default_handler</span><span class="o">=</span><span class="n">i2m</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">Processor</span><span class="o">.</span><span class="n">no_op</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Loop moving the shade up and down</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shade Down ...&quot;</span><span class="p">)</span>
+        <span class="n">_shade_up</span><span class="p">(</span><span class="n">_accessor</span><span class="p">,</span> <span class="n">device_id</span><span class="o">=</span><span class="n">SHADE_ID</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Shade Up ...&quot;</span><span class="p">)</span>
+        <span class="n">_shade_down</span><span class="p">(</span><span class="n">_accessor</span><span class="p">,</span> <span class="n">device_id</span><span class="o">=</span><span class="n">SHADE_ID</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The script execution displays the following output:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Shade Down ...
+&gt;&gt;&gt; [2] state: {&#39;target&#39;: 0}    # Target position set to 0% (fully closed)
+&gt;&gt;&gt; [2] state: {&#39;direction&#39;: -1}# Movement direction set to up (-1)
+&gt;&gt;&gt; [2] state: {&#39;position&#39;: 49} # Current position updates as shade moves
+...
+&gt;&gt;&gt; [2] state: {&#39;position&#39;: 1} # Position approaching target
+&gt;&gt;&gt; [2] state: {&#39;position&#39;: 0} # Final position reached
+</pre></div>
+</div>
+<section id="id5">
+<h4>Explanation<a class="headerlink" href="#id5" title="Link to this heading"></a></h4>
+<p>The script performs the following steps:</p>
+<ol class="arabic simple">
+<li><p>Initializes the MQTT client with the security context and hostname.</p></li>
+<li><p>Starts the MQTT client.</p></li>
+<li><p>Create the message data queue restricted to ESPSomfy devices.</p></li>
+<li><p>Initialize the main loop, waiting for processing messages:</p>
+<ul class="simple">
+<li><p>Just printing the shade position found in the refined data queue.</p></li>
+</ul>
+</li>
+<li><p>Loop moving the shade up and down every 30 seconds.</p></li>
+</ol>
+</section>
+<section id="understanding-the-event-loop-output">
+<h4>Understanding the Event Loop Output<a class="headerlink" href="#understanding-the-event-loop-output" title="Link to this heading"></a></h4>
+<p>Each message shows:</p>
+<ul class="simple">
+<li><p>Device ID in brackets [2]</p></li>
+<li><p>Message type (state)</p></li>
+<li><p>Current shade parameters as key-value pairs:</p>
+<ul>
+<li><p>target: Desired position (0-100%)</p></li>
+<li><p>direction: Movement direction (-1=up, 0=stop, 1=down)</p></li>
+<li><p>position: Current position as percentage</p></li>
+</ul>
+</li>
+</ul>
+<p>The position updates provide real-time feedback as the shade moves toward its target position.</p>
+</section>
+</section>
+</section>
 <section id="script-customization">
 <h2>Script customization<a class="headerlink" href="#script-customization" title="Link to this heading"></a></h2>
 <p>The script integration allows users to specify a sequence of actions to be executed according to the state of the devices. The following sections provide examples of how to customize the script.</p>
 <section id="example-changing-the-state-of-a-switch-on-motion-detection">
 <h3>Example: Changing the State of a Switch on Motion Detection<a class="headerlink" href="#example-changing-the-state-of-a-switch-on-motion-detection" title="Link to this heading"></a></h3>
 <p>This example demonstrates how to create a script that changes the state of a switch when motion is detected. The switch will remain on for 15 seconds before turning off.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span><span class="p">,</span> <span class="n">processor</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 <span class="c1"># Define the MQTT broker hostname</span>
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
@@ -349,16 +515,16 @@
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="c1"># Initialize the MQTT client helper with the specified context</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="c1"># Get the refined data queue from the central module</span>
-    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
 
     <span class="c1"># Create a device accessor to interact with the devices</span>
-    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
 
     <span class="c1"># Continuously process messages to find motion detection messages</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
@@ -366,13 +532,13 @@
         <span class="n">_message</span> <span class="o">=</span> <span class="n">_refined_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 
         <span class="c1"># Check if the message indicates motion detection for the specified device</span>
-        <span class="k">if</span> <span class="n">processor</span><span class="o">.</span><span class="n">is_motion_detected</span><span class="p">(</span><span class="n">_message</span><span class="p">,</span> <span class="n">MOTION_DEVICE</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i2m</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">is_motion_detected</span><span class="p">(</span><span class="n">_message</span><span class="p">,</span> <span class="n">MOTION_DEVICE</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s1">&#39;Motion detected, turning switches on for </span><span class="si">{</span><span class="n">SHORT_TIME</span><span class="si">}</span><span class="s1"> sec.&#39;</span><span class="p">)</span>
 
             <span class="c1"># Change the state of the switch to &#39;on&#39; for the specified duration</span>
             <span class="n">_accessor</span><span class="o">.</span><span class="n">switch_power_change_helper</span><span class="p">(</span>
-                <span class="n">device_names</span><span class="o">=</span><span class="n">SWITCH</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_time</span><span class="o">=</span><span class="n">SHORT_TIME</span><span class="p">,</span>
+                <span class="n">device_ids</span><span class="o">=</span><span class="n">SWITCH</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_time</span><span class="o">=</span><span class="n">SHORT_TIME</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="c1"># End loop</span>
             <span class="k">return</span>
@@ -381,8 +547,8 @@
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-<section id="id4">
-<h4>Explanation<a class="headerlink" href="#id4" title="Link to this heading"></a></h4>
+<section id="id6">
+<h4>Explanation<a class="headerlink" href="#id6" title="Link to this heading"></a></h4>
 <p>The script performs the following steps:</p>
 <ol class="arabic simple">
 <li><p>Connects to the MQTT broker.</p></li>
@@ -395,7 +561,7 @@
 <section id="example-changing-the-state-of-a-switch-on-button-action">
 <h3>Example: Changing the State of a Switch on Button Action<a class="headerlink" href="#example-changing-the-state-of-a-switch-on-button-action" title="Link to this heading"></a></h3>
 <p>This example demonstrates how to create a script that changes the state of a switch when a button action is detected. The switch will remain on for a specified duration before turning off.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="p">(</span><span class="n">abstract</span><span class="p">,</span> <span class="n">central</span><span class="p">,</span> <span class="n">mqtthelper</span><span class="p">,</span> <span class="n">processor</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">iot2mqtt</span> <span class="k">as</span> <span class="nn">i2m</span>
 <span class="c1"># Define the MQTT broker hostname</span>
 <span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
 
@@ -410,25 +576,23 @@
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="c1"># Initialize the MQTT client helper with the specified context</span>
-    <span class="n">_client</span> <span class="o">=</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
-        <span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
+    <span class="n">_client</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">ClientHelper</span><span class="p">(</span>
+        <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">MQTTContext</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">TARGET</span><span class="p">),</span> <span class="n">i2m</span><span class="o">.</span><span class="n">mqtthelper</span><span class="o">.</span><span class="n">SecurityContext</span><span class="p">()</span>
     <span class="p">)</span>
     <span class="n">_client</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="c1"># Get the refined data queue from the central module</span>
-    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_refined_queue</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">get_refined_data_queue</span><span class="p">(</span><span class="n">_client</span><span class="p">)</span>
 
     <span class="c1"># Create a device accessor to interact with the devices</span>
-    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
+    <span class="n">_accessor</span> <span class="o">=</span> <span class="n">i2m</span><span class="o">.</span><span class="n">central</span><span class="o">.</span><span class="n">DeviceAccessor</span><span class="p">(</span><span class="n">mqtt_client</span><span class="o">=</span><span class="n">_client</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">handle_button_action</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">switch</span><span class="p">,</span> <span class="n">on_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="c1"># Handles the button action by turning the switch on or off based </span>
-        <span class="c1"># on the action detected.</span>
-        <span class="k">if</span> <span class="n">processor</span><span class="o">.</span><span class="n">is_button_action_expected</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i2m</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">is_button_action_expected</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
             <span class="n">action_desc</span> <span class="o">=</span> <span class="s1">&#39;on&#39;</span> <span class="k">if</span> <span class="n">power_on</span> <span class="k">else</span> <span class="s1">&#39;off&#39;</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Button </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s1"> pressed, turning switches </span><span class="si">{</span><span class="n">action_desc</span><span class="si">}</span><span class="s1"> for </span><span class="si">{</span><span class="n">on_time</span><span class="si">}</span><span class="s1"> sec.&#39;</span><span class="p">)</span>
             <span class="n">_accessor</span><span class="o">.</span><span class="n">switch_power_change_helper</span><span class="p">(</span>
-                <span class="n">device_names</span><span class="o">=</span><span class="n">switch</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="n">power_on</span><span class="p">,</span> <span class="n">on_time</span><span class="o">=</span><span class="n">on_time</span><span class="p">)</span>
+                <span class="n">device_ids</span><span class="o">=</span><span class="n">switch</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="n">power_on</span><span class="p">,</span> <span class="n">on_time</span><span class="o">=</span><span class="n">on_time</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="c1"># Continuously process messages from the refined data queue</span>
@@ -438,26 +602,24 @@
 
         <span class="c1"># Check if the message indicates button press for the specified device</span>
         <span class="k">if</span> <span class="n">handle_button_action</span><span class="p">(</span>
-            <span class="n">_message</span><span class="p">,</span> <span class="n">BUTTON_DEVICE</span><span class="p">,</span> <span class="n">abstract</span><span class="o">.</span><span class="n">ButtonValues</span><span class="o">.</span><span class="n">SINGLE_ACTION</span><span class="p">,</span> <span class="n">SWITCH</span><span class="p">,</span> <span class="n">MEDIUM_TIME</span>
+            <span class="n">_message</span><span class="p">,</span> <span class="n">BUTTON_DEVICE</span><span class="p">,</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">ButtonValues</span><span class="o">.</span><span class="n">SINGLE_ACTION</span><span class="p">,</span> <span class="n">SWITCH</span><span class="p">,</span> <span class="n">MEDIUM_TIME</span>
         <span class="p">):</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">handle_button_action</span><span class="p">(</span>
-            <span class="n">_message</span><span class="p">,</span> <span class="n">BUTTON_DEVICE</span><span class="p">,</span> <span class="n">abstract</span><span class="o">.</span><span class="n">ButtonValues</span><span class="o">.</span><span class="n">DOUBLE_ACTION</span><span class="p">,</span> <span class="n">SWITCH</span><span class="p">,</span> <span class="n">LONG_TIME</span>
+            <span class="n">_message</span><span class="p">,</span> <span class="n">BUTTON_DEVICE</span><span class="p">,</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">ButtonValues</span><span class="o">.</span><span class="n">DOUBLE_ACTION</span><span class="p">,</span> <span class="n">SWITCH</span><span class="p">,</span> <span class="n">LONG_TIME</span>
         <span class="p">):</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">handle_button_action</span><span class="p">(</span>
-            <span class="n">_message</span><span class="p">,</span> <span class="n">BUTTON_DEVICE</span><span class="p">,</span> <span class="n">abstract</span><span class="o">.</span><span class="n">ButtonValues</span><span class="o">.</span><span class="n">LONG_ACTION</span><span class="p">,</span> <span class="n">SWITCH</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">_message</span><span class="p">,</span> <span class="n">BUTTON_DEVICE</span><span class="p">,</span> <span class="n">i2m</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">ButtonValues</span><span class="o">.</span><span class="n">LONG_ACTION</span><span class="p">,</span> <span class="n">SWITCH</span><span class="p">,</span> <span class="n">power_on</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">):</span>
             <span class="k">continue</span>
-
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-
 </pre></div>
 </div>
-<section id="id5">
-<h4>Explanation<a class="headerlink" href="#id5" title="Link to this heading"></a></h4>
+<section id="id7">
+<h4>Explanation<a class="headerlink" href="#id7" title="Link to this heading"></a></h4>
 <p>The script performs the following steps:</p>
 <ol class="arabic simple">
 <li><p>Connects to the MQTT broker.</p></li>

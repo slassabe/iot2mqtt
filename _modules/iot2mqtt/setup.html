@@ -87,20 +87,24 @@
 <span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">abstract</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">processor</span><span class="p">,</span> <span class="n">utils</span>
 
 <span class="c1"># Supported model names</span>
+<span class="n">CTP_R01</span> <span class="o">=</span> <span class="s2">&quot;CTP-R01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/CTP-R01.html</span>
+<span class="n">E3</span> <span class="o">=</span> <span class="s2">&quot;E3&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/E3.html</span>
+<span class="n">HM_ALARM_BUTTON</span> <span class="o">=</span> <span class="s2">&quot;HM1RC-2-E&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html</span>
 <span class="n">MIFLORA</span> <span class="o">=</span> <span class="s2">&quot;Miflora&quot;</span>
 <span class="n">NEO_ALARM</span> <span class="o">=</span> <span class="s2">&quot;NAS-AB02B2&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html</span>
 <span class="n">RING_CAMERA</span> <span class="o">=</span> <span class="s2">&quot;RingCamera&quot;</span>
 <span class="n">SHELLY_PLUGS</span> <span class="o">=</span> <span class="s2">&quot;Shelly Plug S&quot;</span>  <span class="c1"># Shelly Plug S WiFi smart plug</span>
 <span class="n">SHELLY_UNI</span> <span class="o">=</span> <span class="s2">&quot;Shelly Uni&quot;</span>  <span class="c1"># Shelly Uni WiFi relay/dimmer</span>
-<span class="n">SRTS_A01</span> <span class="o">=</span> <span class="s2">&quot;SRTS-A01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SRTS-A01.html</span>
-<span class="n">TUYA_SOIL</span> <span class="o">=</span> <span class="s2">&quot;TS0601_soil&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/TS0601_soil.html</span>
 <span class="n">SN_AIRSENSOR</span> <span class="o">=</span> <span class="s2">&quot;SNZB-02&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-02.html</span>
 <span class="n">SN_BUTTON</span> <span class="o">=</span> <span class="s2">&quot;SNZB-01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-01.html</span>
-<span class="n">SN_MOTION</span> <span class="o">=</span> <span class="s2">&quot;SNZB-03&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-03.html</span>
 <span class="n">SN_MINI</span> <span class="o">=</span> <span class="s2">&quot;ZBMINI-L&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/ZBMINI.html</span>
 <span class="n">SN_MINI_L2</span> <span class="o">=</span> <span class="s2">&quot;ZBMINIL2&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/ZBMINIL2.html</span>
+<span class="n">SN_MOTION</span> <span class="o">=</span> <span class="s2">&quot;SNZB-03&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SNZB-03.html</span>
 <span class="n">SN_SMART_PLUG</span> <span class="o">=</span> <span class="s2">&quot;S26R2ZB&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/S26R2ZB.html</span>
 <span class="n">SN_ZBBRIDGE</span> <span class="o">=</span> <span class="s2">&quot;Sonoff ZbBridge&quot;</span>  <span class="c1"># Tasmota signature for Sonoff ZbBridge</span>
+<span class="n">SOMFY_SHADES</span> <span class="o">=</span> <span class="s2">&quot;ESPSomfy-RTS MQTT&quot;</span>
+<span class="n">SRTS_A01</span> <span class="o">=</span> <span class="s2">&quot;SRTS-A01&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/SRTS-A01.html</span>
+<span class="n">TUYA_SOIL</span> <span class="o">=</span> <span class="s2">&quot;TS0601_soil&quot;</span>  <span class="c1"># https://www.zigbee2mqtt.io/devices/TS0601_soil.html</span>
 
 
 <div class="viewcode-block" id="Models">
@@ -110,20 +114,24 @@
 <span class="sd">    Default configuration values for the iot2mqtt application.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">CTP_R01</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CTP_R01</span><span class="p">)</span>
+    <span class="n">E3</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">E3</span><span class="p">)</span>
+    <span class="n">HM_ALARM_BUTTON</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">HM_ALARM_BUTTON</span><span class="p">)</span>
     <span class="n">MIFLORA</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">MIFLORA</span><span class="p">)</span>
     <span class="n">NEO_ALARM</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NEO_ALARM</span><span class="p">)</span>
     <span class="n">RING_CAMERA</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">RING_CAMERA</span><span class="p">)</span>
     <span class="n">SHELLY_PLUGS</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SHELLY_PLUGS</span><span class="p">)</span>
     <span class="n">SHELLY_UNI</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SHELLY_UNI</span><span class="p">)</span>
-    <span class="n">SRTS_A01</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SRTS_A01</span><span class="p">)</span>
-    <span class="n">TUYA_SOIL</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TUYA_SOIL</span><span class="p">)</span>
     <span class="n">SN_AIRSENSOR</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_AIRSENSOR</span><span class="p">)</span>
     <span class="n">SN_BUTTON</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_BUTTON</span><span class="p">)</span>
-    <span class="n">SN_MOTION</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_MOTION</span><span class="p">)</span>
     <span class="n">SN_MINI</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_MINI</span><span class="p">)</span>
     <span class="n">SN_MINI_L2</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_MINI_L2</span><span class="p">)</span>
+    <span class="n">SN_MOTION</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_MOTION</span><span class="p">)</span>
     <span class="n">SN_SMART_PLUG</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_SMART_PLUG</span><span class="p">)</span>
     <span class="n">SN_ZBBRIDGE</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SN_ZBBRIDGE</span><span class="p">)</span>
+    <span class="n">SOMFY_SHADES</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SOMFY_SHADES</span><span class="p">)</span>
+    <span class="n">SRTS_A01</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SRTS_A01</span><span class="p">)</span>
+    <span class="n">TUYA_SOIL</span> <span class="o">=</span> <span class="n">dev</span><span class="o">.</span><span class="n">ModelFactory</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TUYA_SOIL</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -141,16 +149,20 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">processor</span><span class="o">.</span><span class="n">StateNormalizerFactory</span><span class="p">(</span>
             <span class="n">initial_registry</span><span class="o">=</span><span class="p">{</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_AIRSENSOR</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">AirSensor</span><span class="p">,</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MINI</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MINI_L2</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">CTP_R01</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">MagicCube</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">E3</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">DoorSensor</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">HM_ALARM_BUTTON</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">AlarmButton</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">NEO_ALARM</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Alarm</span><span class="p">,</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">SHELLY_PLUGS</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">SHELLY_UNI</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch2Channels</span><span class="p">,</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MOTION</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Motion</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_AIRSENSOR</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">AirSensor</span><span class="p">,</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">SN_BUTTON</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MINI</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MINI_L2</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MOTION</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Motion</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Switch</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">SOMFY_SHADES</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">SomfyShade</span><span class="p">,</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">SRTS_A01</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">SrtsA01</span><span class="p">,</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">NEO_ALARM</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">Alarm</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
 
@@ -161,9 +173,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">encoder</span><span class="o">.</span><span class="n">EncoderRegistry</span><span class="p">(</span>
             <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">SN_MINI</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">SN_MINI_L2</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">SN_SMART_PLUG</span><span class="p">],</span>
-            <span class="n">settable_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">],</span>
-            <span class="n">gettable_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">],</span>
-            <span class="n">field_aliases</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;power&quot;</span><span class="p">:</span> <span class="s2">&quot;state&quot;</span><span class="p">},</span>
+            <span class="n">settable_fields</span><span class="o">=</span><span class="p">[</span><span class="n">abstract</span><span class="o">.</span><span class="n">STATE</span><span class="p">],</span>
+            <span class="n">gettable_fields</span><span class="o">=</span><span class="p">[</span><span class="n">abstract</span><span class="o">.</span><span class="n">STATE</span><span class="p">],</span>
+            <span class="n">field_aliases</span><span class="o">=</span><span class="p">{</span><span class="n">abstract</span><span class="o">.</span><span class="n">POWER</span><span class="p">:</span> <span class="n">abstract</span><span class="o">.</span><span class="n">STATE</span><span class="p">},</span>
         <span class="p">)</span>
 
         <span class="n">encoder</span><span class="o">.</span><span class="n">EncoderRegistry</span><span class="p">(</span>
@@ -182,32 +194,51 @@
 
         <span class="n">encoder</span><span class="o">.</span><span class="n">EncoderRegistry</span><span class="p">(</span>
             <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">NEO_ALARM</span><span class="p">],</span>
-            <span class="n">settable_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;alarm&quot;</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;melody&quot;</span><span class="p">,</span> <span class="s2">&quot;volume&quot;</span><span class="p">],</span>
+            <span class="n">settable_fields</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">ALARM</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">DURATION</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">MELODY</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">VOLUME</span><span class="p">,</span>
+            <span class="p">],</span>
             <span class="n">gettable_fields</span><span class="o">=</span><span class="p">[],</span>
         <span class="p">)</span>
 
         <span class="n">encoder</span><span class="o">.</span><span class="n">EncoderRegistry</span><span class="p">(</span>
             <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">SRTS_A01</span><span class="p">],</span>
             <span class="n">settable_fields</span><span class="o">=</span><span class="p">[</span>
-                <span class="s2">&quot;child_lock&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;external_temperature_input&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;occupied_heating_setpoint&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;preset&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;schedule_settings&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;schedule&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;schedule_settings&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;sensor&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;system_mode&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;valve_detection&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;window_detection&quot;</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">CHILD_LOCK</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">EXTERNAL_TEMPERATURE_INPUT</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">OCCUPIED_HEATING_SETPOINT</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">PRESET</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">SCHEDULE_SETTING</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">SCHEDULE</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">SENSOR</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">SYSTEM_MODE</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">VALVE_DETECTION</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">WINDOW_DETECTION</span><span class="p">,</span>
             <span class="p">],</span>
             <span class="n">gettable_fields</span><span class="o">=</span><span class="p">[</span>
-                <span class="s2">&quot;child_lock&quot;</span><span class="p">,</span>  <span class="c1"># Just one field request get all fields</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">CHILD_LOCK</span><span class="p">,</span>  <span class="c1"># Just one field request get all fields</span>
             <span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="n">encoder</span><span class="o">.</span><span class="n">EncoderRegistry</span><span class="p">(</span>
+            <span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">SOMFY_SHADES</span><span class="p">],</span>
+            <span class="n">settable_fields</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">DIRECTION</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">MYPOS</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">MYTILTPOS</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">POSITION</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">SUNFLAG</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">SUNNY</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">TARGET</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">TILTPOSITION</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">TILTTARGET</span><span class="p">,</span>
+                <span class="n">abstract</span><span class="o">.</span><span class="n">WINDY</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">gettable_fields</span><span class="o">=</span><span class="p">[],</span>
         <span class="p">)</span></div>
 
-
-<span class="n">Models</span><span class="p">()</span>
 </pre></div>
 
            </div>

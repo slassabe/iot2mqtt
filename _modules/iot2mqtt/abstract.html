@@ -82,23 +82,6 @@
 <span class="sd">It provides a set of Pydantic models and enumerations to represent the state and configuration</span>
 <span class="sd">of different types of IoT devices, such as switches, sensors, and alarms.</span>
 
-<span class="sd">Classes</span>
-<span class="sd">-------</span>
-
-<span class="sd">- Availability: Represents the availability status of a device.</span>
-<span class="sd">- Registry: Represents a registry of discovered devices.</span>
-<span class="sd">- DeviceState: Root class for all device state classes.</span>
-<span class="sd">- AirSensor: Represents the state of an air sensor device.</span>
-<span class="sd">- Switch: Represents the state of a switch device.</span>
-<span class="sd">- Switch2Channels: Represents the state of a switch device with two channels.</span>
-<span class="sd">- Motion: Represents the state of a motion sensor device.</span>
-<span class="sd">- ButtonValues: Enumeration representing possible button actions.</span>
-<span class="sd">- Button: Represents the state of a button device.</span>
-<span class="sd">- ADC: Represents the state of an ADC (Analog-to-Digital Converter) device.</span>
-<span class="sd">- SrtsA01: Represents the state of a specific Zigbee thermostat device.</span>
-<span class="sd">- AlarmVolumes: Enumeration representing possible alarm volume levels.</span>
-<span class="sd">- Alarm: Represents the state of an alarm device.</span>
-
 <span class="sd">Constants</span>
 <span class="sd">---------</span>
 
@@ -109,9 +92,13 @@
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">AliasChoices</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">computed_field</span><span class="p">,</span> <span class="n">confloat</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="p">(</span><span class="n">AliasChoices</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">BeforeValidator</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span>
+                      <span class="n">computed_field</span><span class="p">,</span> <span class="n">confloat</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Annotated</span>
+
+<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">exceptions</span>
 
 <span class="c1"># Abstract IOT device properties</span>
 
@@ -122,7 +109,9 @@
 <span class="n">BATTERY_LOW</span> <span class="o">=</span> <span class="s2">&quot;battery_low&quot;</span>
 <span class="n">CALIBRATED</span> <span class="o">=</span> <span class="s2">&quot;calibrated&quot;</span>
 <span class="n">CHILD_LOCK</span> <span class="o">=</span> <span class="s2">&quot;child_lock&quot;</span>
+<span class="n">CONTACT</span> <span class="o">=</span> <span class="s2">&quot;contact&quot;</span>
 <span class="n">DEVICE_TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;device_temperature&quot;</span>
+<span class="n">DIRECTION</span> <span class="o">=</span> <span class="s2">&quot;direction&quot;</span>
 <span class="n">DURATION</span> <span class="o">=</span> <span class="s2">&quot;duration&quot;</span>
 <span class="n">EXTERNAL_TEMPERATURE_INPUT</span> <span class="o">=</span> <span class="s2">&quot;external_temperature_input&quot;</span>
 <span class="n">HUMIDITY</span> <span class="o">=</span> <span class="s2">&quot;humidity&quot;</span>
@@ -130,8 +119,11 @@
 <span class="n">LINKQUALITY</span> <span class="o">=</span> <span class="s2">&quot;linkquality&quot;</span>
 <span class="n">LOCAL_TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;local_temperature&quot;</span>
 <span class="n">MELODY</span> <span class="o">=</span> <span class="s2">&quot;melody&quot;</span>
+<span class="n">MYPOS</span> <span class="o">=</span> <span class="s2">&quot;mypos&quot;</span>
+<span class="n">MYTILTPOS</span> <span class="o">=</span> <span class="s2">&quot;myTiltPos&quot;</span>
 <span class="n">OCCUPIED_HEATING_SETPOINT</span> <span class="o">=</span> <span class="s2">&quot;occupied_heating_setpoint&quot;</span>
 <span class="n">OCCUPANCY</span> <span class="o">=</span> <span class="s2">&quot;occupancy&quot;</span>
+<span class="n">POSITION</span> <span class="o">=</span> <span class="s2">&quot;position&quot;</span>
 <span class="n">POWER</span> <span class="o">=</span> <span class="s2">&quot;power&quot;</span>
 <span class="n">POWER1</span> <span class="o">=</span> <span class="s2">&quot;power1&quot;</span>
 <span class="n">POWER2</span> <span class="o">=</span> <span class="s2">&quot;power2&quot;</span>
@@ -143,9 +135,15 @@
 <span class="n">SCHEDULE_SETTING</span> <span class="o">=</span> <span class="s2">&quot;schedule_setting&quot;</span>
 <span class="n">SENSOR</span> <span class="o">=</span> <span class="s2">&quot;sensor&quot;</span>
 <span class="n">SETUP</span> <span class="o">=</span> <span class="s2">&quot;setup&quot;</span>
+<span class="n">STATE</span> <span class="o">=</span> <span class="s2">&quot;state&quot;</span>
+<span class="n">SUNFLAG</span> <span class="o">=</span> <span class="s2">&quot;sunFlag&quot;</span>
+<span class="n">SUNNY</span> <span class="o">=</span> <span class="s2">&quot;sunny&quot;</span>
 <span class="n">SYSTEM_MODE</span> <span class="o">=</span> <span class="s2">&quot;system_mode&quot;</span>
+<span class="n">TARGET</span> <span class="o">=</span> <span class="s2">&quot;target&quot;</span>
 <span class="n">TAMPER</span> <span class="o">=</span> <span class="s2">&quot;tamper&quot;</span>
 <span class="n">TEMPERATURE</span> <span class="o">=</span> <span class="s2">&quot;temperature&quot;</span>
+<span class="n">TILTPOSITION</span> <span class="o">=</span> <span class="s2">&quot;tiltPosition&quot;</span>
+<span class="n">TILTTARGET</span> <span class="o">=</span> <span class="s2">&quot;tiltTarget&quot;</span>
 <span class="n">UPDATE</span> <span class="o">=</span> <span class="s2">&quot;update&quot;</span>
 <span class="n">VALVE_ALARM</span> <span class="o">=</span> <span class="s2">&quot;valve_alarm&quot;</span>
 <span class="n">VALVE_DETECTION</span> <span class="o">=</span> <span class="s2">&quot;valve_detection&quot;</span>
@@ -153,6 +151,7 @@
 <span class="n">VOLUME</span> <span class="o">=</span> <span class="s2">&quot;volume&quot;</span>
 <span class="n">WINDOW_DETECTION</span> <span class="o">=</span> <span class="s2">&quot;window_detection&quot;</span>
 <span class="n">WINDOW_OPEN</span> <span class="o">=</span> <span class="s2">&quot;window_open&quot;</span>
+<span class="n">WINDY</span> <span class="o">=</span> <span class="s2">&quot;windy&quot;</span>
 
 
 <div class="viewcode-block" id="Availability">
@@ -176,10 +175,10 @@
 <span class="sd">    Represents a registry of dicovered devices.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        device_names (List[str]): A list of device names.</span>
+<span class="sd">        device_ids (List[str]): A list of device ids.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">device_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+    <span class="n">device_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
 
 
 
@@ -282,6 +281,80 @@
 
     <span class="n">occupancy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">tamper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="DoorSensor">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.DoorSensor">[docs]</a>
+<span class="k">class</span> <span class="nc">DoorSensor</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a door sensor device.</span>
+
+<span class="sd">    This class models the state information for door/window contact sensors, including</span>
+<span class="sd">    contact status, battery information, tamper detection, and signal quality.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        contact (Optional[bool]): Contact state of the sensor.</span>
+<span class="sd">            - True: Contact is closed (door/window closed)</span>
+<span class="sd">            - False: Contact is open (door/window open)</span>
+<span class="sd">            - None: Contact state unknown</span>
+<span class="sd">        battery (Optional[int]): Remaining battery percentage (0-100).</span>
+<span class="sd">        voltage (Optional[int]): Battery voltage in millivolts.</span>
+<span class="sd">        tamper (Optional[bool]): Tamper detection status.</span>
+<span class="sd">            - True: Device has been tampered</span>
+<span class="sd">            - False: No tampering detected</span>
+<span class="sd">            - None: Tamper status unknown</span>
+<span class="sd">        battery_low (Optional[bool]): Low battery warning indicator.</span>
+<span class="sd">            - True: Battery is critically low</span>
+<span class="sd">            - False: Battery level is okay</span>
+<span class="sd">            - None: Battery status unknown</span>
+<span class="sd">        linkquality (Optional[int]): Signal strength/link quality indicator (0-255).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">contact</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">voltage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tamper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="AlarmButtonlValues">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.AlarmButtonlValues">[docs]</a>
+<span class="k">class</span> <span class="nc">AlarmButtonlValues</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enumeration representing possible alarm controler actions.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        EMERGENCY_ACTION: Represents an emergency alarm action.</span>
+<span class="sd">        DISARM_ACTION: Represents a disarm action.</span>
+<span class="sd">        ARM_DAYZONES_ACTION: Represents an arm day zones action.</span>
+<span class="sd">        ARM_ALL_ACTION: Represents an arm all zones action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">EMERGENCY_ACTION</span> <span class="o">=</span> <span class="s2">&quot;emergency&quot;</span>
+    <span class="n">DISARM_ACTION</span> <span class="o">=</span> <span class="s2">&quot;disarm&quot;</span>
+    <span class="n">ARM_DAYZONES_ACTION</span> <span class="o">=</span> <span class="s2">&quot;arm_day_zones&quot;</span>
+    <span class="n">ARM_ALL_ACTION</span> <span class="o">=</span> <span class="s2">&quot;arm_all_zones&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AlarmButton">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.AlarmButton">[docs]</a>
+<span class="k">class</span> <span class="nc">AlarmButton</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a alarm controler device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">    battery (Optional[int]): The battery level of the device.</span>
+<span class="sd">    action (AlarmButtonlValues): The action performed by the alarm controler.</span>
+<span class="sd">    linkquality (Optional[int]): The link quality of the device.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">action</span><span class="p">:</span> <span class="n">AlarmButtonlValues</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -402,6 +475,129 @@
     <span class="n">window_detection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Indique si la fenêtre est ouverte</span>
     <span class="n">window_open</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_validate_somfy_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">any</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">expected_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">NoValueException</span><span class="p">(</span><span class="n">expected_type</span><span class="p">)</span>
+
+
+<span class="n">SomfyInt</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">_validate_somfy_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>
+<span class="p">]</span>
+<span class="n">SomfyBool</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">BeforeValidator</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">_validate_somfy_value</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="SomfyDevice">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.SomfyDevice">[docs]</a>
+<span class="k">class</span> <span class="nc">SomfyDevice</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a Somfy RTS device.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">remoteAddress</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The current direction of the motor movement. This will be one of the following values :</span>
+    <span class="c1"># -1 = The shade is moving up, 0 = The shade is stopped, 1 = The shade is moving down</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The last rolling code that was used to send the last command from ESPSomfy RTS</span>
+    <span class="n">lastRollingCode</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indicates the existence of a sun sensor. Valid values are true or false</span>
+    <span class="n">sunSensor</span><span class="p">:</span> <span class="n">SomfyBool</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indicates whether the sun sensor is enabled or not. Valid values are 0 or 1</span>
+    <span class="n">sunFlag</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indicates whether the shade thinks it is sunny or not. Valid values are 0 or 1</span>
+    <span class="n">sunny</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indicates whether the shade thinks it is windy or calm. Valid values are 0 or 1</span>
+    <span class="n">windy</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="SomfyGroup">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.SomfyGroup">[docs]</a>
+<span class="k">class</span> <span class="nc">SomfyGroup</span><span class="p">(</span><span class="n">SomfyDevice</span><span class="p">):</span>
+    <span class="n">groupId</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="SomfyShade">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.SomfyShade">[docs]</a>
+<span class="k">class</span> <span class="nc">SomfyShade</span><span class="p">(</span><span class="n">SomfyDevice</span><span class="p">):</span>
+    <span class="c1"># shadeId: Optional[int] = None</span>
+    <span class="n">shadeId</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">shadeType</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The tilt type if the shade type is blind :</span>
+    <span class="c1"># 0 = None, 1 = Tilt Motor, 2 = Integrated Tilt, 3 = Tilt Only</span>
+    <span class="n">tiltType</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indicates whether up is down and down is up.</span>
+    <span class="n">flipCommands</span><span class="p">:</span> <span class="n">SomfyBool</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indicates whether 100% is open or closed. Valid values are true or false</span>
+    <span class="n">flipPosition</span><span class="p">:</span> <span class="n">SomfyBool</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The current lift position in percentage of the motor.</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The current tilt position in percentage of the motor.</span>
+    <span class="n">tiltPosition</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The lift position that the shade is seeking</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The tilt position that the shade is seeking</span>
+    <span class="n">tiltTarget</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The current favorite lift position. -1 is unset</span>
+    <span class="n">mypos</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The current favorite tilt position. -1 is unset</span>
+    <span class="n">myTiltPos</span><span class="p">:</span> <span class="n">SomfyInt</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Undocumented</span>
+    <span class="n">cmd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cmdAddress</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cmdSource</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="MagicCube">
+<a class="viewcode-back" href="../../iot2mqtt.html#iot2mqtt.abstract.MagicCube">[docs]</a>
+<span class="k">class</span> <span class="nc">MagicCube</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents the state of a Cube T1 Pro device from Aquara.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Batterie restante en %</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Tension de la batterie en millivolts</span>
+    <span class="n">voltage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Nombre de pannes de courant (depuis le dernier couplage)</span>
+    <span class="n">power_outage_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">operation_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;action_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;scene_mode&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Face du cube</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Action depuis face du cube</span>
+    <span class="n">action_from_side</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Angle en degrès</span>
+    <span class="n">action_angle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Action déclenchée (par ex : un clic sur un bouton)</span>
+    <span class="n">action</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">Literal</span><span class="p">[</span>
+            <span class="s2">&quot;shake&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;throw&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tap&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;slide&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;flip180&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;flip90&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;hold&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;side_up&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rotate_left&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rotate_right&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;1_min_inactivity&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;flip_to_side&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Qualité du lien (force du signal)</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 

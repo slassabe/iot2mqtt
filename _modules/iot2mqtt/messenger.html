@@ -108,25 +108,24 @@
 <span class="sd">.. code-block:: python</span>
 
 <span class="sd">    import time</span>
-
-<span class="sd">    from iot2mqtt import central, mqtthelper, messenger</span>
+<span class="sd">    import iot2mqtt as i2m</span>
 
 <span class="sd">    TARGET = &quot;localhost&quot;</span>
 
 
 <span class="sd">    def main():</span>
-<span class="sd">        _client = mqtthelper.ClientHelper(</span>
-<span class="sd">            mqtthelper.MQTTContext(hostname=TARGET), mqtthelper.SecurityContext()</span>
+<span class="sd">        _client = i2m.mqtthelper.ClientHelper(</span>
+<span class="sd">            i2m.mqtthelper.MQTTContext(hostname=TARGET), i2m.mqtthelper.SecurityContext()</span>
 <span class="sd">        )</span>
 <span class="sd">        _client.start()</span>
-<span class="sd">        _refined_queue = central.get_refined_data_queue(_client)</span>
+<span class="sd">        _refined_queue = i2m.central.get_refined_data_queue(_client)</span>
 
-<span class="sd">        messenger.Dispatcher(</span>
+<span class="sd">        i2m.messenger.Dispatcher(</span>
 <span class="sd">            input_queue=_refined_queue,</span>
 <span class="sd">            output_queue=None,</span>
 <span class="sd">            conditional_handlers=[</span>
-<span class="sd">                (messenger.is_type_availability, </span>
-<span class="sd">                lambda msg: print(f&quot;Availability: {msg.device_name} {msg.refined}&quot;)),</span>
+<span class="sd">                (i2m.messenger.is_type_availability, </span>
+<span class="sd">                lambda msg: print(f&quot;Availability: {msg.device_id} {msg.refined}&quot;)),</span>
 <span class="sd">            ],</span>
 <span class="sd">        )</span>
 
@@ -153,7 +152,7 @@
 
 <span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">SerializeAsAny</span>
 
-<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">dev</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">iot2mqtt</span> <span class="kn">import</span> <span class="n">dev</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span>
 
 
 <div class="viewcode-block" id="MessageType">
@@ -181,12 +180,9 @@
 <span class="sd">    Attributes:</span>
 <span class="sd">        data (Union[Dict, str, List[Dict]]): The data associated with the item.</span>
 <span class="sd">            It can be a dictionary, a string, or a list of dictionaries.</span>
-<span class="sd">        tag (Optional[str]): An optional tag for the item, which can be used</span>
-<span class="sd">            for additional metadata or categorization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]</span>
-    <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]]</span></div>
 
 
 
@@ -199,7 +195,7 @@
 <span class="sd">    Attributes:</span>
 <span class="sd">        protocol (dev.Protocol): The communication protocol used by the device.</span>
 <span class="sd">        model (Optional[dev.Model]): The model of the device, if available.</span>
-<span class="sd">        device_name (str): The name of the device.</span>
+<span class="sd">        device_id (str): The id of the device.</span>
 <span class="sd">        message_type (MessageType): The type of the message (e.g., discovery,</span>
 <span class="sd">            availability, state).</span>
 <span class="sd">        raw_item (Item): The raw data item associated with the message.</span>
@@ -211,7 +207,7 @@
 
     <span class="n">protocol</span><span class="p">:</span> <span class="n">dev</span><span class="o">.</span><span class="n">Protocol</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">dev</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span>
-    <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">device_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">message_type</span><span class="p">:</span> <span class="n">MessageType</span>
     <span class="n">raw_item</span><span class="p">:</span> <span class="n">Item</span>
     <span class="nb">id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">uuid4</span><span class="p">)</span>
@@ -367,7 +363,7 @@
         <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
             <span class="s2">&quot;No handler set for message with ID: </span><span class="si">%s</span><span class="s2">, Device: </span><span class="si">%s</span><span class="s2">, Type: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">message</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">.</span><span class="n">device_name</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">.</span><span class="n">device_id</span><span class="p">,</span>
             <span class="n">message</span><span class="o">.</span><span class="n">message_type</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -428,7 +424,7 @@
                                 <span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">: Ignored] Id: </span><span class="si">%s</span><span class="s2"> - Device: </span><span class="si">%s</span><span class="s2"> - Type : </span><span class="si">%s</span><span class="s2"> - Refined: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                                 <span class="n">_message</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                                <span class="n">_message</span><span class="o">.</span><span class="n">device_name</span><span class="p">,</span>
+                                <span class="n">_message</span><span class="o">.</span><span class="n">device_id</span><span class="p">,</span>
                                 <span class="n">_message</span><span class="o">.</span><span class="n">message_type</span><span class="p">,</span>
                                 <span class="n">_message</span><span class="o">.</span><span class="n">refined</span><span class="p">,</span>
                             <span class="p">)</span>
@@ -438,6 +434,12 @@
 
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">_found</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_process_and_put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_handler</span><span class="p">,</span> <span class="n">_message</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">DecodingException</span><span class="p">:</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Exception decoding message: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">_message</span><span class="p">,</span>
+                    <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">utils</span><span class="o">.</span><span class="n">i2m_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                     <span class="s2">&quot;Exception evaluating conditional handler handler: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>

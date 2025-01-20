@@ -120,9 +120,6 @@
 
 <span class="sd">    This class ensures that only one instance of each Model is created and provides a thread-safe</span>
 <span class="sd">    mechanism for accessing these instances.</span>
-
-<span class="sd">    Attributes:</span>
-<span class="sd">        UNKNOWN (Model): A default model instance with the tag &#39;UNKNOWN&#39;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_model_instances</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -166,6 +163,7 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        DEFAULT (str): Default protocol, used as a fallback.</span>
+<span class="sd">        ESPSOMFY (str): The protocol used by ESPHome Somfy RTS devices.</span>
 <span class="sd">        HOMIE (str): The Homie IoT convention for MQTT.</span>
 <span class="sd">        RING (str): The protocol used by Ring devices.</span>
 <span class="sd">        SHELLY (str): The protocol used by Shelly smart home devices.</span>
@@ -175,6 +173,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">DEFAULT</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span>
+    <span class="n">ESPSOMFY</span> <span class="o">=</span> <span class="s2">&quot;ESPSomfy&quot;</span>
     <span class="n">HOMIE</span> <span class="o">=</span> <span class="s2">&quot;Homie&quot;</span>
     <span class="n">RING</span> <span class="o">=</span> <span class="s2">&quot;Ring&quot;</span>
     <span class="n">SHELLY</span> <span class="o">=</span> <span class="s2">&quot;Shelly&quot;</span>

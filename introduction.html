@@ -108,7 +108,7 @@
 <ul class="simple">
 <li><p><strong>Programmatic Alternative</strong>: Provides more flexibility and control compared to traditional home automation platforms like openHAB, Home Assistant, and Jeedom.</p></li>
 <li><p><strong>Reliable Communication</strong>: Leverages the MQTT protocol to ensure reliable data transfer between devices.</p></li>
-<li><p><strong>Protocol-Agnostic</strong>: Supports both direct device integration over MQTT (e.g., Shelly, Tasmota) and gateway integration (e.g., Zigbee2MQTT, ring to MQTT, miflora to MQTT).</p></li>
+<li><p><strong>Protocol-Agnostic</strong>: Supports both direct device integration over MQTT (e.g., Shelly, Tasmota) and gateway integration (e.g., <a class="reference external" href="https://github.com/Koenkk/zigbee2mqtt">zigbee2mqtt</a>, ring to MQTT, <a class="reference external" href="https://github.com/rstrouse/ESPSomfy-RTS">ESPSomfy RTS</a>).</p></li>
 <li><p><strong>Abstract Devices</strong>: Comprehensive support for creating and managing abstract devices, simplifying the integration between different device models, providers, and protocols.</p></li>
 </ul>
 </section>
@@ -120,7 +120,7 @@
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>Python 3.x</p></li>
-<li><p>IoT bridges if required (e.g., Zigbee2MQTT, ring to MQTT, miflora to MQTT)</p></li>
+<li><p>IoT bridges if required (e.g., Zigbee2MQTT, ESPSomfy RTS)</p></li>
 </ul>
 </section>
 <section id="installation">
@@ -190,6 +190,26 @@ pip3<span class="w"> </span>install<span class="w"> </span>iot2mqtt
 </tr>
 </thead>
 <tbody>
+<tr class="row-even"><td><p>Z2M</p></td>
+<td><p>CTP-R01</p></td>
+<td><p>Release 0.14.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/CTP-R01.html">Link</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>E3</p></td>
+<td><p>Release 0.11.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/E3.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>ESPSOMFY</p></td>
+<td><p>E3</p></td>
+<td><p>Release 0.12.0</p></td>
+<td><p><a class="reference external" href="https://github.com/rstrouse/ESPSomfy-RTS">Link</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>HM1RC-2-E</p></td>
+<td><p>Release 0.11.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html">Link</a></p></td>
+</tr>
 <tr class="row-even"><td><p>Homie</p></td>
 <td><p>Miflora</p></td>
 <td><p>In progress</p></td>
@@ -226,14 +246,14 @@ pip3<span class="w"> </span>install<span class="w"> </span>iot2mqtt
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p>Z2M</p></td>
+<td><p>S26R2ZB</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/S26R2ZB.html">Link</a></p></td>
+</tr>
+<tr class="row-even"><td><p>Z2M</p></td>
 <td><p>SRTS-A01</p></td>
 <td><p>Release 0.9.0</p></td>
 <td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/SRTS-A01.html">Link</a></p></td>
-</tr>
-<tr class="row-even"><td><p>Z2M</p></td>
-<td><p>TS0601_soil</p></td>
-<td><p>Release 0.9.0</p></td>
-<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/TS0601_soil.html">Link</a></p></td>
 </tr>
 <tr class="row-odd"><td><p>Z2M</p></td>
 <td><p>SNZB-02</p></td>
@@ -251,19 +271,19 @@ pip3<span class="w"> </span>install<span class="w"> </span>iot2mqtt
 <td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/SNZB-03.html">Link</a></p></td>
 </tr>
 <tr class="row-even"><td><p>Z2M</p></td>
+<td><p>TS0601_soil</p></td>
+<td><p>Release 0.9.0</p></td>
+<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/TS0601_soil.html">Link</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Z2M</p></td>
 <td><p>ZBMINI-L</p></td>
 <td><p>Release 0.9.0</p></td>
 <td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/ZBMINI.html">Link</a></p></td>
 </tr>
-<tr class="row-odd"><td><p>Z2M</p></td>
+<tr class="row-even"><td><p>Z2M</p></td>
 <td><p>ZBMINIL2</p></td>
 <td><p>Release 0.9.0</p></td>
 <td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/ZBMINIL2.html">Link</a></p></td>
-</tr>
-<tr class="row-even"><td><p>Z2M</p></td>
-<td><p>S26R2ZB</p></td>
-<td><p>Release 0.9.0</p></td>
-<td><p><a class="reference external" href="https://www.zigbee2mqtt.io/devices/S26R2ZB.html">Link</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -271,7 +291,9 @@ pip3<span class="w"> </span>install<span class="w"> </span>iot2mqtt
 <section id="related-projects">
 <h2>Related projects<a class="headerlink" href="#related-projects" title="Link to this heading"></a></h2>
 <ul class="simple">
+<li><p><a class="reference external" href="https://github.com/rstrouse/ESPSomfy-RTS">ESPSomfy RTS</a> : A controller for Somfy RTS shades and blinds</p></li>
 <li><p><a class="reference external" href="https://github.com/eclipse/paho.mqtt.python">paho-mqtt</a> : Eclipse Paho™ MQTT Python Client</p></li>
+<li><p><a class="reference external" href="https://github.com/pydantic/pydantic">https://github.com/pydantic/pydantic</a> : Data validation using Python type hints</p></li>
 <li><p><a class="reference external" href="https://github.com/ThomDietrich/miflora-mqtt-daemon">miflora-mqtt-daemon</a> : Xiaomi Mi Flora Plant Sensor MQTT Client/Daemon</p></li>
 <li><p><a class="reference external" href="https://github.com/tsightler/ring-mqtt">ring-mqtt</a> : Ring devices to MQTT Bridge</p></li>
 <li><p><a class="reference external" href="https://github.com/Koenkk/zigbee2mqtt">zigbee2mqtt</a> : Allows you to use your Zigbee devices without the vendor’s bridge or gateway.</p></li>
