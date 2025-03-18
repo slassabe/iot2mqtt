@@ -16,7 +16,7 @@
 
 - **Programmatic Alternative**: Provides more flexibility and control compared to traditional home automation platforms like openHAB, Home Assistant, and Jeedom.
 - **Reliable Communication**: Leverages the MQTT protocol to ensure reliable data transfer between devices.
-- **Protocol-Agnostic**: Supports both direct device integration over MQTT (e.g., Shelly, Tasmota) and gateway integration (e.g., [zigbee2mqtt](https://github.com/Koenkk/zigbee2mqtt), ring to MQTT, [ESPSomfy RTS](https://github.com/rstrouse/ESPSomfy-RTS)).
+- **Protocol-Agnostic**: Supports both direct device integration over MQTT (e.g., Shelly, Tasmota) and gateway integration (e.g., [zigbee2mqtt](https://github.com/Koenkk/zigbee2mqtt), [ring-MQTT](https://github.com/tsightler/ring-mqtt), [ESPSomfy RTS](https://github.com/rstrouse/ESPSomfy-RTS)).
 - **Abstract Devices**: Comprehensive support for creating and managing abstract devices, simplifying the integration between different device models, providers, and protocols.
 
 ## Documentation
@@ -104,7 +104,9 @@ Below is a table outlining the available codecs.
 | Z2M     | HM1RC-2-E       | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html)|
 | Homie   | Miflora         | In progress    |             |
 | Z2M     | NAS-AB02B2      | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html)|
-| RING    | RingCamera      | In progress    |             |
+| RING    | RingAlarm       | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|
+| RING    | RingCamera      | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|
+| RING    | RingChime       | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|
 | TASMOTA | Shelly Plug S   | Release 0.9.0  | [Link](https://templates.blakadder.com/shelly_plug_S.html)|
 | SHELLY  | Shelly Plug S   | In progress    |             |
 | TASMOTA | Shelly Uni      | Release 0.9.0  | [Link](https://templates.blakadder.com/shelly_UNI.html)|

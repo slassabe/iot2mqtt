@@ -23,11 +23,39 @@ import sys
 import threading
 import time
 import traceback
+from dataclasses import dataclass, field
 from functools import wraps
 from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 i2m_log = logging.getLogger("iot2mqtt")
 DEBUG = True
+
+
+@dataclass
+class MetricsCollector:
+    queue_size_max: int = 0
+    start_processing: float = 0.0
+    processing_times: Dict[str, float] = field(default_factory=dict)
+    message_counts: Dict[str, int] = field(default_factory=dict)
+
+    def record_queue_size(self, size: int) -> None:
+        self.queue_size_max = max(size, self.queue_size_max)
+
+    def start_collect(self) -> None:
+        self.start_processing = time.time()
+
+    def end_collect(self, message_type: str) -> None:
+        duration = time.time() - self.start_processing
+        self.processing_times[message_type] = duration
+        self.message_counts[message_type] = self.message_counts.get(message_type, 0) + 1
+
+    def get_metrics(self) -> Dict:
+        return {
+            "queue_sizes": self.queue_size_max,
+            "processing_times": self.processing_times,
+            "message_counts": self.message_counts,
+        }
+
 
 T = TypeVar("T")
 

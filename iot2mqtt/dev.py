@@ -118,6 +118,14 @@ class Device(BaseModel):
     model: Optional[Model] = (None,)
 
 
+class RingDevice(Device):
+    """
+    Represents a Ring device in the system.
+    """
+
+    location_id: str = (Field(frozen=True),)
+
+
 class ButtonAction(Enum):
     """
     Enumeration defining button action values.

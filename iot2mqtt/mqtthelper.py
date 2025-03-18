@@ -78,6 +78,19 @@ class SecurityContext:
         # utils.check_parameter("user_pwd", self.user_pwd, str, optional=True)
 
 
+class ConnectionRetryPolicy:
+    """
+    ConnectionRetryPolicy defines the retry policy for connecting to the MQTT broker.
+
+    Attributes:
+        MAX_RETRY (int): The maximum number of retry attempts for connecting to the broker.
+        RETRY_DELAY (int): The delay in seconds between retry attempts.
+    """
+
+    MAX_RETRY = 5
+    RETRY_DELAY = 5  # seconds
+
+
 class ClientHelper(mqtt.Client):
     """
     ClientHelper is a helper class for managing MQTT client operations.
@@ -191,22 +204,43 @@ class ClientHelper(mqtt.Client):
         return _rc
 
     def _do_connect(self) -> mqtt.MQTTErrorCode:
-        try:
-            _rc = self.connect(
-                self._context.hostname,
-                port=self._context.port,
-                keepalive=self._context.keepalive,
-                clean_start=self._context.clean_start,
-                properties=None,
-            )
-            return _rc
-        except socket.gaierror as exp:
-            utils.i2m_log.fatal(
-                "[%s] cannot connect host %s",
-                exp,
-                self._context.hostname,
-            )
-            raise exceptions.ConnectionException("connect failed") from exp
+        """
+        Connects the client to the MQTT broker according to the Connection policy.
+
+        This method attempts to connect to the MQTT broker using the connection parameters
+        specified in the context. If the connection fails due to a temporary DNS resolution
+        issue, it retries the connection according to the retry policy defined in
+        ConnectionRetryPolicy.
+
+        Returns:
+            mqtt.MQTTErrorCode: The result code of the connection attempt.
+
+        Raises:
+            exceptions.ConnectionException: If all retry attempts fail.
+        """
+
+        for attempt in range(ConnectionRetryPolicy.MAX_RETRY):
+            try:
+                _rc = self.connect(
+                    self._context.hostname,
+                    port=self._context.port,
+                    keepalive=self._context.keepalive,
+                    clean_start=self._context.clean_start,
+                    properties=None,
+                )
+                return _rc
+            except socket.gaierror as exp:
+                utils.i2m_log.fatal(
+                    "[%s] cannot connect host %s (attempt %d/%d)",
+                    exp,
+                    self._context.hostname,
+                    attempt + 1,
+                    ConnectionRetryPolicy.MAX_RETRY,
+                )
+                if attempt < ConnectionRetryPolicy.MAX_RETRY - 1:
+                    time.sleep(ConnectionRetryPolicy.RETRY_DELAY)
+                else:
+                    raise exceptions.ConnectionException("connect failed") from exp
 
     def _handle_on_connect(  # pylint: disable=too-many-arguments
         self,

@@ -70,8 +70,7 @@ dispatcher according to their message type:
 import enum
 import queue
 import threading
-from datetime import datetime
-from typing import Callable, Dict, List, Optional, Tuple, TypeAlias, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeAlias, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
@@ -109,6 +108,7 @@ class Message(BaseModel):
     Represents a message in the IoT system.
 
     Attributes:
+        topic (str): The topic of the message.
         protocol (dev.Protocol): The communication protocol used by the device.
         model (Optional[dev.Model]): The model of the device, if available.
         device_id (str): The id of the device.
@@ -121,6 +121,7 @@ class Message(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    topic: str
     protocol: dev.Protocol
     model: Optional[dev.Model]
     device_id: str
@@ -128,6 +129,21 @@ class Message(BaseModel):
     raw_item: Item
     id: UUID = Field(default_factory=uuid4)
     refined: SerializeAsAny[Optional[Item]] = None
+
+    def header(self) -> str:
+        return f"protocol: {self.protocol} - topic: {self.topic} - model: {self.model} - id: {self.device_id} - type: {self.message_type}"
+
+    def refined_to_str(self) -> str:
+        if self.refined is None:
+            return None
+        _valuables: Dict[str, Any] = {k: v for k, v in self.refined if v is not None}
+        if not _valuables:
+            return f"raw: {self.raw_item}"
+        else:
+            return f"refined: {_valuables}"
+
+    def __str__(self) -> str:
+        return f"[{self.header()}] {self.refined_to_str()}"
 
 
 # Class predicate definition
@@ -239,9 +255,6 @@ class Dispatcher(QueueManager):
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._stop_event = threading.Event()  # Use an event for stopping
         self._thread.start()
-        utils.i2m_log.debug(
-            "[%s] Dispatcher started at %s", self.name, datetime.now().isoformat()
-        )
 
     def __str__(self) -> str:
         conditional_handlers_count = (
@@ -296,46 +309,52 @@ class Dispatcher(QueueManager):
         """
         while not self._stop_event.is_set():
             try:
-                _message = self._input_queue.get(
+                _msg = self._input_queue.get(
                     timeout=1
                 )  # Use timeout to periodically check the stop event
             except queue.Empty:
                 continue
 
-            if _message == self.STOP:
+            if _msg == self.STOP:
                 utils.i2m_log.debug("[%s] Dispatcher stopped", self.name)
                 break
 
-            if _message is None:
+            if _msg is None:
                 utils.i2m_log.error("Message is None")
                 continue
 
             _found = False
             try:
                 for _condition, _handler in self.conditional_handlers:
-                    if _condition(_message):
+                    if _condition(_msg):
                         if _found:
+                            _refined_short = f"{_msg.refined}"[:500]
                             utils.i2m_log.warning(
-                                "[%s: Ignored] Id: %s - Device: %s - Type : %s - Refined: %s",
+                                "[%s] Ignored condition '%s': allready satisfyed by '%s' for Device: %s - Type : %s - Refined: %s...",
                                 self.name,
-                                _message.id,
-                                _message.device_id,
-                                _message.message_type,
-                                _message.refined,
+                                _found.__name__,
+                                _condition.__name__,
+                                _msg.device_id,
+                                _msg.message_type,
+                                _refined_short,
                             )
                             break
-                        _found = True
-                        self._process_and_put(_handler, _message)
+                        _found = _condition
+                        self._process_and_put(_handler, _msg)
 
                 if not _found:
-                    self._process_and_put(self._default_handler, _message)
+                    self._process_and_put(self._default_handler, _msg)
             except exceptions.DecodingException:
                 utils.i2m_log.error(
                     "Exception decoding message: %s",
-                    _message,
+                    _msg,
                     exc_info=True,
                 )
             except TypeError as e:
+                utils.i2m_log.error(
+                    "Exception decoding message: %s",
+                    _msg,
+                )
                 utils.i2m_log.error(
                     "Exception evaluating conditional handler handler: %s",
                     e,

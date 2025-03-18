@@ -16,7 +16,9 @@ E3 = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
 HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
-RING_CAMERA = "RingCamera"
+RING_ALARM = "alarm"
+RING_CAMERA = "camera"
+RING_CHIME = "chime"
 SHELLY_PLUGS = "Shelly Plug S"  # Shelly Plug S WiFi smart plug
 SHELLY_UNI = "Shelly Uni"  # Shelly Uni WiFi relay/dimmer
 SN_AIRSENSOR = "SNZB-02"  # https://www.zigbee2mqtt.io/devices/SNZB-02.html
@@ -41,7 +43,9 @@ class Models(metaclass=utils.Singleton):
     HM_ALARM_BUTTON = dev.ModelFactory.get(HM_ALARM_BUTTON)
     MIFLORA = dev.ModelFactory.get(MIFLORA)
     NEO_ALARM = dev.ModelFactory.get(NEO_ALARM)
+    RING_ALARM = dev.ModelFactory.get(RING_ALARM)
     RING_CAMERA = dev.ModelFactory.get(RING_CAMERA)
+    RING_CHIME = dev.ModelFactory.get(RING_CHIME)
     SHELLY_PLUGS = dev.ModelFactory.get(SHELLY_PLUGS)
     SHELLY_UNI = dev.ModelFactory.get(SHELLY_UNI)
     SN_AIRSENSOR = dev.ModelFactory.get(SN_AIRSENSOR)
@@ -75,6 +79,9 @@ class Models(metaclass=utils.Singleton):
                 cls.E3: abstract.DoorSensor,
                 cls.HM_ALARM_BUTTON: abstract.AlarmButton,
                 cls.NEO_ALARM: abstract.Alarm,
+                cls.RING_ALARM: abstract.RingAlarm,
+                cls.RING_CAMERA: abstract.Camera,
+                cls.RING_CHIME: abstract.Chime,
                 cls.SHELLY_PLUGS: abstract.Switch,
                 cls.SHELLY_UNI: abstract.Switch2Channels,
                 cls.SN_AIRSENSOR: abstract.AirSensor,
@@ -157,6 +164,38 @@ class Models(metaclass=utils.Singleton):
                 abstract.TILTPOSITION,
                 abstract.TILTTARGET,
                 abstract.WINDY,
+            ],
+            gettable_fields=[],
+        )
+
+        encoder.EncoderRegistry(
+            models=[cls.RING_ALARM],
+            settable_fields=[
+                abstract.MODE,
+            ],
+            gettable_fields=[],
+        )
+
+        encoder.EncoderRegistry(
+            models=[cls.RING_CAMERA],
+            settable_fields=[
+                abstract.LIGHT,
+                abstract.MOTION_DETECTION,
+                abstract.MOTION_WARNING,
+                abstract.SIREN,
+                abstract.SNAPSHOT_INTERVAL,
+                abstract.STREAM,
+            ],
+            gettable_fields=[],
+        )
+
+        encoder.EncoderRegistry(
+            models=[cls.RING_CHIME],
+            settable_fields=[
+                abstract.PLAY_MOTION_SOUND,
+                abstract.PLAY_MOTION_SOUND,
+                abstract.SNOOZE,
+                abstract.SNOOZE_MINUTES,
             ],
             gettable_fields=[],
         )

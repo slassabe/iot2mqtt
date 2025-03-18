@@ -11,8 +11,9 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Optional, Type
 
 from pydantic import BaseModel, Field, ValidationError
+from pydantic_core import PydanticSerializationError
 
-from iot2mqtt import abstract, dev, exceptions, messenger, utils
+from iot2mqtt import abstract, dev, exceptions, messenger, topics, utils
 
 
 class Processor(metaclass=ABCMeta):
@@ -192,7 +193,10 @@ class MessageWritter(Processor):
         Returns:
             None
         """
-        self._file.write("\n," + message.model_dump_json(indent=4))
+        try:
+            self._file.write("\n," + message.model_dump_json(indent=4))
+        except PydanticSerializationError:
+            utils.i2m_log.warning("Error while writing message to file")
         self._file.flush()
         return None
 
@@ -215,11 +219,12 @@ class ModelResolver(Processor):
         _device_id = message.device_id
         if _device_id in self._notified_devices:
             return
-        utils.i2m_log.debug(
-            '[%s] "%s" is unable to resolve model: message type: %s',
-            _device_id,
+        utils.i2m_log.warning(
+            '["%s"] unable to normalyse message - device_id: "%s" - type: %s - value: %s',
             self.__class__.__name__,
-            message.message_type,
+            _device_id,
+            message.message_type.value,
+            message.raw_item.data,
         )
         self._notified_devices[_device_id] = True
 
@@ -242,6 +247,9 @@ class ModelResolver(Processor):
             raise exceptions.DecodingException(
                 f"Discovery message not allowed: {message}"
             )
+        if message.model is not None:
+            # Model already set for protocol RING
+            return message
         _device_id = message.device_id
         _device = Discoverer.directory.get_device(_device_id)
         message.model = _device.model if _device else dev.ModelFactory.UNKNOWN
@@ -267,6 +275,8 @@ class DeviceDirectory:
         Args:
             devices (List[dev.Device]): A list of devices to be added or updated in the directory.
         """
+        if not isinstance(devices, list):
+            raise TypeError("parameter 'devices' must be a list of devices")
         self._directory.update({device.name: device for device in devices})
 
     @staticmethod
@@ -384,6 +394,8 @@ class Discoverer(Processor):
             return self._discover_tasmota(message)
         if message.protocol == dev.Protocol.ESPSOMFY:
             return self._discover_espsomfy(message)
+        if message.protocol == dev.Protocol.RING:
+            return self._discover_ring(message)
 
         utils.i2m_log.info("Unknown protocol: %s", message.protocol)
         return message
@@ -505,6 +517,34 @@ class Discoverer(Processor):
         message.refined = abstract.Registry(device_ids=[_device_id])
         return message
 
+    def _discover_ring(self, message: messenger.Message) -> Optional[messenger.Message]:
+        _device_id = topics.InfoTopicManager().get_device_id(
+            protocol=dev.Protocol.RING,
+            message_type=messenger.MessageType.DISCO,
+            topic=message.topic,
+        )
+        _model = topics.InfoTopicManager().get_model(
+            protocol=dev.Protocol.RING,
+            message_type=messenger.MessageType.DISCO,
+            topic=message.topic,
+        )
+        _location_id = topics.InfoTopicManager().get_ring_location_id(
+            message_type=messenger.MessageType.DISCO,
+            topic=message.topic,
+        )
+        if self.directory.get_device(_device_id) is not None:
+            return None
+        _device = dev.RingDevice(
+            address=_device_id,
+            name=_device_id,
+            model=_model,
+            protocol=dev.Protocol.RING,
+            location_id=_location_id,
+        )
+        self.directory.update_devices([_device])
+        message.refined = abstract.Registry(device_ids=[_device_id])
+        return message
+
 
 class AvailabilityNormalizer(Processor):
     """
@@ -551,6 +591,8 @@ class AvailabilityNormalizer(Processor):
         if message.protocol == dev.Protocol.TASMOTA:
             _raw_avail_value = self._decode_availability(_raw_data, "Online", "Offline")
         elif message.protocol == dev.Protocol.ESPSOMFY:
+            _raw_avail_value = self._decode_availability(_raw_data, "online", "offline")
+        elif message.protocol == dev.Protocol.RING:
             _raw_avail_value = self._decode_availability(_raw_data, "online", "offline")
         elif message.protocol == dev.Protocol.Z2M:
             if isinstance(_raw_data, dict):
@@ -644,10 +686,11 @@ class StateNormalizer(Processor):
         if _device_id in self._notified_devices:
             return
         utils.i2m_log.warning(
-            '[%s] "%s" is unable to normalyse message type: %s - value: %s',
-            _device_id,
+            '["%s"] unable to normalyse message - device_id: "%s" - type: %s - model: %s - value: %s',
             self.__class__.__name__,
+            _device_id,
             message.message_type.value,
+            message.model if message.model else "Unset",
             message.raw_item.data,
         )
         self._notified_devices[_device_id] = True

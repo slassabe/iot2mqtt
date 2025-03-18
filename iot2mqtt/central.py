@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 # coding=utf-8
 
 """
@@ -48,16 +47,17 @@ class MessageStructure(Enum):
     JSON = "json"
     RAW = "raw"
     ESPSOMFY = "espsomfy"
+    RING = "ring"
 
 
-class MessageParser(ABC):
+class MessageFormater(ABC):
     """
     Abstract base class for parsing incoming MQTT messages.
     """
 
     @staticmethod
     @abstractmethod
-    def parse(
+    def modify_incoming_message(
         protocol: dev.Protocol,
         message_type: messenger.MessageType,
         topic: str,
@@ -69,13 +69,13 @@ class MessageParser(ABC):
         pass
 
 
-class JsonMessageParser(MessageParser):
+class JsonMessageFormater(MessageFormater):
     """
-    Parses incoming MQTT messages in JSON format.
+    Format incoming MQTT messages in JSON format.
     """
 
     @staticmethod
-    def parse(
+    def modify_incoming_message(
         protocol: dev.Protocol,
         message_type: messenger.MessageType,
         topic: str,
@@ -92,13 +92,13 @@ class JsonMessageParser(MessageParser):
             return raw_payload
 
 
-class RawMessageParser(MessageParser):
+class RawMessageFormater(MessageFormater):
     """
-    Parses incoming MQTT messages in raw format.
+    Format incoming MQTT messages in raw format.
     """
 
     @staticmethod
-    def parse(
+    def modify_incoming_message(
         protocol: dev.Protocol,
         message_type: messenger.MessageType,
         topic: str,
@@ -110,13 +110,13 @@ class RawMessageParser(MessageParser):
         return raw_payload
 
 
-class ESPSomfyMessageParser(MessageParser):
+class ESPSomfyMessageFormater(MessageFormater):
     """
-    Parses incoming ESPSomfy messages.
+    Format incoming STATE and DISCO ESPSomfy messages.
     """
 
     @staticmethod
-    def parse(
+    def modify_incoming_message(
         protocol: dev.Protocol,
         message_type: messenger.MessageType,
         topic: str,
@@ -125,7 +125,7 @@ class ESPSomfyMessageParser(MessageParser):
         # Called by :
         # - ESPSomfy state messages: _on_espsomfy_state
         # - ESPSomfy discovery messages : _on_espsomfy_disco
-        key = topics.InfoTopicManager().resolve_wildcards(
+        key = topics.InfoTopicManager().get_wildcard_by_position(
             protocol=protocol, message_type=message_type, topic=topic, position=1
         )
         if message_type == messenger.MessageType.DISCO:
@@ -133,6 +133,92 @@ class ESPSomfyMessageParser(MessageParser):
         else:
             value = raw_payload
         return {key: value}
+
+
+class RingTags(Enum):
+    STATE = "state"
+    INFO = "info"
+    ATTRIBUTES = "attributes"
+    IMAGE = "image"
+    COMMAND = "command"
+
+
+class RingMessageFormater(MessageFormater):
+    """
+    Format incoming Ring STATE messages.
+
+    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/state
+    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/info
+    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/attributes
+    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/image
+    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/command
+    """
+
+    TOPIC_TAG_POSITION = 4
+    ATTRIBUTE_POSITION = 3
+
+    @staticmethod
+    def modify_incoming_message(
+        protocol: dev.Protocol,
+        message_type: messenger.MessageType,
+        topic: str,
+        raw_payload: Union[str, bytes],
+    ) -> Optional[DataItem]:
+        # Called by :
+        # - RING state messages: _on_ring_state
+        if not isinstance(raw_payload, (str, bytes)):
+            utils.i2m_log.error("Invalid payload type: %s", type(raw_payload))
+            return None
+        _topic_tag = topics.InfoTopicManager().get_wildcard_by_position(
+            protocol=protocol,
+            message_type=message_type,
+            topic=topic,
+            position=RingMessageFormater.TOPIC_TAG_POSITION,
+        )
+        _attribute = topics.InfoTopicManager().get_wildcard_by_position(
+            protocol=protocol,
+            message_type=message_type,
+            topic=topic,
+            position=RingMessageFormater.ATTRIBUTE_POSITION,
+        )
+        return RingMessageFormater._handle_message(
+            topic_tag=_topic_tag, attribute=_attribute, raw_payload=raw_payload
+        )
+
+    @staticmethod
+    def _handle_message(
+        topic_tag: str, attribute: str, raw_payload: Union[str, bytes]
+    ) -> Optional[DataItem]:
+        def _to_json(payload: str) -> Optional[Dict[str, Any]]:
+            try:
+                return json.loads(payload)
+            except json.JSONDecodeError:
+                return None
+
+        if topic_tag == RingTags.COMMAND.value:
+            # Dismissing echo sending command messages
+            return None
+        if topic_tag == RingTags.STATE.value:
+            _key = attribute
+            if attribute == RingTags.INFO.value:
+                _json_payload = _to_json(raw_payload)
+                if _json_payload is not None:
+                    raw_payload = _json_payload
+        elif topic_tag == RingTags.ATTRIBUTES.value:
+            _key = f"{attribute}_{topic_tag}"
+            _json_payload = _to_json(raw_payload)
+            if _json_payload is not None:
+                raw_payload = _json_payload
+            else:
+                return None
+        elif topic_tag == RingTags.IMAGE.value:
+            _key = f"{attribute}_{topic_tag}"
+        else:
+            utils.i2m_log.warning(
+                "Dismissing RING device message with topic tag: %s", topic_tag
+            )
+            return None
+        return {_key: raw_payload}
 
 
 class Scrutinizer:
@@ -162,20 +248,31 @@ class Scrutinizer:
         self._mqtt_client = mqtt_client
         self._output_queue = output_queue
         self._queue_timeout = queue_timeout
-        _protocols = protocols_expected or [dev.Protocol.Z2M, dev.Protocol.TASMOTA, dev.Protocol.ESPSOMFY]
+        self._metrics_collector = utils.MetricsCollector()
+        # Listen all supported protocols by default
+        _protocols = protocols_expected or [
+            dev.Protocol.Z2M,
+            dev.Protocol.TASMOTA,
+            dev.Protocol.RING,
+            dev.Protocol.ESPSOMFY,
+        ]
         self._subscribe_to_topics(_protocols)
-        self._parsers = {
-            MessageStructure.JSON: JsonMessageParser.parse,
-            MessageStructure.RAW: RawMessageParser.parse,
-            MessageStructure.ESPSOMFY: ESPSomfyMessageParser.parse,
+        self._formaters: dict[MessageStructure, MessageFormater] = {
+            MessageStructure.JSON: JsonMessageFormater,
+            MessageStructure.RAW: RawMessageFormater,
+            MessageStructure.ESPSOMFY: ESPSomfyMessageFormater,
+            MessageStructure.RING: RingMessageFormater,
         }
+
+    def _get_formater(self, message_structure: MessageStructure) -> Callable:
+        return self._formaters[message_structure].modify_incoming_message
 
     def _subscribe_to_topics(self, protocols_expected) -> None:
         def _callback_add(
             protocol: dev.Protocol,
             message_type: messenger.MessageType,
             callback: Callable[[messenger.Message], None],
-        ):
+        ) -> None:
             _topic = topics.InfoTopicManager().get_topic_to_subscribe(
                 protocol, message_type
             )
@@ -187,6 +284,7 @@ class Scrutinizer:
         _z2m_proto = dev.Protocol.Z2M
         _tasmota_proto = dev.Protocol.TASMOTA
         _espsomfy_proto = dev.Protocol.ESPSOMFY
+        _ring_proto = dev.Protocol.RING
 
         if _z2m_proto in protocols_expected:
             _callback_add(_z2m_proto, _disco, self._on_z2m_disco)
@@ -202,6 +300,10 @@ class Scrutinizer:
             _callback_add(_espsomfy_proto, _disco, self._on_espsomfy_disco)
             _callback_add(_espsomfy_proto, _avail, self._on_espsomfy_avail)
             _callback_add(_espsomfy_proto, _state, self._on_espsomfy_state)
+
+        if _ring_proto in protocols_expected:
+            _callback_add(_ring_proto, _avail, self._on_ring_avail)
+            _callback_add(_ring_proto, _state, self._on_ring_state)
         # Set connection handler
         self._mqtt_client.connect_handler_add(self._on_connect)
 
@@ -212,35 +314,51 @@ class Scrutinizer:
         mqtt_message: mqtt.MQTTMessage,
         protocol: dev.Protocol,
         message_type: messenger.MessageType,
-        parser: Parser,
+        target_message_structure: MessageStructure,
     ) -> None:
         """
         Process an incoming MQTT message and put the result in the output queue.
+        Args:
+            client (mqtt.Client): The MQTT client instance.
+            userdata (Any): User data associated with the client.
+            mqtt_message (mqtt.MQTTMessage): The incoming MQTT message.
+            protocol (dev.Protocol): The protocol associated with the message.
+            message_type (messenger.MessageType): The type of the message.
+            target_message_structure (MessageStructure): The target structure of the message.
         """
         topic = mqtt_message.topic
-        _raw_payload = str(mqtt_message.payload.decode("utf-8"))
+        try:
+            _raw_payload = str(mqtt_message.payload.decode("utf-8"))
+        except UnicodeDecodeError:
+            _raw_payload = mqtt_message.payload
         if _raw_payload is None:
             utils.i2m_log.info("Received empty message on topic %s", topic)
             return
-        _device_id = self._get_device_id(
-            protocol=protocol,
-            message_type=message_type,
-            topic=topic,
-        )
 
-        _data = parser(
+        _data = self._get_formater(target_message_structure)(
             protocol=protocol,
             message_type=message_type,
             topic=topic,
             raw_payload=_raw_payload,
         )
-
         if _data is None:
             return
+
         _item = messenger.Item(data=_data)
-        _incoming = messenger.Message(
+        _device_id = topics.InfoTopicManager().get_device_id(
             protocol=protocol,
-            model=None,
+            message_type=message_type,
+            topic=topic,
+        )
+        _model = topics.InfoTopicManager().get_model(
+            protocol=protocol,
+            message_type=message_type,
+            topic=topic,
+        )
+        _incoming = messenger.Message(
+            topic=topic,
+            protocol=protocol,
+            model=_model,
             device_id=_device_id,
             message_type=message_type,
             raw_item=_item,
@@ -252,32 +370,6 @@ class Scrutinizer:
                 "Output queue is full. Dropping message for topic %s", topic
             )
 
-    def _get_device_id(
-        self,
-        protocol: dev.Protocol,
-        message_type: messenger.MessageType,
-        topic: str,
-    ) -> Optional[str]:
-        """
-        Get the device ID from the topic.
-        """
-        PREFIX = "shade"
-        _index = topics.InfoTopicManager().resolve_wildcards(
-            protocol=protocol,
-            message_type=message_type,
-            topic=topic,
-            position=0,
-        )
-        if protocol == dev.Protocol.ESPSOMFY:
-            if message_type == messenger.MessageType.AVAIL:
-                return PREFIX
-            if message_type in [
-                messenger.MessageType.DISCO,
-                messenger.MessageType.STATE,
-            ]:
-                return _index
-        return _index
-
     def _on_z2m_avail(self, *argc, **kwargs) -> None:
         """
         Process zigbee2mqtt availability messages:
@@ -288,7 +380,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.AVAIL,
-            parser=self._parsers[MessageStructure.JSON],
+            target_message_structure=MessageStructure.JSON,
         )
 
     def _on_tasmota_avail(self, *argc, **kwargs) -> None:
@@ -301,7 +393,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.AVAIL,
-            parser=self._parsers[MessageStructure.RAW],
+            target_message_structure=MessageStructure.RAW,
         )
 
     def _on_espsomfy_avail(self, *argc, **kwargs) -> None:
@@ -314,7 +406,28 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.ESPSOMFY,
             message_type=messenger.MessageType.AVAIL,
-            parser=self._parsers[MessageStructure.RAW],
+            target_message_structure=MessageStructure.RAW,
+        )
+
+    def _on_ring_avail(self, *argc, **kwargs) -> None:
+        """
+        Process RING availability messages:
+        ring/<location_id>/<product_category>/<device_id>/status: <value>
+        """
+        self._process_message(
+            *argc,
+            **kwargs,
+            protocol=dev.Protocol.RING,
+            message_type=messenger.MessageType.AVAIL,
+            target_message_structure=MessageStructure.RAW,
+        )
+        # RING device don't have DISCO message, so we need to send a DISCO message
+        self._process_message(
+            *argc,
+            **kwargs,
+            protocol=dev.Protocol.RING,
+            message_type=messenger.MessageType.DISCO,
+            target_message_structure=MessageStructure.RAW,
         )
 
     def _on_z2m_state(self, *argc, **kwargs) -> None:
@@ -327,7 +440,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.STATE,
-            parser=self._parsers[MessageStructure.JSON],
+            target_message_structure=MessageStructure.JSON,
         )
 
     def _on_tasmota_state(self, *argc, **kwargs) -> None:
@@ -340,7 +453,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.STATE,
-            parser=self._parsers[MessageStructure.JSON],
+            target_message_structure=MessageStructure.JSON,
         )
 
     def _on_espsomfy_state(self, *argc, **kwargs) -> None:
@@ -353,7 +466,20 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.ESPSOMFY,
             message_type=messenger.MessageType.STATE,
-            parser=self._parsers[MessageStructure.ESPSOMFY],
+            target_message_structure=MessageStructure.ESPSOMFY,
+        )
+
+    def _on_ring_state(self, *argc, **kwargs) -> None:
+        """
+        Process RING state messages:
+        ESPSomfy/shades/<device_id>/<property>: <value>
+        """
+        self._process_message(
+            *argc,
+            **kwargs,
+            protocol=dev.Protocol.RING,
+            message_type=messenger.MessageType.STATE,
+            target_message_structure=MessageStructure.RING,
         )
 
     def _on_z2m_disco(self, *argc, **kwargs) -> None:
@@ -366,7 +492,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.DISCO,
-            parser=self._parsers[MessageStructure.JSON],
+            target_message_structure=MessageStructure.JSON,
         )
 
     def _on_tasmota_disco(self, *argc, **kwargs) -> None:
@@ -379,7 +505,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.TASMOTA,
             message_type=messenger.MessageType.DISCO,
-            parser=self._parsers[MessageStructure.JSON],
+            target_message_structure=MessageStructure.JSON,
         )
 
     def _on_espsomfy_disco(self, *argc, **kwargs) -> None:
@@ -392,7 +518,7 @@ class Scrutinizer:
             **kwargs,
             protocol=dev.Protocol.ESPSOMFY,
             message_type=messenger.MessageType.DISCO,
-            parser=self._parsers[MessageStructure.ESPSOMFY],
+            target_message_structure=MessageStructure.ESPSOMFY,
         )
 
     def _on_connect(  # pylint: disable=too-many-arguments
@@ -410,6 +536,9 @@ class Scrutinizer:
 
 
 class DeviceAccessor:
+    RETRY_COUNT_MAX = 3
+    RETRY_ELAPSE = 60  # seconds
+
     _timer_mgr = utils.TimerManager()
     """
     A class responsible for accessing device state via MQTT.
@@ -473,7 +602,7 @@ class DeviceAccessor:
             _command_payload = json.dumps(_pl)
             _publish_it(_command_topic, _command_payload)
             return
-        if protocol in [dev.Protocol.TASMOTA, dev.Protocol.ESPSOMFY]:
+        if protocol in [dev.Protocol.TASMOTA, dev.Protocol.ESPSOMFY, dev.Protocol.RING]:
             for _field in _fields:
                 _command_topic = f"{_command_base_topic}/{device_id}/{_field}"
                 _command_payload = ""
@@ -526,6 +655,129 @@ class DeviceAccessor:
             return
         _error_msg = f"Unknown protocol {protocol}"
         raise NotImplementedError(_error_msg)
+
+    def ring_trigger_change_state(
+        self,
+        device_id: str,
+        protocol: dev.Protocol,
+        state: Dict,
+        location_id: str,
+        model: str,
+    ) -> None:
+        """
+        Publishes state changes for Ring devices to MQTT topics.
+
+        Args:
+            device_id (str): The Ring device identifier
+            protocol (dev.Protocol): Must be Protocol.RING
+            state (Dict): State changes to apply to the device
+            location_id (str): The Ring location identifier
+            model (str): The Ring device model/category
+
+        Raises:
+            ValueError: If device_id, location_id or model are empty
+            NotImplementedError: If protocol is not Protocol.RING
+
+        The method constructs Ring-specific MQTT command topics in the format:
+        <base_topic>/<location_id>/<model>/<device_id>/<state_key>/command
+        """
+
+        def _publish_it(topic: str, payload: str) -> None:
+            utils.i2m_log.debug(
+                "Publishing state change to %s - state : %s", topic, payload
+            )
+            self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
+            return
+
+        if not device_id or not location_id or not model:
+            _msg = (
+                f"device_id: {device_id}, location_id: {location_id} /"
+                f"and model: {location_id} must not be empty"
+            )
+            raise ValueError(_msg)
+
+        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(
+            protocol
+        )
+        if protocol == dev.Protocol.RING:
+            for _key, _value in state.items():
+                _command_topic = (
+                    f"{_command_base_topic}/{location_id}/"
+                    f"{model}/{device_id}/{_key}/command"
+                )
+                _publish_it(_command_topic, _value)
+            return
+        _error_msg = f"Protocol {protocol} is not permitted for Ring devices"
+        raise ValueError(_error_msg)
+
+    def _do_trigger_change_state_helper(
+        self,
+        device_id: str,
+        state: Dict,
+        retry_count: int = 0,
+    ) -> None:
+        _device: Optional[dev.RingDevice] = processor.DeviceDirectory.get_device(
+            device_id
+        )
+        if _device is None:
+            if retry_count > self.RETRY_COUNT_MAX:
+                utils.i2m_log.error("[%s] device not found: abort", device_id)
+                return
+            utils.i2m_log.warning(
+                "[%s] device not found: retry (%s)", device_id, retry_count
+            )
+            _params = {
+                "device_id": device_id,
+                "state": state,
+                "retry_count": retry_count + 1,
+            }
+            self._timer_mgr.create_timer(
+                device_id=device_id,
+                countdown=self.RETRY_ELAPSE * (retry_count + 1),
+                task=self._do_trigger_change_state_helper,
+                kwargs=_params,
+            )
+            return
+        if _device.protocol == dev.Protocol.RING:
+            self.ring_trigger_change_state(
+                device_id=device_id,
+                protocol=_device.protocol,
+                state=state,
+                location_id=_device.location_id,
+                model=_device.model,
+            )
+            return
+        if _device.protocol in [dev.Protocol.TASMOTA, dev.Protocol.ESPSOMFY]:
+            self.trigger_change_state(
+                device_id=device_id,
+                protocol=_device.protocol,
+                state=state,
+            )
+            return
+        _error_msg = f"Unknown protocol {_device.protocol}"
+        raise NotImplementedError(_error_msg)
+
+    def trigger_change_state_helper(
+        self,
+        device_ids: str,
+        state: Dict,
+    ) -> None:
+        """
+        Triggers state changes for multiple devices.
+
+        Args:
+            device_ids (str): A comma-separated string of device IDs to update
+            state (Dict): The state changes to apply to each device
+
+        The method splits the device_ids string and triggers state changes for each device
+        individually, with retry handling in case devices are not immediately available.
+        """
+        for _device_id in device_ids.split(","):
+            self._do_trigger_change_state_helper(
+                device_id=_device_id,
+                state=state,
+                retry_count=0,
+            )
 
     def _do_switch_power(
         self,
@@ -795,7 +1047,11 @@ def get_refined_data_queue(
     _layer1_queue = Queue()
     _layer2_queue = Queue()
     _refined_queue = Queue()
-    Scrutinizer(mqtt_client=mqtt_client, output_queue=_raw_data_queue, protocols_expected=protocols_expected)
+    Scrutinizer(
+        mqtt_client=mqtt_client,
+        output_queue=_raw_data_queue,
+        protocols_expected=protocols_expected,
+    )
     _accessor = DeviceAccessor(mqtt_client=mqtt_client)
 
     messenger.Dispatcher(
@@ -906,14 +1162,14 @@ def _get_device_state(
     """
     Ask for state device
     """
-    _registry = message.refined
+    _refined_data = message.refined
     if message.message_type != messenger.MessageType.DISCO:
         utils.i2m_log.error("Must be DISCOVERY message, not: %s", message)
         return message
-    if _registry is None:
+    if _refined_data is None:
         utils.i2m_log.error("No refined message found for: %s", message)
         return message
-    for _device_id in _registry.device_ids:
+    for _device_id in _refined_data.device_ids:
         _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(_device_id)
         _model = _device.model
         _protocol = _device.protocol
