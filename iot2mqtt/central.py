@@ -147,11 +147,15 @@ class RingMessageFormater(MessageFormater):
     """
     Format incoming Ring STATE messages.
 
-    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/state
-    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/info
-    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/attributes
-    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/image
-    - ring/<location_id>/<ring_category>/<device_id>/<device_type>/command
+    <topic_tag> : "state" | "info" | "attributes" | "image" | "command"
+    <category> (RING abstract classes) : "alarm" | "camera" | "chime" 
+    <attribute> : attribute defined in abstract.py
+
+    - ring/<location_id>/<category>/<device_id>/<attribute>/state
+    - ring/<location_id>/<category>/<device_id>/<attribute>/info
+    - ring/<location_id>/<category>/<device_id>/<attribute>/attributes
+    - ring/<location_id>/<category>/<device_id>/<attribute>/image
+    - ring/<location_id>/<category>/<device_id>/<attribute>/command
     """
 
     TOPIC_TAG_POSITION = 4

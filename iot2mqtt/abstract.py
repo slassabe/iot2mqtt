@@ -566,8 +566,16 @@ class WirelessAttributes(RingDeviceState):
 
 
 class EventSelectAttributes(RingDeviceState):
+    # {"recordingUrl":"https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
+    #  "eventId":"1234"}
     recordingUrl: Optional[str] = None
     eventId: Optional[int] = None
+
+class DingAttributes(RingDeviceState):
+    #  {'ding_attributes': {'lastDing': 1741776527, 
+    #                       'lastDingTime': '2025-03-12T10:48:47Z'}}
+    lastDing: Optional[int] = None
+    lastDingTime: Optional[datetime] = None
 
 
 class SnapshotAttributes(RingDeviceState):
@@ -591,7 +599,7 @@ class Camera(RingDeviceState):
     ding: Optional[bool] = None
     # Last ding time
     # ring/<location_id>/camera/<device_id>/ding/attributes
-    ding_attributes: Optional[str] = None
+    ding_attributes: Optional[DingAttributes] = None
     # Motion Detected
     motion: Optional[bool] = None
     # Last motion time, person/motion detection enabled

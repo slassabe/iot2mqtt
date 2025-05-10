@@ -14,11 +14,14 @@ def _get_version() -> str:
     Returns the version of the package.
     """
     _here = pathlib.Path(__file__).parent
-    _file_content = (_here / "iot2mqtt" / "version.py").read_text()
-    _line = _file_content.split("=")[1].strip()
-    _version = _line.strip('"')
-    print(_version)
-    return _version
+    try:
+        _file_content = (_here / "iot2mqtt" / "version.py").read_text()
+        _line = _file_content.split("=")[1].strip()
+        _version = _line.strip('"')
+        return _version
+    except (FileNotFoundError, IndexError):
+        raise RuntimeError("Unable to retrieve version from iot2mqtt/version.py")
+
 
 setup(
     name='iot2mqtt',
