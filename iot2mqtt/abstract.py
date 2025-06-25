@@ -497,15 +497,7 @@ class AlarmVolumes(str, Enum):
     HIGH = "high"
 
 
-class RingDeviceState(BaseModel):
-    """
-    Represents the state of a Ring device.
-    """
-
-    pass
-
-
-class Alarm(RingDeviceState):
+class Alarm(BaseModel):
     """
     Represents the state of an alarm device.
 
@@ -522,6 +514,14 @@ class Alarm(RingDeviceState):
     duration: Optional[int] = None
     melody: Optional[int] = None
     volume: Optional[Literal["low", "medium", "high"]] = None
+
+
+class RingDeviceState(BaseModel):
+    """
+    Represents the state of a Ring device.
+    """
+
+    pass
 
 
 class MotionInfo(RingDeviceState):
@@ -674,3 +674,14 @@ class RingAlarm(RingDeviceState):
 
     # {'mode': 'armed_home'}
     mode: Optional[Literal["disarmed", "armed_home", "armed_away"]] = None
+
+
+class SmokeSensor(DeviceState):
+    """
+    Represents the state of a smoke sensor device.
+    """
+
+    smoke: Optional[bool] = None
+    battery_low: Optional[bool] = None
+    battery: Optional[int] = None
+    test: Optional[bool] = None

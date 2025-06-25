@@ -240,7 +240,7 @@ class ClientHelper(mqtt.Client):
                 if attempt < ConnectionRetryPolicy.MAX_RETRY - 1:
                     time.sleep(ConnectionRetryPolicy.RETRY_DELAY)
                 else:
-                    raise exceptions.ConnectionException("connect failed") from exp
+                    raise exceptions.ConnectionException("Connection failed") from None
 
     def _handle_on_connect(  # pylint: disable=too-many-arguments
         self,

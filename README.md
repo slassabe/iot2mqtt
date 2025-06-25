@@ -102,6 +102,7 @@ Below is a table outlining the available codecs.
 | Z2M     | E3              | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/E3.html)|
 | ESPSOMFY| E3              | Release 0.12.0 | [Link](https://github.com/rstrouse/ESPSomfy-RTS)  |
 | Z2M     | HM1RC-2-E       | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html)|
+| Z2M     | HS1SA.          | Release 0.16.0 | [Link](https://www.zigbee2mqtt.io/devices/HS1SA.html)|
 | Homie   | Miflora         | In progress    |             |
 | Z2M     | NAS-AB02B2      | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html)|
 | RING    | RingAlarm       | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|

@@ -13,7 +13,8 @@ from iot2mqtt import abstract, dev, encoder, processor, utils
 # Supported model names
 CTP_R01 = "CTP-R01"  # https://www.zigbee2mqtt.io/devices/CTP-R01.html
 E3 = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
-HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
+HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html 
+HS1SA = "HS1SA"  # https://www.zigbee2mqtt.io/devices/HS1SA.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
 RING_ALARM = "alarm"
@@ -41,6 +42,7 @@ class Models(metaclass=utils.Singleton):
     CTP_R01 = dev.ModelFactory.get(CTP_R01)
     E3 = dev.ModelFactory.get(E3)
     HM_ALARM_BUTTON = dev.ModelFactory.get(HM_ALARM_BUTTON)
+    HS1SA = dev.ModelFactory.get(HS1SA)
     MIFLORA = dev.ModelFactory.get(MIFLORA)
     NEO_ALARM = dev.ModelFactory.get(NEO_ALARM)
     RING_ALARM = dev.ModelFactory.get(RING_ALARM)
@@ -78,6 +80,7 @@ class Models(metaclass=utils.Singleton):
                 cls.CTP_R01: abstract.MagicCube,
                 cls.E3: abstract.DoorSensor,
                 cls.HM_ALARM_BUTTON: abstract.AlarmButton,
+                cls.HS1SA: abstract.SmokeSensor,
                 cls.NEO_ALARM: abstract.Alarm,
                 cls.RING_ALARM: abstract.RingAlarm,
                 cls.RING_CAMERA: abstract.Camera,
