@@ -187,15 +187,15 @@ class Switch2Channels(DeviceState):
 
 class Motion(DeviceState):
     """
-    Represents the state of a motion sensor device.
+    Represents the generic states of a motion sensor device.
 
     Attributes:
+        battery (Optional[int]): Remaining battery percentage (0-100).
         occupancy (Optional[bool]): Indicates whether motion is detected.
-        tamper (Optional[bool]): Indicates whether the device has been tampered with.
     """
 
+    battery: Optional[int] = None
     occupancy: Optional[bool] = None
-    tamper: Optional[bool] = None
 
 
 class DoorSensor(DeviceState):

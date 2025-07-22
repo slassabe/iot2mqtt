@@ -12,11 +12,11 @@ from iot2mqtt import abstract, dev, encoder, processor, utils
 
 # Supported model names
 CTP_R01 = "CTP-R01"  # https://www.zigbee2mqtt.io/devices/CTP-R01.html
-E3 = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
 HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html 
 HS1SA = "HS1SA"  # https://www.zigbee2mqtt.io/devices/HS1SA.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html
+NOUS_DOOR_CONTACT = "E3"  # https://www.zigbee2mqtt.io/devices/E3.html
 RING_ALARM = "alarm"
 RING_CAMERA = "camera"
 RING_CHIME = "chime"
@@ -24,9 +24,11 @@ SHELLY_PLUGS = "Shelly Plug S"  # Shelly Plug S WiFi smart plug
 SHELLY_UNI = "Shelly Uni"  # Shelly Uni WiFi relay/dimmer
 SN_AIRSENSOR = "SNZB-02"  # https://www.zigbee2mqtt.io/devices/SNZB-02.html
 SN_BUTTON = "SNZB-01"  # https://www.zigbee2mqtt.io/devices/SNZB-01.html
+SN_DOOR_CONTACT_P = "SNZB-04P"  # https://www.zigbee2mqtt.io/devices/SNZB-04P.html
 SN_MINI = "ZBMINI-L"  # https://www.zigbee2mqtt.io/devices/ZBMINI.html
 SN_MINI_L2 = "ZBMINIL2"  # https://www.zigbee2mqtt.io/devices/ZBMINIL2.html
 SN_MOTION = "SNZB-03"  # https://www.zigbee2mqtt.io/devices/SNZB-03.html
+SN_MOTION_P = "SNZB-03P"  # https://www.zigbee2mqtt.io/devices/SNZB-03P.html
 SN_SMART_PLUG = "S26R2ZB"  # https://www.zigbee2mqtt.io/devices/S26R2ZB.html
 SN_ZBBRIDGE = "Sonoff ZbBridge"  # Tasmota signature for Sonoff ZbBridge
 SOMFY_SHADES = "ESPSomfy-RTS MQTT"
@@ -40,11 +42,11 @@ class Models(metaclass=utils.Singleton):
     """
 
     CTP_R01 = dev.ModelFactory.get(CTP_R01)
-    E3 = dev.ModelFactory.get(E3)
     HM_ALARM_BUTTON = dev.ModelFactory.get(HM_ALARM_BUTTON)
     HS1SA = dev.ModelFactory.get(HS1SA)
     MIFLORA = dev.ModelFactory.get(MIFLORA)
     NEO_ALARM = dev.ModelFactory.get(NEO_ALARM)
+    NOUS_DOOR_CONTACT = dev.ModelFactory.get(NOUS_DOOR_CONTACT)
     RING_ALARM = dev.ModelFactory.get(RING_ALARM)
     RING_CAMERA = dev.ModelFactory.get(RING_CAMERA)
     RING_CHIME = dev.ModelFactory.get(RING_CHIME)
@@ -52,9 +54,11 @@ class Models(metaclass=utils.Singleton):
     SHELLY_UNI = dev.ModelFactory.get(SHELLY_UNI)
     SN_AIRSENSOR = dev.ModelFactory.get(SN_AIRSENSOR)
     SN_BUTTON = dev.ModelFactory.get(SN_BUTTON)
+    SN_DOOR_CONTACT_P = dev.ModelFactory.get(SN_DOOR_CONTACT_P)
     SN_MINI = dev.ModelFactory.get(SN_MINI)
     SN_MINI_L2 = dev.ModelFactory.get(SN_MINI_L2)
     SN_MOTION = dev.ModelFactory.get(SN_MOTION)
+    SN_MOTION_P = dev.ModelFactory.get(SN_MOTION_P)
     SN_SMART_PLUG = dev.ModelFactory.get(SN_SMART_PLUG)
     SN_ZBBRIDGE = dev.ModelFactory.get(SN_ZBBRIDGE)
     SOMFY_SHADES = dev.ModelFactory.get(SOMFY_SHADES)
@@ -78,10 +82,10 @@ class Models(metaclass=utils.Singleton):
         processor.StateNormalizerFactory(
             initial_registry={
                 cls.CTP_R01: abstract.MagicCube,
-                cls.E3: abstract.DoorSensor,
                 cls.HM_ALARM_BUTTON: abstract.AlarmButton,
                 cls.HS1SA: abstract.SmokeSensor,
                 cls.NEO_ALARM: abstract.Alarm,
+                cls.NOUS_DOOR_CONTACT: abstract.DoorSensor,
                 cls.RING_ALARM: abstract.RingAlarm,
                 cls.RING_CAMERA: abstract.Camera,
                 cls.RING_CHIME: abstract.Chime,
@@ -89,9 +93,11 @@ class Models(metaclass=utils.Singleton):
                 cls.SHELLY_UNI: abstract.Switch2Channels,
                 cls.SN_AIRSENSOR: abstract.AirSensor,
                 cls.SN_BUTTON: abstract.Button,
+                cls.SN_DOOR_CONTACT_P: abstract.DoorSensor,
                 cls.SN_MINI: abstract.Switch,
                 cls.SN_MINI_L2: abstract.Switch,
                 cls.SN_MOTION: abstract.Motion,
+                cls.SN_MOTION_P: abstract.Motion,
                 cls.SN_SMART_PLUG: abstract.Switch,
                 cls.SOMFY_SHADES: abstract.SomfyShade,
                 cls.SRTS_A01: abstract.SrtsA01,

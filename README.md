@@ -117,6 +117,7 @@ Below is a table outlining the available codecs.
 | Z2M     | SNZB-02         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html)|
 | Z2M     | SNZB-01         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
 | Z2M     | SNZB-03         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
+| Z2M     | SNZB-03P        | Release 0.17.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03P.html) |
 | Z2M     | TS0601_soil     | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/TS0601_soil.html)|
 | Z2M     | ZBMINI-L        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/ZBMINI.html) |
 | Z2M     | ZBMINIL2        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/ZBMINIL2.html) |
