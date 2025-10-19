@@ -258,7 +258,7 @@ class AlarmButton(DeviceState):
     linkquality (Optional[int]): The link quality of the device.
     """
 
-    battery: Optional[int] = None
+    battery: Optional[float] = None
     action: AlarmButtonlValues = None
     linkquality: Optional[int] = None
 
