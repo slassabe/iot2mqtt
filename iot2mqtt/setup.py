@@ -23,6 +23,7 @@ RING_CHIME = "chime"
 SHELLY_PLUGS = "Shelly Plug S"  # Shelly Plug S WiFi smart plug
 SHELLY_UNI = "Shelly Uni"  # Shelly Uni WiFi relay/dimmer
 SN_AIRSENSOR = "SNZB-02"  # https://www.zigbee2mqtt.io/devices/SNZB-02.html
+SN_AIRSENSOR_V2 = "SNZB-02D"  # https://www.zigbee2mqtt.io/devices/SNZB-02D.html
 SN_BUTTON = "SNZB-01"  # https://www.zigbee2mqtt.io/devices/SNZB-01.html
 SN_DOOR_CONTACT_P = "SNZB-04P"  # https://www.zigbee2mqtt.io/devices/SNZB-04P.html
 SN_MINI = "ZBMINI-L"  # https://www.zigbee2mqtt.io/devices/ZBMINI.html
@@ -53,6 +54,7 @@ class Models(metaclass=utils.Singleton):
     SHELLY_PLUGS = dev.ModelFactory.get(SHELLY_PLUGS)
     SHELLY_UNI = dev.ModelFactory.get(SHELLY_UNI)
     SN_AIRSENSOR = dev.ModelFactory.get(SN_AIRSENSOR)
+    SN_AIRSENSOR_V2 = dev.ModelFactory.get(SN_AIRSENSOR_V2)
     SN_BUTTON = dev.ModelFactory.get(SN_BUTTON)
     SN_DOOR_CONTACT_P = dev.ModelFactory.get(SN_DOOR_CONTACT_P)
     SN_MINI = dev.ModelFactory.get(SN_MINI)
@@ -92,6 +94,7 @@ class Models(metaclass=utils.Singleton):
                 cls.SHELLY_PLUGS: abstract.Switch,
                 cls.SHELLY_UNI: abstract.Switch2Channels,
                 cls.SN_AIRSENSOR: abstract.AirSensor,
+                cls.SN_AIRSENSOR_V2: abstract.AirSensor,
                 cls.SN_BUTTON: abstract.Button,
                 cls.SN_DOOR_CONTACT_P: abstract.DoorSensor,
                 cls.SN_MINI: abstract.Switch,
