@@ -19,7 +19,7 @@ from enum import Enum
 from typing import List, Literal, Optional, Union
 
 from pydantic import (AliasChoices, BaseModel, BeforeValidator, Field,
-                      computed_field, confloat)
+                      computed_field, confloat, field_validator)
 from typing_extensions import Annotated
 
 from iot2mqtt import exceptions
@@ -550,6 +550,15 @@ class MotionAttributes(RingDeviceState):
     personDetected: Optional[bool] = None
     motionDetectionEnabled: Optional[bool] = None
 
+    @field_validator("lastMotionTime", mode="before")
+    @classmethod
+    def _coerce_last_motion_time(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str) and v.strip().lower() in {"none", "", "null", "undefined"}:
+            return None
+        return v
+
 
 class BatteryAttributes(RingDeviceState):
     """Represents the state of a battery device."""
@@ -576,6 +585,15 @@ class DingAttributes(RingDeviceState):
     #                       'lastDingTime': '2025-03-12T10:48:47Z'}}
     lastDing: Optional[int] = None
     lastDingTime: Optional[datetime] = None
+
+    @field_validator("lastDingTime", mode="before")
+    @classmethod
+    def _coerce_last_ding_time(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str) and v.strip().lower() in {"none", "", "null", "undefined"}:
+            return None
+        return v
 
 
 class SnapshotAttributes(RingDeviceState):
