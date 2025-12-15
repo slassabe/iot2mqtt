@@ -115,6 +115,8 @@ Below is a table outlining the available codecs.
 | Z2M     | S26R2ZB         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/S26R2ZB.html) |
 | Z2M     | SRTS-A01        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SRTS-A01.html)|
 | Z2M     | SNZB-02         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html)|
+| Z2M     | SNZB-0D         | Release 0.17.2 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02D.html)|
+| Z2M     | SNZB-0P         | Release 0.17.2 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02P.html)|
 | Z2M     | SNZB-01         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
 | Z2M     | SNZB-03         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
 | Z2M     | SNZB-03P        | Release 0.17.0 | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03P.html) |

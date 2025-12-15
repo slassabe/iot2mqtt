@@ -1,0 +1,10 @@
+coverage
+isort
+black
+pylint
+build
+sphinx-rtd-theme
+sphinx-pydantic
+myst_parser
+twine
+pytest
