@@ -311,6 +311,15 @@ class Scrutinizer:
         # Set connection handler
         self._mqtt_client.connect_handler_add(self._on_connect)
 
+        # IMPORTANT: If already connected (e.g. Docker/Linux where TCP handshake
+        # completes before Scrutinizer is instantiated), on_connect will never fire.
+        # Must subscribe immediately in this case.
+        if self._mqtt_client.is_connected():
+            utils.i2m_log.debug("Already connected - subscribing immediately")
+            for _topic in topics.InfoTopicManager().get_all_topics_to_subscribe():
+                utils.i2m_log.debug("Subscribing to %s", _topic)
+                self._mqtt_client.subscribe(_topic)
+
     def _process_message(
         self,
         client: mqtt.Client,  # pylint: disable=unused-argument
