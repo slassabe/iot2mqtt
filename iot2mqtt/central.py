@@ -597,9 +597,10 @@ class DeviceAccessor:
         """
 
         def _publish_it(topic: str, payload: str) -> None:
-            utils.i2m_log.debug(
-                "Publishing state retrieval to %s - state : %s", topic, payload
-            )
+            # The debug log for publishing state retrieval is commented out to reduce verbosity in the logs.
+            # utils.i2m_log.debug(
+            #     "Publishing state retrieval to %s - state : %s", topic, payload
+            # )
             self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
             return
 
