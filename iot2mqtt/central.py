@@ -24,7 +24,7 @@ import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from queue import Full, Queue
-from typing import Any, Callable, Dict, List, Optional, TypeAlias, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeAlias, Union
 
 import paho.mqtt.client as mqtt
 
@@ -246,13 +246,19 @@ class Scrutinizer:
         self,
         mqtt_client: mqtthelper.ClientHelper,
         output_queue: Queue,
-        protocols_expected: List[dev.Protocol] = None,
+        protocols_expected: Optional[List[dev.Protocol]] = None,
         queue_timeout: int = QUEUE_TIMEOUT,  # timeout in sec.
     ) -> None:
         self._mqtt_client = mqtt_client
         self._output_queue = output_queue
         self._queue_timeout = queue_timeout
         self._metrics_collector = utils.MetricsCollector()
+        self._formaters: dict[MessageStructure, Type[MessageFormater]] = {
+            MessageStructure.JSON: JsonMessageFormater,
+            MessageStructure.RAW: RawMessageFormater,
+            MessageStructure.ESPSOMFY: ESPSomfyMessageFormater,
+            MessageStructure.RING: RingMessageFormater,
+        }
         # Listen all supported protocols by default
         _protocols = protocols_expected or [
             dev.Protocol.Z2M,
@@ -261,12 +267,6 @@ class Scrutinizer:
             dev.Protocol.ESPSOMFY,
         ]
         self._subscribe_to_topics(_protocols)
-        self._formaters: dict[MessageStructure, MessageFormater] = {
-            MessageStructure.JSON: JsonMessageFormater,
-            MessageStructure.RAW: RawMessageFormater,
-            MessageStructure.ESPSOMFY: ESPSomfyMessageFormater,
-            MessageStructure.RING: RingMessageFormater,
-        }
 
     def _get_formater(self, message_structure: MessageStructure) -> Callable:
         return self._formaters[message_structure].modify_incoming_message
@@ -973,10 +973,10 @@ class DeviceAccessor:
 
 def is_message_expected(
     message: messenger.Message,
-    types_expected: List[messenger.MessageType] = None,
-    protocols_expected: List[dev.Protocol] = None,
-    models_expected: List[dev.Model] = None,
-    devices_expected: List[str] = None,
+    types_expected: Optional[List[messenger.MessageType]] = None,
+    protocols_expected: Optional[List[dev.Protocol]] = None,
+    models_expected: Optional[List[dev.Model]] = None,
+    devices_expected: Optional[List[str]] = None,
 ) -> bool:
     """
     Validates if a message matches the expected criteria for message type,
@@ -1030,9 +1030,9 @@ def is_message_expected(
 
 def get_refined_data_queue(
     mqtt_client: mqtthelper.ClientHelper,
-    protocols_expected: List[dev.Protocol] = None,
-    models_expected: List[dev.Model] = None,
-    devices_expected: List[str] = None,
+    protocols_expected: Optional[List[dev.Protocol]] = None,
+    models_expected: Optional[List[dev.Model]] = None,
+    devices_expected: Optional[List[str]] = None,
 ) -> Queue:
     """
     Creates and returns a queue of refined messages by processing raw messages from MQTT.
