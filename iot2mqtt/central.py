@@ -35,6 +35,8 @@ DEFAULT_ON_TIME = 0.0
 DEFAULT_OFF_TIME = 0.0
 QUEUE_TIMEOUT = 1  # write on queue timeout in seconds
 
+_UNSUPPORTED_MODEL_LOGGED: set = set()  # models already warned about missing encoder
+
 Parser: TypeAlias = Callable[..., Optional[messenger.Item]]
 DataItem: TypeAlias = Union[Dict, str, int, List[Dict]]
 
@@ -606,7 +608,12 @@ class DeviceAccessor:
         )
         _encoder = encoder.EncoderRegistry.get_encoder(model=model)
         if _encoder is None:
-            utils.i2m_log.debug("Cannot get state for model: %s", model)
+            if model not in _UNSUPPORTED_MODEL_LOGGED:
+                utils.i2m_log.warning(
+                    "No encoder for model %s — state polling skipped for all instances",
+                    model,
+                )
+                _UNSUPPORTED_MODEL_LOGGED.add(model)
             return
         _fields = _encoder.gettable_fields
         if protocol == dev.Protocol.Z2M:
