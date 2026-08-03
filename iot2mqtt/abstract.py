@@ -47,6 +47,7 @@ MELODY = "melody"
 MYPOS = "mypos"
 MYTILTPOS = "myTiltPos"
 MODE = "mode"
+MOISTURE = "moisture"
 MOTION_DETECTION = "motion_detection"  # Ring Camera
 MOTION_WARNING = "motion_warning"  # Ring Camera
 OCCUPIED_HEATING_SETPOINT = "occupied_heating_setpoint"
@@ -139,6 +140,20 @@ class AirSensor(DeviceState):
     """
 
     humidity: Optional[float] = None
+    temperature: Optional[float] = None
+
+class SoilSensor(DeviceState):
+    """
+    Represents the state of an soil sensor device.
+
+    Attributes:
+        moisture (Optional[float]): The moisture level measured by the sensor.
+        temperature (Optional[float]): The temperature measured by the sensor.
+    """
+
+    moisture: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("moisture", "soil_moisture")
+    )
     temperature: Optional[float] = None
 
 

@@ -11,7 +11,7 @@ as well as functions for retrieving topic configurations and generating MQTT top
 
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from iot2mqtt import dev, messenger, utils
 
@@ -112,9 +112,7 @@ class _InfoTopicRegistryKey(BaseModel):
     protocol: dev.Protocol
     message_type: messenger.MessageType
 
-    class Config:
-        "Pydantic configuration for the InfoTopicRegistryKey class."
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class _InfoTopicRegistry(BaseModel):

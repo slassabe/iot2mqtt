@@ -107,6 +107,7 @@ class Models(metaclass=utils.Singleton):
                 cls.SN_SMART_PLUG: abstract.Switch,
                 cls.SOMFY_SHADES: abstract.SomfyShade,
                 cls.SRTS_A01: abstract.SrtsA01,
+                cls.TUYA_SOIL: abstract.SoilSensor,
             }
         )
 
