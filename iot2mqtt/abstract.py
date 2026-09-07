@@ -22,7 +22,7 @@ from pydantic import (AliasChoices, BaseModel, BeforeValidator, Field,
                       computed_field, confloat, field_validator)
 from typing_extensions import Annotated
 
-from iot2mqtt import exceptions
+from iot2mqtt.core import exceptions
 
 # Abstract IOT device properties
 

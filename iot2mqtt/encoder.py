@@ -21,7 +21,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
-from iot2mqtt import abstract, dev, utils
+from iot2mqtt import abstract, dev
+from iot2mqtt.core import utils
 
 
 class Encoder(BaseModel):

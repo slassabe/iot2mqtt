@@ -8,7 +8,8 @@ registries.
 
 """
 
-from iot2mqtt import abstract, dev, encoder, processor, utils
+from iot2mqtt import abstract, dev, encoder, processor
+from iot2mqtt.core import utils
 
 # Supported model names
 CTP_R01 = "CTP-R01"  # https://www.zigbee2mqtt.io/devices/CTP-R01.html

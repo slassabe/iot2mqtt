@@ -28,8 +28,9 @@ from typing import Any, Callable, Dict, List, Optional, Type, TypeAlias, Union
 
 import paho.mqtt.client as mqtt
 
-from iot2mqtt import (abstract, dev, encoder, messenger, mqtthelper, processor,
-                      topics, utils)
+from iot2mqtt import (abstract, dev, encoder, messenger, processor,
+                      topics)
+from iot2mqtt.core import mqtthelper, utils
 
 DEFAULT_ON_TIME = 0.0
 DEFAULT_OFF_TIME = 0.0

@@ -15,7 +15,7 @@ from typing import Any, Callable, List, Optional
 import certifi
 import paho.mqtt.client as mqtt
 
-from iot2mqtt import exceptions, utils
+from iot2mqtt.core import exceptions, utils
 
 
 @dataclasses.dataclass

@@ -8,12 +8,13 @@ implementations for handling different types of messages and device protocols.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type
 
+from iot2mqtt.core import exceptions, utils
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_core import PydanticSerializationError
 
-from iot2mqtt import abstract, dev, exceptions, messenger, topics, utils
+from iot2mqtt import abstract, dev, messenger, topics
 
 
 class Processor(metaclass=ABCMeta):

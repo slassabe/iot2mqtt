@@ -13,7 +13,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from iot2mqtt import dev, exceptions, messenger, utils
+from iot2mqtt import dev, messenger
+from iot2mqtt.core import exceptions, utils
 
 Z2M_INFO_BASE_TOPIC = "zigbee2mqtt"
 Z2M_CMND_BASE_TOPIC = "zigbee2mqtt"

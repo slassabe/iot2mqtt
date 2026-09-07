@@ -75,7 +75,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
 
-from iot2mqtt import dev, exceptions, utils
+from iot2mqtt import dev
+from iot2mqtt.core import exceptions, utils
 
 
 class MessageType(enum.Enum):
