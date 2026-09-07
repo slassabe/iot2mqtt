@@ -13,7 +13,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from iot2mqtt import dev, messenger, utils
+from iot2mqtt import dev, exceptions, messenger, utils
 
 Z2M_INFO_BASE_TOPIC = "zigbee2mqtt"
 Z2M_CMND_BASE_TOPIC = "zigbee2mqtt"
@@ -79,7 +79,13 @@ class CommandTopicManager(TopicManager):
         """
         Get the command base topic for a given protocol.
         """
-        return self._topic_registry[protocol]
+        try:
+            return self._topic_registry[protocol]
+        except KeyError as exc:
+            raise exceptions.DecodingException(
+                f"No command topic registered for protocol {protocol!r}. "
+                f"Registered protocols: {list(self._topic_registry)}"
+            ) from exc
 
     def configure_topic_registry(self) -> None:
         """

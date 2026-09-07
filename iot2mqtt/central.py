@@ -741,23 +741,16 @@ class DeviceAccessor:
             device_id
         )
         if _device is None:
-            if retry_count > self.RETRY_COUNT_MAX:
-                utils.i2m_log.error("[%s] device not found: abort", device_id)
-                return
-            utils.i2m_log.warning(
-                "[%s] device not found: retry (%s)", device_id, retry_count
-            )
-            _params = {
-                "device_id": device_id,
-                "state": state,
-                "retry_count": retry_count + 1,
-            }
-            self._timer_mgr.create_timer(
-                device_id=device_id,
-                countdown=self.RETRY_ELAPSE * (retry_count + 1),
+            scheduled = utils.retry_with_timer(
+                self._timer_mgr, 
+                key=device_id, 
+                countdown_base=self.RETRY_ELAPSE,
+                max_retries=self.RETRY_COUNT_MAX, 
                 task=self._do_trigger_change_state_helper,
-                kwargs=_params,
+                retry_count=retry_count, kwargs={"device_id": device_id, "state": state},
             )
+            if not scheduled:
+                utils.i2m_log.error("[%s] device not found: abort", device_id)
             return
         if _device.protocol == dev.Protocol.RING:
             self.ring_trigger_change_state(
@@ -1041,6 +1034,7 @@ def get_refined_data_queue(
     protocols_expected: Optional[List[dev.Protocol]] = None,
     models_expected: Optional[List[dev.Model]] = None,
     devices_expected: Optional[List[str]] = None,
+    discovery_settle_seconds: float = 1.0
 ) -> Queue:
     """
     Creates and returns a queue of refined messages by processing raw messages from MQTT.
@@ -1073,44 +1067,76 @@ def get_refined_data_queue(
         output_queue=_raw_data_queue,
         protocols_expected=protocols_expected,
     )
-    _accessor = DeviceAccessor(mqtt_client=mqtt_client)
-
-    messenger.Dispatcher(
-        name="pipeline-discovery",
+    _build_discovery_stage(
         input_queue=_raw_data_queue,
         output_queue=_layer1_queue,
-        conditional_handlers=[
-            # 1) Protocol Filtering
-            (
-                lambda msg: is_message_expected(
-                    msg,
-                    types_expected=[messenger.MessageType.DISCO],
-                    protocols_expected=protocols_expected,
-                ),
-                processor.Discoverer().process,
-            ),
-            (
-                # copy NON Discovery messages to output queue
-                lambda msg: is_message_expected(
-                    msg,
-                    types_expected=[
-                        messenger.MessageType.AVAIL,
-                        messenger.MessageType.STATE,
-                    ],
-                    protocols_expected=protocols_expected,
-                ),
-                processor.Processor.pass_through,
-            ),
-        ],
-        # Remove non matching protocol messages
-        default_handler=processor.Processor.no_op,
+        protocols_expected=protocols_expected,
     )
-    time.sleep(1)  # Listen to receive all discovery messages
+    time.sleep(discovery_settle_seconds)  # Listen to receive all discovery messages
 
-    messenger.Dispatcher(
-        name="pipeline-layer1",
+    _build_resolution_stage(
         input_queue=_layer1_queue,
         output_queue=_layer2_queue,
+        devices_expected=devices_expected,
+        mqtt_client=mqtt_client,
+    )
+
+    _build_normalizer_stage(
+        input_queue=_layer2_queue,
+        output_queue=_refined_queue,
+        models_expected=models_expected,
+        devices_expected=devices_expected,
+    )
+
+    return _refined_queue
+
+def _build_discovery_stage(
+    input_queue: Queue, 
+    output_queue: Queue,
+    protocols_expected: Optional[List[dev.Protocol]],
+) -> messenger.Dispatcher:
+    return messenger.Dispatcher(
+        name="pipeline-discovery",
+        input_queue=input_queue,
+        output_queue=output_queue,
+        conditional_handlers=[
+        # 1) Protocol Filtering
+        (
+            lambda msg: is_message_expected(
+                msg,
+                types_expected=[messenger.MessageType.DISCO],
+                protocols_expected=protocols_expected,
+            ),
+            processor.Discoverer().process,
+        ),
+        (
+            # copy NON Discovery messages to output queue
+            lambda msg: is_message_expected(
+                msg,
+                types_expected=[
+                    messenger.MessageType.AVAIL,
+                    messenger.MessageType.STATE,
+                ],
+                protocols_expected=protocols_expected,
+            ),
+            processor.Processor.pass_through,
+        ),
+        ],
+        default_handler=processor.Processor.no_op,
+    )
+
+def _build_resolution_stage(
+    input_queue: Queue, 
+    output_queue: Queue,
+    devices_expected: Optional[List[str]],
+    mqtt_client: mqtthelper.ClientHelper,
+) -> messenger.Dispatcher:
+    _accessor = DeviceAccessor(mqtt_client=mqtt_client)
+
+    return messenger.Dispatcher(
+        name="pipeline-resolution",
+        input_queue=input_queue,
+        output_queue=output_queue,
         conditional_handlers=[
             # Device filtering
             (
@@ -1140,10 +1166,17 @@ def get_refined_data_queue(
         # Remove non matching messages
         default_handler=processor.Processor.no_op,
     )
-    messenger.Dispatcher(
+
+def _build_normalizer_stage(
+    input_queue: Queue, 
+    output_queue: Queue,
+    models_expected: Optional[List[dev.Model]],
+    devices_expected: Optional[List[str]] = None,
+) -> messenger.Dispatcher:
+    return messenger.Dispatcher(
         name="normalizer",
-        input_queue=_layer2_queue,
-        output_queue=_refined_queue,
+        input_queue=input_queue,
+        output_queue=output_queue,
         conditional_handlers=[
             (
                 lambda msg: is_message_expected(
@@ -1171,11 +1204,8 @@ def get_refined_data_queue(
                 processor.Processor.pass_through,
             ),
         ],
-        # Remove non matching messages
         default_handler=processor.Processor.no_op,
     )
-    return _refined_queue
-
 
 def _get_device_state(
     message: messenger.Message, accessor: DeviceAccessor

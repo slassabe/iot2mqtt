@@ -106,86 +106,6 @@ def check_parameter(
         )
 
 
-LOGIT = True
-if LOGIT:
-    TIMEIT_INDENT = 1
-
-
-def logit():
-    """
-    Decorator to log the function call and its parameters.
-    """
-
-    def decorator(func):
-        # caller = getframeinfo(_stack[1][0])
-        # _caller_frame = currentframe().f_back
-        _caller_frame = sys._getframe().f_back
-        _caller = _caller_frame.f_code.co_name
-        _caller_info = traceback.extract_stack(f=_caller_frame, limit=1)[0]
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            args_repr = [str(a) for a in args]
-            kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
-            signature = ", ".join(args_repr + kwargs_repr)
-            global TIMEIT_INDENT
-            # mes = f'{"-" * _TIMEIT_INDENT}> params: ({signature})'
-            mes = f'{"-" * TIMEIT_INDENT}> caller: {_caller} - params: ({signature})'
-
-            _name = func.__name__
-            _filename = os.path.basename(_caller_info[0])
-            _lineno = _caller_info[1]
-
-            i2m_log.debug(
-                mes,
-                extra={
-                    "name_override": _name,
-                    "file_override": _filename,
-                    "line_override": _lineno,
-                },
-            )
-            _exc_start = time.perf_counter()
-            TIMEIT_INDENT += 1
-            result = func(*args, **kwargs)
-            TIMEIT_INDENT -= 1
-            _exc_end = time.perf_counter()
-            i2m_log.debug(
-                f'<{"-"*TIMEIT_INDENT} {result} [elapsed : {(_exc_end - _exc_start) * 1000:.2f} ms.]',
-                extra={
-                    "name_override": _name,
-                    "file_override": _filename,
-                    "line_override": _lineno,
-                },
-            )
-            return result
-
-        return wrapper
-
-    def no_decorator(func):
-        return func
-
-    return decorator if LOGIT else no_decorator
-
-
-STACK_INDENT = 4 * " "
-
-
-def stacktrace(func):
-    """
-    Decorator to print the stack trace of the function call.
-    """
-
-    @functools.wraps(func)
-    def wrapped(*args, **kwds):
-        callstack = "\n".join(
-            [STACK_INDENT + line.strip() for line in traceback.format_stack()][:-1]
-        )
-        i2m_log.debug("---> %s:\n%s", func.__name__, callstack)
-        return func(*args, **kwds)
-
-    return wrapped
-
-
 class TimerManager:
     """
     A class to manage timers for devices, ensuring thread safety and preventing multiple timers
@@ -245,3 +165,31 @@ class TimerManager:
         except Exception as e:
             i2m_log.error("Failed to manage timer for %s: %s", device_id, str(e))
             raise
+
+def retry_with_timer(
+    timer_manager: TimerManager,
+    key: str,
+    countdown_base: float,
+    max_retries: int,
+    task: Callable[..., Any],
+    retry_count: int = 0,
+    args: tuple = (),
+    kwargs: Optional[Dict[str, Any]] = None,
+) -> bool:
+    """
+    Schedule `task` to run again via `timer_manager` with linear backoff, up to `max_retries`.
+    Returns True if a retry was scheduled, False if max_retries was exceeded (caller should
+    treat this as final failure).
+    """
+    if retry_count > max_retries:
+        return False
+    _kwargs = dict(kwargs or {})
+    _kwargs["retry_count"] = retry_count + 1
+    timer_manager.create_timer(
+        device_id=key,
+        countdown=countdown_base * (retry_count + 1),
+        task=task,
+        args=args,
+        kwargs=_kwargs,
+    )
+    return True

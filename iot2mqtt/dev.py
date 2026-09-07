@@ -112,10 +112,10 @@ class Device(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    name: str = (Field(frozen=True),)
-    protocol: Protocol = (Field(frozen=True),)
-    address: Optional[str] = (None,)
-    model: Optional[Model] = (None,)
+    name: str = Field(frozen=True)
+    protocol: Protocol = Field(frozen=True)
+    address: Optional[str] = None
+    model: Optional[Model] = None
 
 
 class RingDevice(Device):
@@ -123,7 +123,7 @@ class RingDevice(Device):
     Represents a Ring device in the system.
     """
 
-    location_id: str = (Field(frozen=True),)
+    location_id: str = Field(frozen=True)
 
 
 class ButtonAction(Enum):

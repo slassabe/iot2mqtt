@@ -215,6 +215,11 @@ class ModelResolver(Processor):
 
     _notified_devices = {}
 
+    @classmethod
+    def reset(cls) -> None:
+        """Test/runtime hook: clear all registered devices."""
+        cls._notified_devices.clear()
+
     def _notify_once(self, message: messenger.Message) -> None:
         _device_id = message.device_id
         if _device_id in self._notified_devices:
@@ -267,6 +272,11 @@ class DeviceDirectory:
     """
 
     _directory: Dict[str, dev.Device] = {}
+
+    @classmethod
+    def reset(cls) -> None:
+        """Test/runtime hook: clear all registered devices."""
+        cls._directory.clear()
 
     def update_devices(self, devices: List[dev.Device]) -> None:
         """
@@ -397,8 +407,8 @@ class Discoverer(Processor):
         if message.protocol == dev.Protocol.RING:
             return self._discover_ring(message)
 
-        utils.i2m_log.info("Unknown protocol: %s", message.protocol)
-        return message
+        utils.i2m_log.warning("Unknown protocol, dropping discovery message: %s", message.protocol)
+        return None
 
     def _discover_z2m(self, message: messenger.Message) -> Optional[messenger.Message]:
         _key_name = "friendly_name"
@@ -627,6 +637,11 @@ class StateNormalizerFactory:
 
     _registry: Dict[dev.Model, Type[abstract.DeviceState]] = {}
 
+    @classmethod
+    def reset(cls) -> None:
+        """Test/runtime hook: clear all registered devices."""
+        cls._registry.clear()
+
     def __init__(
         self,
         initial_registry: Optional[Dict[dev.Model, Type[abstract.DeviceState]]] = None,
@@ -680,6 +695,11 @@ class StateNormalizer(Processor):
     """
 
     _notified_devices = {}
+
+    @classmethod
+    def reset(cls) -> None:
+        """Test/runtime hook: clear all registered devices."""
+        cls._notified_devices.clear()
 
     def _notify_once(self, message: messenger.Message) -> None:
         _device_id = message.device_id

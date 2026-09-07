@@ -97,6 +97,11 @@ class EncoderRegistry:
 
     _registry: Dict[dev.Model, Encoder] = {}
 
+    @classmethod
+    def reset(cls) -> None:
+        """Test/runtime hook: clear all registered devices."""
+        cls._registry.clear()
+
     def __init__(
         self,
         models: dev.Model,
