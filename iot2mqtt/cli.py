@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 # coding=utf-8
 import argparse
 import logging
@@ -26,7 +25,7 @@ def signal_handler(sig, frame):
 
 
 def _handle_msg(msg: messenger.Message, devices: str, verbose: bool) -> None:
-    _device_name = msg.device_name
+    _device_name = msg.device_name or msg.device_id
     if devices and _device_name not in devices:
         return
     if verbose:
@@ -42,7 +41,7 @@ def _handle_msg(msg: messenger.Message, devices: str, verbose: bool) -> None:
             f"{C_BOLD}type:{C_END} {msg.message_type}"
             f" - {C_BOLD}refined:{C_END} {msg.refined} "
         )
-    print(f'{C_GREEN} [{msg.device_name}]{C_END} {_details}')
+    print(f'{C_GREEN} [{_device_name}]{C_END} {_details}')
 
 
 def main():
@@ -91,6 +90,3 @@ def main():
         time.sleep(1)
     _dispatcher.force_stop()
     sys.exit(0)
-    
-if __name__ == "__main__":
-    main()

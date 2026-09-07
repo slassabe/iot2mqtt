@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 """
-This module defines various enumerations and classes related to IoT device models, protocols, 
+This module defines various enumerations and classes related to IoT device models, protocols,
 and actions. It also includes custom exceptions for handling specific error cases.
 
 Classes and Enums

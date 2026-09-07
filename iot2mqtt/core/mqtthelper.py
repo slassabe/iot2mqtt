@@ -2,11 +2,12 @@
 # coding=utf-8
 
 """
-This module provides helper classes and functions for managing MQTT client operations 
-using the paho.mqtt.client library. It includes context and security configurations, 
+This module provides helper classes and functions for managing MQTT client operations
+using the paho.mqtt.client library. It includes context and security configurations,
 as well as client management for connecting, disconnecting, and handling MQTT events.
 
 """
+
 import dataclasses
 import socket
 import time
@@ -169,9 +170,7 @@ class ClientHelper(mqtt.Client):
             self._context.started = True
             return _rc
         except ConnectionRefusedError as exp:
-            utils.i2m_log.fatal(
-                "[%s] cannot connect host %s", exp, self._context.hostname
-            )
+            utils.i2m_log.fatal("[%s] cannot connect host %s", exp, self._context.hostname)
             raise exceptions.ConnectionException("[%s] connection refused") from exp
 
     def stop(self) -> mqtt.MQTTErrorCode:
@@ -294,9 +293,7 @@ class ClientHelper(mqtt.Client):
         """Define the default disconnect callback implementation."""
         self._context.connected = False
         for on_disconnect_handler in self.on_disconnect_handlers:
-            on_disconnect_handler(
-                client, userdata, disconnect_flags, reason_code, properties
-            )
+            on_disconnect_handler(client, userdata, disconnect_flags, reason_code, properties)
 
     def disconnect_handler_add(self, handler: Callable) -> None:
         """
@@ -381,9 +378,7 @@ class MQTTClientDeprecated(ClientHelper):
         timeout_time = None if timeout is None else time.time() + timeout
         timeout_tenth = None if timeout is None else timeout / 10.0
 
-        utils.i2m_log.warning(
-            "Outgoing message on %s(%s) : %s", topic, type(payload), payload
-        )
+        utils.i2m_log.warning("Outgoing message on %s(%s) : %s", topic, type(payload), payload)
         _mi = self.publish(topic, payload, **kwargs)
         if timeout is not None and not timed_out():
             while not _mi.is_published():

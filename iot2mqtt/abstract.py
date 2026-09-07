@@ -18,8 +18,15 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Literal, Optional, Union
 
-from pydantic import (AliasChoices, BaseModel, BeforeValidator, Field,
-                      computed_field, confloat, field_validator)
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    BeforeValidator,
+    Field,
+    computed_field,
+    confloat,
+    field_validator,
+)
 from typing_extensions import Annotated
 
 from iot2mqtt.core import exceptions
@@ -141,6 +148,7 @@ class AirSensor(DeviceState):
 
     humidity: Optional[float] = None
     temperature: Optional[float] = None
+
 
 class SoilSensor(DeviceState):
     """
@@ -595,8 +603,9 @@ class EventSelectAttributes(RingDeviceState):
     recordingUrl: Optional[str] = None
     eventId: Optional[int] = None
 
+
 class DingAttributes(RingDeviceState):
-    #  {'ding_attributes': {'lastDing': 1741776527, 
+    #  {'ding_attributes': {'lastDing': 1741776527,
     #                       'lastDingTime': '2025-03-12T10:48:47Z'}}
     lastDing: Optional[int] = None
     lastDingTime: Optional[datetime] = None
@@ -669,9 +678,9 @@ class Camera(RingDeviceState):
     event_stream_attributes: Optional[StreamAttributes] = None
     # Get/set selected event stream
     event_select: Optional[str] = None
-    ##
-    ## Undocumented Attributes
-    ##
+    #
+    # Undocumented Attributes
+    #
     battery_attributes: Optional[BatteryAttributes] = None
     wireless_attributes: Optional[WirelessAttributes] = None
     # ring/<location_id>/camera/<device_id>/event_select/attributes

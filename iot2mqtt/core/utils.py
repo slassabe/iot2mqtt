@@ -16,15 +16,11 @@ Constants
 - DEBUG: Boolean flag indicating whether debugging is enabled.
 
 """
-import functools
+
 import logging
-import os
-import sys
 import threading
 import time
-import traceback
 from dataclasses import dataclass, field
-from functools import wraps
 from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 i2m_log = logging.getLogger("iot2mqtt")
@@ -76,9 +72,7 @@ class Singleton(type):
         return cls.__instance
 
 
-def check_parameter(
-    name: str, value: Any, class_of: type, optional: bool = False
-) -> None:
+def check_parameter(name: str, value: Any, class_of: type, optional: bool = False) -> None:
     """
     Check if a parameter meets the specified type and optionality requirements.
 
@@ -101,9 +95,7 @@ def check_parameter(
             return
         raise TypeError(f"Not optional parameter {name} is None")
     if not isinstance(value, class_of):
-        raise TypeError(
-            f"{name} must be a {class_of}, got {value} of class {type(value).__name__}"
-        )
+        raise TypeError(f"{name} must be a {class_of}, got {value} of class {type(value).__name__}")
 
 
 class TimerManager:
@@ -165,6 +157,7 @@ class TimerManager:
         except Exception as e:
             i2m_log.error("Failed to manage timer for %s: %s", device_id, str(e))
             raise
+
 
 def retry_with_timer(
     timer_manager: TimerManager,

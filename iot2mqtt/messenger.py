@@ -2,7 +2,7 @@
 # coding=utf-8
 
 """
-This module defines the messaging system for the IoT framework, including message types, 
+This module defines the messaging system for the IoT framework, including message types,
 message structures, and the mechanisms for producing and dispatching messages.
 
 Classes
@@ -48,7 +48,7 @@ dispatcher according to their message type:
             input_queue=_refined_queue,
             output_queue=None,
             conditional_handlers=[
-                (i2m.messenger.is_type_availability, 
+                (i2m.messenger.is_type_availability,
                 lambda msg: print(f"Availability: {msg.device_id} {msg.refined}")),
             ],
         )
@@ -69,9 +69,15 @@ dispatcher according to their message type:
 
 import enum
 import queue
+import sys
 import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeAlias, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
+
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, SerializeAsAny
 

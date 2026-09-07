@@ -51,7 +51,7 @@ help: ## Show lib commands
 	@printf "$(BOLD)Quality:$(RESET)\n"
 	@printf "  \033[36m%-20s\033[0m %s\n" "format" "Format code with black + isort"
 	@printf "  \033[36m%-20s\033[0m %s\n" "lint" "Lint with flake8 + mypy"
-	@printf "  \033[36m%-20s\033[0m %s\n" "test" "Run tests with pytest (if present)"
+	@printf "  \033[36m%-20s\033[0m %s\n" "test" "Run tests with unittest"
 	@printf "\n"
 	@printf "$(BOLD)Packaging:$(RESET)\n"
 	@printf "  \033[36m%-20s\033[0m %s\n" "build" "Build sdist and wheel into dist/"
@@ -67,17 +67,16 @@ venv: ## Create local virtual environment
 
 install: venv ## Install component dependencies
 	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
 	$(PIP) install -e .
 	@echo "✓ $(COMPONENT_NAME) installed"
 
 dev: venv ## Setup development environment
-	$(PIP) install -r requirements-dev.txt
+	$(PIP) install -e ".[dev]"
 	@echo "✓ Development environment ready"
 
 test: ## Run tests (if tests/ exists)
 	@if [ -d tests ]; then \
-		$(PYTHON) -m pytest -v tests; \
+		$(PYTHON) -m unittest discover tests -p "test_*.py" -v; \
 	else \
 		echo "No tests/ directory found; skipping."; \
 	fi
@@ -93,6 +92,7 @@ format: dev ## Format code
 
 lint: dev ## Lint code
 	$(PYTHON) -m flake8 $(SRC_DIR)
+	$(PYTHON) -m pylint $(SRC_DIR)
 	$(PYTHON) -m mypy $(SRC_DIR) || true
 
 build: install ensure-build ## Build sdist and wheel
@@ -111,3 +111,7 @@ upload: build ensure-twine ## Upload to repository
 
 all: lint format build ## Run quality checks and build
 
+.PHONY: validate-toml
+validate-toml: ## Validate pyproject.toml syntax
+	python3 -m pip install tomli
+	python3 -c "import tomli; tomli.loads(open('pyproject.toml').read())"

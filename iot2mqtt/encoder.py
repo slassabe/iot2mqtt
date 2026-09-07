@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 """
-This module provides functionality for encoding and validating device states, managing timers, 
+This module provides functionality for encoding and validating device states, managing timers,
 and handling power state changes for various device models.
 
 Classes
@@ -33,9 +33,7 @@ class Encoder(BaseModel):
     settable_fields: List[str] = Field(frozen=True)
     gettable_fields: List[str] = Field(frozen=True)
     field_aliases: Optional[Dict[str, str]] = Field(default=None, frozen=True)
-    field_converters: Optional[Dict[str, Callable[[Any], Any]]] = Field(
-        default=None, frozen=True
-    )
+    field_converters: Optional[Dict[str, Callable[[Any], Any]]] = Field(default=None, frozen=True)
 
     def __repr__(self):
         return (
@@ -57,9 +55,7 @@ class Encoder(BaseModel):
         _encoded_state = {}
         for key, value in state.model_dump(exclude_none=True).items():
             _alias = self.field_aliases.get(key) if self.field_aliases else None
-            _converter = (
-                self.field_converters.get(key) if self.field_converters else None
-            )
+            _converter = self.field_converters.get(key) if self.field_converters else None
             if _converter is None:
                 transformed_value = value
             else:
@@ -119,9 +115,7 @@ class EncoderRegistry:
                 field_converters=field_converters,
             )
         except ValidationError as exc:
-            utils.i2m_log.error(
-                "Error creating encoder for models %s : %s", models, exc
-            )
+            utils.i2m_log.error("Error creating encoder for models %s : %s", models, exc)
             return
         for _model in models:
             self._registry[_model] = _encoder
@@ -159,8 +153,6 @@ def encode(model: dev.Model, state: abstract.DeviceState) -> Dict[str, Any]:
 
     _encoder = EncoderRegistry.get_encoder(model=model)
     if _encoder is None:
-        utils.i2m_log.warning(
-            "No encoder found for model: %s with state: %s", model, state
-        )
+        utils.i2m_log.warning("No encoder found for model: %s with state: %s", model, state)
         return state.model_dump()
     return _encoder.transform(state)

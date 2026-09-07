@@ -13,7 +13,7 @@ from iot2mqtt.core import utils
 
 # Supported model names
 CTP_R01 = "CTP-R01"  # https://www.zigbee2mqtt.io/devices/CTP-R01.html
-HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html 
+HM_ALARM_BUTTON = "HM1RC-2-E"  # https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html
 HS1SA = "HS1SA"  # https://www.zigbee2mqtt.io/devices/HS1SA.html
 MIFLORA = "Miflora"
 NEO_ALARM = "NAS-AB02B2"  # https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html

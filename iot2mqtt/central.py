@@ -19,17 +19,23 @@ Functions
 - get_refined_data_queue: Returns a queue of refined messages by processing raw messages from MQTT.
 
 """
+
 import json
+import sys
 import time
 from abc import ABC, abstractmethod
 from enum import Enum
 from queue import Full, Queue
-from typing import Any, Callable, Dict, List, Optional, Type, TypeAlias, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
+
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 import paho.mqtt.client as mqtt
 
-from iot2mqtt import (abstract, dev, encoder, messenger, processor,
-                      topics)
+from iot2mqtt import abstract, dev, encoder, messenger, processor, topics
 from iot2mqtt.core import mqtthelper, utils
 
 DEFAULT_ON_TIME = 0.0
@@ -151,7 +157,7 @@ class RingMessageFormater(MessageFormater):
     Format incoming Ring STATE messages.
 
     <topic_tag> : "state" | "info" | "attributes" | "image" | "command"
-    <category> (RING abstract classes) : "alarm" | "camera" | "chime" 
+    <category> (RING abstract classes) : "alarm" | "camera" | "chime"
     <attribute> : attribute defined in abstract.py
 
     - ring/<location_id>/<category>/<device_id>/<attribute>/state
@@ -221,9 +227,7 @@ class RingMessageFormater(MessageFormater):
         elif topic_tag == RingTags.IMAGE.value:
             _key = f"{attribute}_{topic_tag}"
         else:
-            utils.i2m_log.warning(
-                "Dismissing RING device message with topic tag: %s", topic_tag
-            )
+            utils.i2m_log.warning("Dismissing RING device message with topic tag: %s", topic_tag)
             return None
         return {_key: raw_payload}
 
@@ -280,9 +284,7 @@ class Scrutinizer:
             message_type: messenger.MessageType,
             callback: Callable[[messenger.Message], None],
         ) -> None:
-            _topic = topics.InfoTopicManager().get_topic_to_subscribe(
-                protocol, message_type
-            )
+            _topic = topics.InfoTopicManager().get_topic_to_subscribe(protocol, message_type)
             self._mqtt_client.message_callback_add(_topic, callback)
 
         _avail = messenger.MessageType.AVAIL
@@ -382,9 +384,7 @@ class Scrutinizer:
         try:
             self._output_queue.put(_incoming, block=True, timeout=self._queue_timeout)
         except Full:
-            utils.i2m_log.error(
-                "Output queue is full. Dropping message for topic %s", topic
-            )
+            utils.i2m_log.error("Output queue is full. Dropping message for topic %s", topic)
 
     def _on_z2m_avail(self, *argc, **kwargs) -> None:
         """
@@ -572,9 +572,7 @@ class DeviceAccessor:
     def __init__(self, mqtt_client: mqtthelper.ClientHelper) -> None:
         self._mqtt_client = mqtt_client
 
-    def trigger_get_state(
-        self, device_id: str, protocol: dev.Protocol, model: dev.Model
-    ) -> None:
+    def trigger_get_state(self, device_id: str, protocol: dev.Protocol, model: dev.Model) -> None:
         """
         Triggers the retrieval of the current state of a device via MQTT.
 
@@ -605,9 +603,7 @@ class DeviceAccessor:
             self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
             return
 
-        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(
-            protocol
-        )
+        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(protocol)
         _encoder = encoder.EncoderRegistry.get_encoder(model=model)
         if _encoder is None:
             if model not in _UNSUPPORTED_MODEL_LOGGED:
@@ -633,9 +629,7 @@ class DeviceAccessor:
         _error_msg = f"Unknown protocol {protocol}"
         raise NotImplementedError(_error_msg)
 
-    def trigger_change_state(
-        self, device_id: str, protocol: dev.Protocol, state: Dict
-    ) -> None:
+    def trigger_change_state(self, device_id: str, protocol: dev.Protocol, state: Dict) -> None:
         """
         Publish a state change message to the MQTT topic for the given device.
 
@@ -651,15 +645,11 @@ class DeviceAccessor:
         """
 
         def _publish_it(topic: str, payload: str) -> None:
-            utils.i2m_log.debug(
-                "Publishing state change to %s - state : %s", topic, payload
-            )
+            utils.i2m_log.debug("Publishing state change to %s - state : %s", topic, payload)
             self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
             return
 
-        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(
-            protocol
-        )
+        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(protocol)
         _json_state = json.dumps(state)
         if protocol == dev.Protocol.Z2M:
             _command_topic = f"{_command_base_topic}/{device_id}/set"
@@ -705,9 +695,7 @@ class DeviceAccessor:
         """
 
         def _publish_it(topic: str, payload: str) -> None:
-            utils.i2m_log.debug(
-                "Publishing state change to %s - state : %s", topic, payload
-            )
+            utils.i2m_log.debug("Publishing state change to %s - state : %s", topic, payload)
             self._mqtt_client.publish(topic, payload=payload, qos=1, retain=False)
             return
 
@@ -718,14 +706,11 @@ class DeviceAccessor:
             )
             raise ValueError(_msg)
 
-        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(
-            protocol
-        )
+        _command_base_topic = topics.CommandTopicManager().get_command_base_topic(protocol)
         if protocol == dev.Protocol.RING:
             for _key, _value in state.items():
                 _command_topic = (
-                    f"{_command_base_topic}/{location_id}/"
-                    f"{model}/{device_id}/{_key}/command"
+                    f"{_command_base_topic}/{location_id}/" f"{model}/{device_id}/{_key}/command"
                 )
                 _publish_it(_command_topic, _value)
             return
@@ -738,17 +723,16 @@ class DeviceAccessor:
         state: Dict,
         retry_count: int = 0,
     ) -> None:
-        _device: Optional[dev.RingDevice] = processor.DeviceDirectory.get_device(
-            device_id
-        )
+        _device: Optional[dev.RingDevice] = processor.DeviceDirectory.get_device(device_id)
         if _device is None:
             scheduled = utils.retry_with_timer(
-                self._timer_mgr, 
-                key=device_id, 
+                self._timer_mgr,
+                key=device_id,
                 countdown_base=self.RETRY_ELAPSE,
-                max_retries=self.RETRY_COUNT_MAX, 
+                max_retries=self.RETRY_COUNT_MAX,
                 task=self._do_trigger_change_state_helper,
-                retry_count=retry_count, kwargs={"device_id": device_id, "state": state},
+                retry_count=retry_count,
+                kwargs={"device_id": device_id, "state": state},
             )
             if not scheduled:
                 utils.i2m_log.error("[%s] device not found: abort", device_id)
@@ -804,9 +788,7 @@ class DeviceAccessor:
         self.trigger_change_state(
             device_id=device_id,
             protocol=protocol,
-            state=encoder.encode(
-                model, abstract.SWITCH_ON if power_on else abstract.SWITCH_OFF
-            ),
+            state=encoder.encode(model, abstract.SWITCH_ON if power_on else abstract.SWITCH_OFF),
         )
 
     def _do_switch_power_change(
@@ -954,9 +936,7 @@ class DeviceAccessor:
         """
         for device_id in device_ids.split(","):
             # Retrieve the device from the device directory
-            _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(
-                device_id
-            )
+            _device: Optional[dev.Device] = processor.DeviceDirectory.get_device(device_id)
             if _device is None:
                 devices = processor.DeviceDirectory.get_device_ids()
                 utils.i2m_log.warning("Device %s not found in %s", device_id, devices)
@@ -1035,7 +1015,7 @@ def get_refined_data_queue(
     protocols_expected: Optional[List[dev.Protocol]] = None,
     models_expected: Optional[List[dev.Model]] = None,
     devices_expected: Optional[List[str]] = None,
-    discovery_settle_seconds: float = 1.0
+    discovery_settle_seconds: float = 1.0,
 ) -> Queue:
     """
     Creates and returns a queue of refined messages by processing raw messages from MQTT.
@@ -1091,8 +1071,9 @@ def get_refined_data_queue(
 
     return _refined_queue
 
+
 def _build_discovery_stage(
-    input_queue: Queue, 
+    input_queue: Queue,
     output_queue: Queue,
     protocols_expected: Optional[List[dev.Protocol]],
 ) -> messenger.Dispatcher:
@@ -1101,33 +1082,34 @@ def _build_discovery_stage(
         input_queue=input_queue,
         output_queue=output_queue,
         conditional_handlers=[
-        # 1) Protocol Filtering
-        (
-            lambda msg: is_message_expected(
-                msg,
-                types_expected=[messenger.MessageType.DISCO],
-                protocols_expected=protocols_expected,
+            # 1) Protocol Filtering
+            (
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[messenger.MessageType.DISCO],
+                    protocols_expected=protocols_expected,
+                ),
+                processor.Discoverer().process,
             ),
-            processor.Discoverer().process,
-        ),
-        (
-            # copy NON Discovery messages to output queue
-            lambda msg: is_message_expected(
-                msg,
-                types_expected=[
-                    messenger.MessageType.AVAIL,
-                    messenger.MessageType.STATE,
-                ],
-                protocols_expected=protocols_expected,
+            (
+                # copy NON Discovery messages to output queue
+                lambda msg: is_message_expected(
+                    msg,
+                    types_expected=[
+                        messenger.MessageType.AVAIL,
+                        messenger.MessageType.STATE,
+                    ],
+                    protocols_expected=protocols_expected,
+                ),
+                processor.Processor.pass_through,
             ),
-            processor.Processor.pass_through,
-        ),
         ],
         default_handler=processor.Processor.no_op,
     )
 
+
 def _build_resolution_stage(
-    input_queue: Queue, 
+    input_queue: Queue,
     output_queue: Queue,
     devices_expected: Optional[List[str]],
     mqtt_client: mqtthelper.ClientHelper,
@@ -1168,8 +1150,9 @@ def _build_resolution_stage(
         default_handler=processor.Processor.no_op,
     )
 
+
 def _build_normalizer_stage(
-    input_queue: Queue, 
+    input_queue: Queue,
     output_queue: Queue,
     models_expected: Optional[List[dev.Model]],
     devices_expected: Optional[List[str]] = None,
@@ -1207,6 +1190,7 @@ def _build_normalizer_stage(
         ],
         default_handler=processor.Processor.no_op,
     )
+
 
 def _get_device_state(
     message: messenger.Message, accessor: DeviceAccessor

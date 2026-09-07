@@ -93,9 +93,7 @@ class CommandTopicManager(TopicManager):
         Configure the topic registry.
         """
         _prefix = ""
-        self.register(
-            protocol=dev.Protocol.Z2M, command_topic_base=_prefix + Z2M_CMND_BASE_TOPIC
-        )
+        self.register(protocol=dev.Protocol.Z2M, command_topic_base=_prefix + Z2M_CMND_BASE_TOPIC)
         self.register(
             protocol=dev.Protocol.TASMOTA,
             command_topic_base=_prefix + TASMOTA_CMND_BASE_TOPIC,
@@ -155,9 +153,7 @@ class InfoTopicManager(TopicManager):
         """
         if index_name not in ["index_device_id", "index_model"]:
             raise ValueError(f"Invalid index_name: {index_name}")
-        _registry_key = _InfoTopicRegistryKey(
-            protocol=protocol, message_type=message_type
-        )
+        _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         _registry_value = self._topic_registry.get(_registry_key)
         _offset = _registry_value.device_name_offset
         _index_value = getattr(_registry_value, index_name)
@@ -175,9 +171,7 @@ class InfoTopicManager(TopicManager):
         """
         Get the device ID from the topic based on the protocol and message type.
         """
-        _device_id = self._get_wildcard_by_index(
-            protocol, message_type, topic, "index_device_id"
-        )
+        _device_id = self._get_wildcard_by_index(protocol, message_type, topic, "index_device_id")
         return _device_id
 
     def get_model(
@@ -189,9 +183,7 @@ class InfoTopicManager(TopicManager):
         """
         Get the model from the topic based on the protocol and message type.
         """
-        _model = self._get_wildcard_by_index(
-            protocol, message_type, topic, "index_model"
-        )
+        _model = self._get_wildcard_by_index(protocol, message_type, topic, "index_model")
         if _model is None:
             return None
         return dev.ModelFactory.get(_model)
@@ -222,9 +214,7 @@ class InfoTopicManager(TopicManager):
         """
         Get wildcards in the topic based on the protocol and message type.
         """
-        _registry_key = _InfoTopicRegistryKey(
-            protocol=protocol, message_type=message_type
-        )
+        _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         _registry_value = self._topic_registry.get(_registry_key)
         _offset = _registry_value.device_name_offset
         return topic[_offset:].split("/")
@@ -247,9 +237,7 @@ class InfoTopicManager(TopicManager):
         """
         Get the topic to subscribe to based on the protocol and message type.
         """
-        _registry_key = _InfoTopicRegistryKey(
-            protocol=protocol, message_type=message_type
-        )
+        _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         _registry_value = self._topic_registry.get(_registry_key)
         return _registry_value.topic_to_subscribe
 
@@ -271,9 +259,7 @@ class InfoTopicManager(TopicManager):
         """
         Register a topic configuration.
         """
-        _registry_key = _InfoTopicRegistryKey(
-            protocol=protocol, message_type=message_type
-        )
+        _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         if _registry_key in self._topic_registry:
             _msg = f"Topic Manager is already registered for {protocol.value=} and {message_type.value=}"
             raise ValueError(_msg)
