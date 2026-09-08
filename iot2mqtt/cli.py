@@ -1,29 +1,28 @@
 # coding=utf-8
 import argparse
-import logging
 import signal
 import sys
 import time
 
-from iot2mqtt import central, mqtthelper, messenger, exceptions
-from iot2mqtt import __version__
-
+from iot2mqtt import __version__, central, exceptions, messenger, mqtthelper
 
 ANIMATION = "|/-\\"
 C_GREEN = "\033[0;32m"
 C_END = "\033[0m"
 C_BOLD = "\033[1m"
 
+
 def animate_cursor(position: int):
     _anim = ANIMATION[position % len(ANIMATION)]
-    print(f'\r{C_GREEN}{_anim}{C_END}', end="")
+    print(f"\r{C_GREEN}{_anim}{C_END}", end="")
 
 
 def signal_handler(sig, frame):
-    print('\nSignal received, exiting...')
+    print("\nSignal received, exiting...")
     sys.exit(0)
 
-def _format(msg: messenger.Message, verbose: bool, readable:bool = True) -> str:
+
+def _format(msg: messenger.Message, verbose: bool, readable: bool = True) -> str:
     if readable:
         if verbose:
             return (
@@ -42,19 +41,19 @@ def _format(msg: messenger.Message, verbose: bool, readable:bool = True) -> str:
     # Assuming json formatting
     if verbose:
         return {
-            'device_id': msg.device_id,
-            'message_type': msg.message_type.value,
-            'protocol': msg.protocol.value,
-            'model': msg.model,
-            'raw_item': msg.raw_item,
-            'refined': msg.refined,
+            "device_id": msg.device_id,
+            "message_type": msg.message_type.value,
+            "protocol": msg.protocol.value,
+            "model": msg.model,
+            "raw_item": msg.raw_item,
+            "refined": msg.refined,
         }
     return {
-        'device_id': msg.device_id,
-        'message_type': msg.message_type.value,
-        'refined': msg.refined,
+        "device_id": msg.device_id,
+        "message_type": msg.message_type.value,
+        "refined": msg.refined,
     }
-    
+
 
 def _handle_msg(msg: messenger.Message, devices: str, verbose: bool, readable: bool) -> None:
     if devices and msg.device_id not in devices:
@@ -68,16 +67,20 @@ def main():
 
     print(f"iot2mqtt version: {__version__}")
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--brocker", type=str,
-                        help="set the host of the broker")
-    parser.add_argument("-d", "--devices", type=str,
-                        help="set the devices to spy, comma separated names")
-    parser.add_argument("-l", "--loop", type=int,
-                        help="loop for a specific number of seconds (default 10 sec.)")
-    parser.add_argument("-r", "--readable",
-                        action="store_true", help="display information for biped (default is JSON)")
-    parser.add_argument("-v", "--verbose",
-                        action="store_true", help="increase output verbosity")
+    parser.add_argument("-b", "--brocker", type=str, help="set the host of the broker")
+    parser.add_argument(
+        "-d", "--devices", type=str, help="set the devices to spy, comma separated names"
+    )
+    parser.add_argument(
+        "-l", "--loop", type=int, help="loop for a specific number of seconds (default 10 sec.)"
+    )
+    parser.add_argument(
+        "-r",
+        "--readable",
+        action="store_true",
+        help="display information for biped (default is JSON)",
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
 
     args = parser.parse_args()
     if args.brocker:
@@ -87,8 +90,7 @@ def main():
         _brocker = "localhost"
         print(f"MQTT: Using default broker {_brocker}")
     _client = mqtthelper.ClientHelper(
-        mqtthelper.MQTTContext(hostname=_brocker),
-        mqtthelper.SecurityContext()
+        mqtthelper.MQTTContext(hostname=_brocker), mqtthelper.SecurityContext()
     )
     try:
         _client.start()
@@ -102,7 +104,7 @@ def main():
         input_queue=_refined_queue,
         output_queue=None,
         conditional_handlers=[],
-        default_handler=lambda msg: _handle_msg(msg, args.devices, args.verbose, args.readable)
+        default_handler=lambda msg: _handle_msg(msg, args.devices, args.verbose, args.readable),
     )
     # Animate cursor
     _nb_loop = 0
