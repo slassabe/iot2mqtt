@@ -348,7 +348,7 @@ class SrtsA01(DeviceState):
     # pour calibrer.
     calibrated: Optional[bool] = None
     # Indique si cette vanne est calibrée, utilisez l'option calibrer pour calibrer.
-    child_lock: Optional[bool] = None
+    child_lock: Optional[Literal["LOCK", "UNLOCK"]] = None
     # Température de l'appareil
     device_temperature: Optional[float] = None
     # Entrée pour le capteur de température à distance
