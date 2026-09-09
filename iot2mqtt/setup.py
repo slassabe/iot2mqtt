@@ -37,6 +37,7 @@ SN_ZBBRIDGE = "Sonoff ZbBridge"  # Tasmota signature for Sonoff ZbBridge
 SOMFY_SHADES = "ESPSomfy-RTS MQTT"
 SRTS_A01 = "SRTS-A01"  # https://www.zigbee2mqtt.io/devices/SRTS-A01.html
 TUYA_SOIL = "TS0601_soil"  # https://www.zigbee2mqtt.io/devices/TS0601_soil.html
+TUYA_WATER = "ME201WZ" # https://www.zigbee2mqtt.io/devices/ME201WZ.html
 
 
 class Models(metaclass=utils.Singleton):
@@ -69,6 +70,7 @@ class Models(metaclass=utils.Singleton):
     SOMFY_SHADES = dev.ModelFactory.get(SOMFY_SHADES)
     SRTS_A01 = dev.ModelFactory.get(SRTS_A01)
     TUYA_SOIL = dev.ModelFactory.get(TUYA_SOIL)
+    TUYA_WATER = dev.ModelFactory.get(TUYA_WATER)
 
     def __init__(self) -> None:
         try:
@@ -109,6 +111,7 @@ class Models(metaclass=utils.Singleton):
                 cls.SOMFY_SHADES: abstract.SomfyShade,
                 cls.SRTS_A01: abstract.SrtsA01,
                 cls.TUYA_SOIL: abstract.SoilSensor,
+                cls.TUYA_WATER: abstract.WaterLevel,
             }
         )
 

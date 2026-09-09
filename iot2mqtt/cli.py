@@ -35,7 +35,8 @@ def _format(msg: messenger.Message, verbose: bool, readable: bool = True) -> str
             )
         return (
             f"{C_GREEN} [{msg.device_id}]{C_END} "
-            f"{C_BOLD}type:{C_END} {msg.message_type}"
+            f" - {C_BOLD}type:{C_END} {msg.message_type}"
+            f" - {C_BOLD}model:{C_END} {msg.model}\n"
             f" - {C_BOLD}refined:{C_END} {msg.refined.model_dump(mode='json')} "
         )
     # Assuming json formatting

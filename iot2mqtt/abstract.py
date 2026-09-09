@@ -334,6 +334,26 @@ class ADC(DeviceState):
         """
         return self.Range / 100
 
+INSTALLATION_HEIGHT = "installation_height"
+LIQUID_DEPTH = "liquid_depth"
+LIQUID_DEPTH_MAX = "liquid_depth_max"
+LIQUID_LEVEL_PERCENT = "liquid_level_percent"
+
+class WaterLevel(DeviceState):
+    """
+    Represents the state of a Water level sensor (subset of ME201WZ capabilities)
+    assuming installation_height and liquid_depth_max should be set via Z2M or CLI
+    command:
+    $ CONTROLLER_ID=0xa4c138cc15efc8de
+    $ mosquitto_pub -m "{\"installation_height\":1.3\", \"liquid_depth_max\":1.1\", \
+        \"max_set\":90, \"mini_set\":20\"}" -t "zigbee2mqtt/$CONTROLLER_ID/set"
+
+    """
+    installation_height: Optional[float] = None
+    liquid_depth: Optional[float] = None
+    liquid_depth_max: Optional[float] = None
+    liquid_level_percent: Optional[int] = None
+
 
 class SrtsA01(DeviceState):
     """

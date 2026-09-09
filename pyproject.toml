@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Simplifying IoT Solutions with MQTT Integration"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Serge LASSABE", email = "dev@lassabe.org"},
 ]
@@ -16,7 +16,6 @@ keywords = ["IoT", "MQTT", "integration"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
