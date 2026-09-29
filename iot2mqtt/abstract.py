@@ -31,71 +31,6 @@ from typing_extensions import Annotated
 
 from iot2mqtt.core import exceptions
 
-# Abstract IOT device properties
-
-ACTION = "action"
-ALARM = "alarm"
-AWAY_PRESET_TEMPERATURE = "away_preset_temperature"
-BATTERY = "battery"
-BATTERY_LOW = "battery_low"
-CALIBRATED = "calibrated"
-CHILD_LOCK = "child_lock"
-CONTACT = "contact"
-DEVICE_TEMPERATURE = "device_temperature"
-DIRECTION = "direction"
-DURATION = "duration"
-EXTERNAL_TEMPERATURE_INPUT = "external_temperature_input"
-HUMIDITY = "humidity"
-INTERNAL_HEATING_SETPOINT = "internal_heating_setpoint"
-LINKQUALITY = "linkquality"
-LIGHT = "light"  # Ring Camera
-LOCAL_TEMPERATURE = "local_temperature"
-MELODY = "melody"
-MYPOS = "mypos"
-MYTILTPOS = "myTiltPos"
-MODE = "mode"
-MOISTURE = "moisture"
-MOTION_DETECTION = "motion_detection"  # Ring Camera
-MOTION_WARNING = "motion_warning"  # Ring Camera
-OCCUPIED_HEATING_SETPOINT = "occupied_heating_setpoint"
-OCCUPANCY = "occupancy"
-PLAY_DING_SOUND = "play_ding_sound"  # Ring Chime
-PLAY_MOTION_SOUND = "play_motion_sound"  # Ring Chime
-POSITION = "position"
-POWER = "power"
-POWER1 = "power1"
-POWER2 = "power2"
-POWER_ON_BEHAVIOUR = "power_on_behavior"
-POWER_OUTAGE_COUNT = "power_outage_count"
-PRESET = "preset"
-RANGE = "Range"
-SCHEDULE = "schedule"
-SCHEDULE_SETTING = "schedule_setting"
-SENSOR = "sensor"
-SETUP = "setup"
-SIREN = "siren"  # Ring Camera
-SNAPSHOT_INTERVAL = "snapshot_interval"  # Ring Camera
-SNOOZE = "snooze"  # Ring Chime
-SNOOZE_MINUTES = "snooze_minutes"  # Ring Chime
-STATE = "state"
-STREAM = "stream"  # Ring Camera
-SUNFLAG = "sunFlag"
-SUNNY = "sunny"
-SYSTEM_MODE = "system_mode"
-TARGET = "target"
-TAMPER = "tamper"
-TEMPERATURE = "temperature"
-TILTPOSITION = "tiltPosition"
-TILTTARGET = "tiltTarget"
-UPDATE = "update"
-VALVE_ALARM = "valve_alarm"
-VALVE_DETECTION = "valve_detection"
-VOLTAGE = "voltage"
-VOLUME = "volume"
-WINDOW_DETECTION = "window_detection"
-WINDOW_OPEN = "window_open"
-WINDY = "windy"
-
 
 class Availability(BaseModel):
     """
@@ -137,6 +72,33 @@ class DeviceState(BaseModel):
     )
 
 
+#
+#
+
+
+class ADC(DeviceState):
+    """
+    Represents the state of an ADC (Analog-to-Digital Converter) device.
+
+    Attributes:
+        Range (Optional[float]): The range value of the ADC.
+        voltage (float): The computed voltage based on the range value.
+    """
+
+    Range: Optional[float] = Field(default=None)
+
+    @computed_field
+    @property
+    def voltage(self) -> float:
+        """
+        Calculate the voltage based on the range.
+
+        Returns:
+            float: The calculated voltage in volts.
+        """
+        return self.Range / 100
+
+
 class AirSensor(DeviceState):
     """
     Represents the state of an air sensor device.
@@ -150,108 +112,23 @@ class AirSensor(DeviceState):
     temperature: Optional[float] = None
 
 
-class SoilSensor(DeviceState):
+class Alarm(BaseModel):
     """
-    Represents the state of an soil sensor device.
+    Represents the state of an alarm device.
 
     Attributes:
-        moisture (Optional[float]): The moisture level measured by the sensor.
-        temperature (Optional[float]): The temperature measured by the sensor.
+        alarm (Optional[bool]): Indicates whether the alarm is active.
+        battery_low (Optional[bool]): Indicates whether the battery is low.
+        duration (Optional[int]): Duration of the alarm.
+        melody (Optional[int]): Melody of the alarm.
+        volume (Optional[Literal["low", "medium", "high"]]): Volume level of the alarm.
     """
 
-    moisture: Optional[float] = Field(
-        default=None, validation_alias=AliasChoices("moisture", "soil_moisture")
-    )
-    temperature: Optional[float] = None
-
-
-POWER_ON = "ON"
-POWER_OFF = "OFF"
-
-
-class Switch(DeviceState):
-    """
-    Represents the state of a switch device.
-
-    Attributes:
-        power_on_behavior (Optional[str]): The behavior of the switch when power is restored.
-        power (str): The current power state of the switch: "ON" or "OFF"
-            This field can be accessed using aliases "power", "state", or "POWER".
-    """
-
-    power_on_behavior: Optional[str] = None
-    power: Optional[Literal["ON", "OFF"]] = Field(
-        validation_alias=AliasChoices("power", "state", "POWER")
-    )
-
-
-SWITCH_ON = Switch(power=POWER_ON)
-SWITCH_OFF = Switch(power=POWER_OFF)
-
-
-class Switch2Channels(DeviceState):
-    """
-    Represents the state of a switch device with two channels.
-
-    Attributes:
-        power1 (str): The current power state of the first channel: "ON" or "OFF"
-            This field can be accessed using aliases "power1" or "POWER1".
-        power2 (str): The current power state of the second channel: "ON" or "OFF"
-            This field can be accessed using aliases "power2" or "POWER2".
-    """
-
-    power1: Optional[Literal["ON", "OFF"]] = Field(
-        default=None, validation_alias=AliasChoices("power1", "POWER1")
-    )
-    power2: Optional[Literal["ON", "OFF"]] = Field(
-        default=None, validation_alias=AliasChoices("power2", "POWER2")
-    )
-
-
-class Motion(DeviceState):
-    """
-    Represents the generic states of a motion sensor device.
-
-    Attributes:
-        battery (Optional[int]): Remaining battery percentage (0-100).
-        occupancy (Optional[bool]): Indicates whether motion is detected.
-    """
-
-    battery: Optional[int] = None
-    occupancy: Optional[bool] = None
-
-
-class DoorSensor(DeviceState):
-    """
-    Represents the state of a door sensor device.
-
-    This class models the state information for door/window contact sensors, including
-    contact status, battery information, tamper detection, and signal quality.
-
-    Attributes:
-        contact (Optional[bool]): Contact state of the sensor.
-            - True: Contact is closed (door/window closed)
-            - False: Contact is open (door/window open)
-            - None: Contact state unknown
-        battery (Optional[int]): Remaining battery percentage (0-100).
-        voltage (Optional[int]): Battery voltage in millivolts.
-        tamper (Optional[bool]): Tamper detection status.
-            - True: Device has been tampered
-            - False: No tampering detected
-            - None: Tamper status unknown
-        battery_low (Optional[bool]): Low battery warning indicator.
-            - True: Battery is critically low
-            - False: Battery level is okay
-            - None: Battery status unknown
-        linkquality (Optional[int]): Signal strength/link quality indicator (0-255).
-    """
-
-    contact: Optional[bool] = None
-    battery: Optional[int] = None
-    voltage: Optional[int] = None
-    tamper: Optional[bool] = None
+    alarm: Optional[bool] = None
     battery_low: Optional[bool] = None
-    linkquality: Optional[int] = None
+    duration: Optional[int] = None
+    melody: Optional[int] = None
+    volume: Optional[Literal["low", "medium", "high"]] = None
 
 
 class AlarmButtonlValues(str, Enum):
@@ -312,47 +189,116 @@ class Button(DeviceState):
     action: ButtonValues = None
 
 
-class ADC(DeviceState):
+class DoorSensor(DeviceState):
     """
-    Represents the state of an ADC (Analog-to-Digital Converter) device.
+    Represents the state of a door sensor device.
+
+    This class models the state information for door/window contact sensors, including
+    contact status, battery information, tamper detection, and signal quality.
 
     Attributes:
-        Range (Optional[float]): The range value of the ADC.
-        voltage (float): The computed voltage based on the range value.
+        contact (Optional[bool]): Contact state of the sensor.
+            - True: Contact is closed (door/window closed)
+            - False: Contact is open (door/window open)
+            - None: Contact state unknown
+        battery (Optional[int]): Remaining battery percentage (0-100).
+        voltage (Optional[int]): Battery voltage in millivolts.
+        tamper (Optional[bool]): Tamper detection status.
+            - True: Device has been tampered
+            - False: No tampering detected
+            - None: Tamper status unknown
+        battery_low (Optional[bool]): Low battery warning indicator.
+            - True: Battery is critically low
+            - False: Battery level is okay
+            - None: Battery status unknown
+        linkquality (Optional[int]): Signal strength/link quality indicator (0-255).
     """
 
-    Range: Optional[float] = Field(default=None)
+    contact: Optional[bool] = None
+    battery: Optional[int] = None
+    voltage: Optional[int] = None
+    tamper: Optional[bool] = None
+    battery_low: Optional[bool] = None
+    linkquality: Optional[int] = None
 
-    @computed_field
-    @property
-    def voltage(self) -> float:
-        """
-        Calculate the voltage based on the range.
 
-        Returns:
-            float: The calculated voltage in volts.
-        """
-        return self.Range / 100
-
-INSTALLATION_HEIGHT = "installation_height"
-LIQUID_DEPTH = "liquid_depth"
-LIQUID_DEPTH_MAX = "liquid_depth_max"
-LIQUID_LEVEL_PERCENT = "liquid_level_percent"
-
-class WaterLevel(DeviceState):
+class MagicCube(DeviceState):
     """
-    Represents the state of a Water level sensor (subset of ME201WZ capabilities)
-    assuming installation_height and liquid_depth_max should be set via Z2M or CLI
-    command:
-    $ CONTROLLER_ID=0xa4c138cc15efc8de
-    $ mosquitto_pub -m "{\"installation_height\":1.3\", \"liquid_depth_max\":1.1\", \
-        \"max_set\":90, \"mini_set\":20\"}" -t "zigbee2mqtt/$CONTROLLER_ID/set"
-
+    Represents the state of a Cube T1 Pro device from Aquara.
     """
-    installation_height: Optional[float] = None
-    liquid_depth: Optional[float] = None
-    liquid_depth_max: Optional[float] = None
-    liquid_level_percent: Optional[int] = None
+
+    # Batterie restante en %
+    battery: Optional[int] = None
+    # Tension de la batterie en millivolts
+    voltage: Optional[int] = None
+    # Nombre de pannes de courant (depuis le dernier couplage)
+    power_outage_count: Optional[int] = None
+
+    operation_mode: Optional[Literal["action_mode", "scene_mode"]] = None
+    # Face du cube
+    side: Optional[int] = None
+    # Action depuis face du cube
+    action_from_side: Optional[int] = None
+    # Angle en degrès
+    action_angle: Optional[float] = None
+    # Action déclenchée (par ex : un clic sur un bouton)
+    action: Optional[
+        Literal[
+            "shake",
+            "throw",
+            "tap",
+            "slide",
+            "flip180",
+            "flip90",
+            "hold",
+            "side_up",
+            "rotate_left",
+            "rotate_right",
+            "1_min_inactivity",
+            "flip_to_side",
+        ]
+    ] = None
+    # Qualité du lien (force du signal)
+    linkquality: Optional[int] = None
+
+
+class Motion(DeviceState):
+    """
+    Represents the generic states of a motion sensor device.
+
+    Attributes:
+        battery (Optional[int]): Remaining battery percentage (0-100).
+        occupancy (Optional[bool]): Indicates whether motion is detected.
+    """
+
+    battery: Optional[int] = None
+    occupancy: Optional[bool] = None
+
+
+class SmokeSensor(DeviceState):
+    """
+    Represents the state of a smoke sensor device.
+    """
+
+    smoke: Optional[bool] = None
+    battery_low: Optional[bool] = None
+    battery: Optional[int] = None
+    test: Optional[bool] = None
+
+
+class SoilSensor(DeviceState):
+    """
+    Represents the state of an soil sensor device.
+
+    Attributes:
+        moisture (Optional[float]): The moisture level measured by the sensor.
+        temperature (Optional[float]): The temperature measured by the sensor.
+    """
+
+    moisture: Optional[float] = Field(
+        default=None, validation_alias=AliasChoices("moisture", "soil_moisture")
+    )
+    temperature: Optional[float] = None
 
 
 class SrtsA01(DeviceState):
@@ -414,149 +360,69 @@ class SrtsA01(DeviceState):
     window_open: Optional[bool] = None
 
 
-def _validate_somfy_value(value: any, expected_type) -> any:
-    if value != "":
-        return expected_type(value)
-    else:
-        raise exceptions.NoValueException(expected_type)
+POWER_ON = "ON"
+POWER_OFF = "OFF"
 
 
-SomfyInt = Annotated[
-    Union[int, str, None], BeforeValidator(lambda v: _validate_somfy_value(v, int))
-]
-SomfyBool = Annotated[
-    Union[bool, str, None], BeforeValidator(lambda v: _validate_somfy_value(v, bool))
-]
-
-
-class SomfyDevice(DeviceState):
+class Switch(DeviceState):
     """
-    Represents the state of a Somfy RTS device.
-    """
-
-    name: Optional[str] = None
-    remoteAddress: Optional[str] = None
-    # The current direction of the motor movement. This will be one of the following values :
-    # -1 = The shade is moving up, 0 = The shade is stopped, 1 = The shade is moving down
-    direction: SomfyInt = None
-    # The last rolling code that was used to send the last command from ESPSomfy RTS
-    lastRollingCode: SomfyInt = None
-    # Indicates the existence of a sun sensor. Valid values are true or false
-    sunSensor: SomfyBool = None
-    # Indicates whether the sun sensor is enabled or not. Valid values are 0 or 1
-    sunFlag: SomfyInt = None
-    # Indicates whether the shade thinks it is sunny or not. Valid values are 0 or 1
-    sunny: SomfyInt = None
-    # Indicates whether the shade thinks it is windy or calm. Valid values are 0 or 1
-    windy: SomfyInt = None
-
-
-class SomfyGroup(SomfyDevice):
-    groupId: Optional[int] = None
-
-
-class SomfyShade(SomfyDevice):
-    # shadeId: Optional[int] = None
-    shadeId: SomfyInt = None
-    shadeType: SomfyInt = None
-    # The tilt type if the shade type is blind :
-    # 0 = None, 1 = Tilt Motor, 2 = Integrated Tilt, 3 = Tilt Only
-    tiltType: SomfyInt = None
-    # Indicates whether up is down and down is up.
-    flipCommands: SomfyBool = None
-    # Indicates whether 100% is open or closed. Valid values are true or false
-    flipPosition: SomfyBool = None
-    # The current lift position in percentage of the motor.
-    position: SomfyInt = None
-    # The current tilt position in percentage of the motor.
-    tiltPosition: SomfyInt = None
-    # The lift position that the shade is seeking
-    target: SomfyInt = None
-    # The tilt position that the shade is seeking
-    tiltTarget: SomfyInt = None
-    # The current favorite lift position. -1 is unset
-    mypos: SomfyInt = None
-    # The current favorite tilt position. -1 is unset
-    myTiltPos: SomfyInt = None
-
-    # Undocumented
-    cmd: Optional[str] = None
-    cmdAddress: Optional[str] = None
-    cmdSource: Optional[str] = None
-
-
-class MagicCube(DeviceState):
-    """
-    Represents the state of a Cube T1 Pro device from Aquara.
-    """
-
-    # Batterie restante en %
-    battery: Optional[int] = None
-    # Tension de la batterie en millivolts
-    voltage: Optional[int] = None
-    # Nombre de pannes de courant (depuis le dernier couplage)
-    power_outage_count: Optional[int] = None
-
-    operation_mode: Optional[Literal["action_mode", "scene_mode"]] = None
-    # Face du cube
-    side: Optional[int] = None
-    # Action depuis face du cube
-    action_from_side: Optional[int] = None
-    # Angle en degrès
-    action_angle: Optional[float] = None
-    # Action déclenchée (par ex : un clic sur un bouton)
-    action: Optional[
-        Literal[
-            "shake",
-            "throw",
-            "tap",
-            "slide",
-            "flip180",
-            "flip90",
-            "hold",
-            "side_up",
-            "rotate_left",
-            "rotate_right",
-            "1_min_inactivity",
-            "flip_to_side",
-        ]
-    ] = None
-    # Qualité du lien (force du signal)
-    linkquality: Optional[int] = None
-
-
-class AlarmVolumes(str, Enum):
-    """
-    Enumeration representing possible alarm volume levels.
+    Represents the state of a switch device.
 
     Attributes:
-        LOW: Low volume level.
-        MEDIUM: Medium volume level.
-        HIGH: High volume level.
+        power_on_behavior (Optional[str]): The behavior of the switch when power is restored.
+        power (str): The current power state of the switch: "ON" or "OFF"
+            This field can be accessed using aliases "power", "state", or "POWER".
     """
 
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+    power_on_behavior: Optional[str] = None
+    power: Optional[Literal["ON", "OFF"]] = Field(
+        validation_alias=AliasChoices("power", "state", "POWER")
+    )
 
 
-class Alarm(BaseModel):
+SWITCH_ON = Switch(power=POWER_ON)
+SWITCH_OFF = Switch(power=POWER_OFF)
+
+
+class Switch2Channels(DeviceState):
     """
-    Represents the state of an alarm device.
+    Represents the state of a switch device with two channels.
 
     Attributes:
-        alarm (Optional[bool]): Indicates whether the alarm is active.
-        battery_low (Optional[bool]): Indicates whether the battery is low.
-        duration (Optional[int]): Duration of the alarm.
-        melody (Optional[int]): Melody of the alarm.
-        volume (Optional[Literal["low", "medium", "high"]]): Volume level of the alarm.
+        power1 (str): The current power state of the first channel: "ON" or "OFF"
+            This field can be accessed using aliases "power1" or "POWER1".
+        power2 (str): The current power state of the second channel: "ON" or "OFF"
+            This field can be accessed using aliases "power2" or "POWER2".
     """
 
-    alarm: Optional[bool] = None
-    battery_low: Optional[bool] = None
-    duration: Optional[int] = None
-    melody: Optional[int] = None
-    volume: Optional[Literal["low", "medium", "high"]] = None
+    power1: Optional[Literal["ON", "OFF"]] = Field(
+        default=None, validation_alias=AliasChoices("power1", "POWER1")
+    )
+    power2: Optional[Literal["ON", "OFF"]] = Field(
+        default=None, validation_alias=AliasChoices("power2", "POWER2")
+    )
+
+
+class WaterLevel(DeviceState):
+    """
+    Represents the state of a Water level sensor (subset of ME201WZ capabilities)
+    assuming installation_height and liquid_depth_max should be set via Z2M or CLI
+    command:
+    $ CONTROLLER_ID=0xa4c138cc15efc8de
+    $ mosquitto_pub -m "{\"installation_height\":1.3\", \"liquid_depth_max\":1.1\", \
+        \"max_set\":90, \"mini_set\":20\"}" -t "zigbee2mqtt/$CONTROLLER_ID/set"
+
+    """
+
+    installation_height: Optional[float] = None
+    liquid_depth: Optional[float] = None
+    liquid_depth_max: Optional[float] = None
+    liquid_level_percent: Optional[int] = None
+
+
+#
+# Ring abstract devices
+#
 
 
 class RingDeviceState(BaseModel):
@@ -722,7 +588,7 @@ class Chime(RingDeviceState):
     play_motion_sound: Optional[bool] = None
     # Get device info sensor
     info: Optional[RingInfo] = None
-    ## Undocumented Attributes
+    # Undocumented Attributes
     wireless_attributes: Optional[WirelessAttributes] = None
 
 
@@ -738,12 +604,77 @@ class RingAlarm(RingDeviceState):
     mode: Optional[Literal["disarmed", "armed_home", "armed_away"]] = None
 
 
-class SmokeSensor(DeviceState):
+#
+# Somfy
+#
+
+
+def _validate_somfy_value(value: any, expected_type) -> any:
+    if value != "":
+        return expected_type(value)
+    else:
+        raise exceptions.NoValueException(expected_type)
+
+
+SomfyInt = Annotated[
+    Union[int, str, None], BeforeValidator(lambda v: _validate_somfy_value(v, int))
+]
+SomfyBool = Annotated[
+    Union[bool, str, None], BeforeValidator(lambda v: _validate_somfy_value(v, bool))
+]
+
+
+class SomfyDevice(DeviceState):
     """
-    Represents the state of a smoke sensor device.
+    Represents the state of a Somfy RTS device.
     """
 
-    smoke: Optional[bool] = None
-    battery_low: Optional[bool] = None
-    battery: Optional[int] = None
-    test: Optional[bool] = None
+    name: Optional[str] = None
+    remoteAddress: Optional[str] = None
+    # The current direction of the motor movement. This will be one of the following values :
+    # -1 = The shade is moving up, 0 = The shade is stopped, 1 = The shade is moving down
+    direction: SomfyInt = None
+    # The last rolling code that was used to send the last command from ESPSomfy RTS
+    lastRollingCode: SomfyInt = None
+    # Indicates the existence of a sun sensor. Valid values are true or false
+    sunSensor: SomfyBool = None
+    # Indicates whether the sun sensor is enabled or not. Valid values are 0 or 1
+    sunFlag: SomfyInt = None
+    # Indicates whether the shade thinks it is sunny or not. Valid values are 0 or 1
+    sunny: SomfyInt = None
+    # Indicates whether the shade thinks it is windy or calm. Valid values are 0 or 1
+    windy: SomfyInt = None
+
+
+class SomfyGroup(SomfyDevice):
+    groupId: Optional[int] = None
+
+
+class SomfyShade(SomfyDevice):
+    # shadeId: Optional[int] = None
+    shadeId: SomfyInt = None
+    shadeType: SomfyInt = None
+    # The tilt type if the shade type is blind :
+    # 0 = None, 1 = Tilt Motor, 2 = Integrated Tilt, 3 = Tilt Only
+    tiltType: SomfyInt = None
+    # Indicates whether up is down and down is up.
+    flipCommands: SomfyBool = None
+    # Indicates whether 100% is open or closed. Valid values are true or false
+    flipPosition: SomfyBool = None
+    # The current lift position in percentage of the motor.
+    position: SomfyInt = None
+    # The current tilt position in percentage of the motor.
+    tiltPosition: SomfyInt = None
+    # The lift position that the shade is seeking
+    target: SomfyInt = None
+    # The tilt position that the shade is seeking
+    tiltTarget: SomfyInt = None
+    # The current favorite lift position. -1 is unset
+    mypos: SomfyInt = None
+    # The current favorite tilt position. -1 is unset
+    myTiltPos: SomfyInt = None
+
+    # Undocumented
+    cmd: Optional[str] = None
+    cmdAddress: Optional[str] = None
+    cmdSource: Optional[str] = None

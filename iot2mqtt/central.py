@@ -256,6 +256,8 @@ class Scrutinizer:
         protocols_expected: Optional[List[dev.Protocol]] = None,
         queue_timeout: int = QUEUE_TIMEOUT,  # timeout in sec.
     ) -> None:
+        from iot2mqtt import devices # To resolve circular import issue
+        
         self._mqtt_client = mqtt_client
         self._output_queue = output_queue
         self._queue_timeout = queue_timeout
@@ -267,12 +269,8 @@ class Scrutinizer:
             MessageStructure.RING: RingMessageFormater,
         }
         # Listen all supported protocols by default
-        _protocols = protocols_expected or [
-            dev.Protocol.Z2M,
-            dev.Protocol.TASMOTA,
-            dev.Protocol.RING,
-            dev.Protocol.ESPSOMFY,
-        ]
+        _protocols = protocols_expected or dev.Protocol.supported()
+        devices.load_devices_for_protocols(_protocols)
         self._subscribe_to_topics(_protocols)
 
     def _get_formater(self, message_structure: MessageStructure) -> Callable:
@@ -541,9 +539,9 @@ class Scrutinizer:
         self,
         client: mqtt.Client,
         userdata: Any,  # pylint: disable=unused-argument
-        flags: mqtt.ConnectFlags,  # pylint: disable=unused-argument
-        reason_code: mqtt.ReasonCode,  # pylint: disable=unused-argument
-        properties: mqtt.Properties,  # pylint: disable=unused-argument
+        flags: Any,  # pylint: disable=unused-argument
+        reason_code: Any,  # pylint: disable=unused-argument
+        properties: Any,  # pylint: disable=unused-argument
     ) -> None:
         """Subscribes to MQTT topics on connection."""
         for _topic in topics.InfoTopicManager().get_all_topics_to_subscribe():
@@ -607,7 +605,7 @@ class DeviceAccessor:
         _encoder = encoder.EncoderRegistry.get_encoder(model=model)
         if _encoder is None:
             if model not in _UNSUPPORTED_MODEL_LOGGED:
-                utils.i2m_log.warning(
+                utils.i2m_log.debug(
                     "No encoder for model %s — state polling skipped for all instances",
                     model,
                 )
@@ -1043,6 +1041,9 @@ def get_refined_data_queue(
     _layer1_queue = Queue()
     _layer2_queue = Queue()
     _refined_queue = Queue()
+    utils.check_parameter("protocols_expected", protocols_expected, List, optional=True)
+    utils.check_parameter("models_expected", models_expected, List, optional=True)
+    utils.check_parameter("devices_expected", devices_expected, List, optional=True)
     Scrutinizer(
         mqtt_client=mqtt_client,
         output_queue=_raw_data_queue,

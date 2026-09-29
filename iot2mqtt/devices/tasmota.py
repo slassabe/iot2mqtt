@@ -1,0 +1,4 @@
+"""
+Tasmota device registrations : TBC
+
+"""

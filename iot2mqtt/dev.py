@@ -75,24 +75,23 @@ class Protocol(Enum):
     with each other and with central systems. Each protocol is represented as a string constant.
 
     Attributes:
-        DEFAULT (str): Default protocol, used as a fallback.
         ESPSOMFY (str): The protocol used by ESPHome Somfy RTS devices.
-        HOMIE (str): The Homie IoT convention for MQTT.
         RING (str): The protocol used by Ring devices.
         SHELLY (str): The protocol used by Shelly smart home devices.
         TASMOTA (str): The protocol used by Tasmota firmware for ESP8266/ESP32 boards.
         Z2M (str): The Zigbee2MQTT protocol for Zigbee devices.
-        Z2T (str): The Zigbee2Tasmota protocol for Zigbee devices using Tasmota firmware.
     """
 
-    DEFAULT = "default"
     ESPSOMFY = "ESPSomfy"
-    HOMIE = "Homie"
     RING = "Ring"
     SHELLY = "Shelly"
     TASMOTA = "Tasmota"
     Z2M = "Zigbee2MQTT"
-    Z2T = "Zigbee2Tasmota"
+
+    @classmethod
+    def supported(cls) -> list["Protocol"]:
+        """Return all supported protocols."""
+        return [cls.ESPSOMFY, cls.RING, cls.SHELLY, cls.TASMOTA, cls.Z2M]
 
 
 class Device(BaseModel):

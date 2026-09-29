@@ -4,7 +4,7 @@ import signal
 import sys
 import time
 
-from iot2mqtt import __version__, central, exceptions, messenger, mqtthelper
+from iot2mqtt import __version__, central, exceptions, messenger, mqtthelper, dev
 
 ANIMATION = "|/-\\"
 C_GREEN = "\033[0;32m"
@@ -98,7 +98,7 @@ def main():
     except exceptions.ConnectionException:
         sys.exit(1)
 
-    _refined_queue = central.get_refined_data_queue(_client)
+    _refined_queue = central.get_refined_data_queue(_client, protocols_expected=[dev.Protocol.Z2M])
 
     # Configure a dispatcher to handle all incoming messages
     _dispatcher = messenger.Dispatcher(

@@ -138,33 +138,33 @@ class ClientHelper(mqtt.Client):
             f'"{self._context.hostname}:{self._context.port}">'
         )
 
-    def loop_forever(self, *argv, **kwargs) -> mqtt.MQTTErrorCode:
+    def loop_forever(self, *argv, **kwargs) -> int:
         """Start a new thread to run the network loop."""
         self._context.loop_forever_used = True
         return super().loop_forever(*argv, **kwargs)
 
-    def start(self) -> mqtt.MQTTErrorCode:
+    def start(self) -> int:
         """
         Starts the client MQTT network loop.
 
         Connects the client if not already connected, and starts the network loop.
 
         Returns:
-            mqtt.MQTTErrorCode: The result of calling client.loop_start().
+            int: The result of calling client.loop_start().
 
         Raises:
             RuntimeError: If loop_start fails or connection is refused.
         """
         if self._context.started:
             utils.i2m_log.warning("[%s] already started", self)
-            return mqtt.MQTTErrorCode.MQTT_ERR_SUCCESS
+            return mqtt.MQTT_ERR_SUCCESS
         try:
             _rc = self._do_connect()
-            if self.loop_start() != mqtt.MQTTErrorCode.MQTT_ERR_SUCCESS:
+            if self.loop_start() != mqtt.MQTT_ERR_SUCCESS:
                 utils.i2m_log.error(
                     "[%s] loop_start failed : %s",
                     self,
-                    mqtt.error_string(mqtt.MQTTErrorCode),
+                    mqtt.error_string(mqtt.MQTT_ERR_SUCCESS),
                 )
                 raise RuntimeError("loop_start failed")
             self._context.started = True
@@ -173,7 +173,7 @@ class ClientHelper(mqtt.Client):
             utils.i2m_log.fatal("[%s] cannot connect host %s", exp, self._context.hostname)
             raise exceptions.ConnectionException("[%s] connection refused") from exp
 
-    def stop(self) -> mqtt.MQTTErrorCode:
+    def stop(self) -> int:
         """
         Stops the client MQTT connection.
 
@@ -181,28 +181,28 @@ class ClientHelper(mqtt.Client):
         to close the client connection.
 
         Returns:
-            mqtt.MQTTErrorCode: The result of calling disconnect().
+            int: The result of calling disconnect().
 
         Raises:
             RuntimeError: If loop_stop fails.
         """
         if not self._context.connected:
             utils.i2m_log.warning("[%s] Unable to stop disconnected client", self)
-            return mqtt.MQTTErrorCode.MQTT_ERR_SUCCESS
+            return mqtt.MQTT_ERR_SUCCESS
         _rc = self.disconnect()
         if not self._context.loop_forever_used:
             _rc = self.loop_stop()
-            if _rc != mqtt.MQTTErrorCode.MQTT_ERR_SUCCESS:
+            if _rc != mqtt.MQTT_ERR_SUCCESS:
                 utils.i2m_log.error(
                     'loop_stop failed - [%s] "%s"',
-                    mqtt.MQTTErrorCode,
-                    mqtt.error_string(mqtt.MQTTErrorCode),
+                    _rc,
+                    mqtt.error_string(_rc),
                 )
                 raise RuntimeError("Unable to stop loop")
             self._context.started = False
         return _rc
 
-    def _do_connect(self) -> mqtt.MQTTErrorCode:
+    def _do_connect(self) -> int:
         """
         Connects the client to the MQTT broker according to the Connection policy.
 
@@ -212,7 +212,7 @@ class ClientHelper(mqtt.Client):
         ConnectionRetryPolicy.
 
         Returns:
-            mqtt.MQTTErrorCode: The result code of the connection attempt.
+            int: The result code of the connection attempt.
 
         Raises:
             exceptions.ConnectionException: If all retry attempts fail.
@@ -245,9 +245,9 @@ class ClientHelper(mqtt.Client):
         self,
         client: mqtt.Client,
         userdata: Any,
-        flags: mqtt.ConnectFlags,
-        reason_code: mqtt.ReasonCode,
-        properties: mqtt.Properties,
+        flags: Any,
+        reason_code: Any,
+        properties: Any,
     ) -> None:
         """Define the default connect callback implementation."""
         if reason_code == 0:
@@ -264,7 +264,7 @@ class ClientHelper(mqtt.Client):
         """
         self.on_connect_handlers.append(handler)
 
-    def disconnect(self, *argc, **argv) -> mqtt.MQTTErrorCode:
+    def disconnect(self, *argc, **argv) -> int:
         """
         Disconnects the client from the MQTT broker.
 
@@ -276,7 +276,7 @@ class ClientHelper(mqtt.Client):
             **argv: Arbitrary keyword arguments passed to the superclass disconnect method.
 
         Returns:
-            mqtt.MQTTErrorCode: The result code of the disconnection request.
+            int: The result code of the disconnection request.
         """
         _rc = super().disconnect(*argc, **argv)
         utils.i2m_log.debug("[%s] Disconnection request returns : %s", self, _rc)
@@ -286,9 +286,9 @@ class ClientHelper(mqtt.Client):
         self,
         client: mqtt.Client,
         userdata: Any,
-        disconnect_flags: mqtt.DisconnectFlags,
-        reason_code: mqtt.ReasonCode,
-        properties: mqtt.Properties,
+        disconnect_flags: Any,
+        reason_code: Any,
+        properties: Any,
     ) -> None:
         """Define the default disconnect callback implementation."""
         self._context.connected = False
@@ -391,12 +391,12 @@ class MQTTClientDeprecated(ClientHelper):
         client: mqtt.Client,
         userdata: Any,
         mid: int,
-        reason_code_list: List[mqtt.ReasonCode],
-        properties: mqtt.Properties,
+        reason_code_list: List[Any],
+        properties: Any,
     ) -> None:
         """Define the default subscribtion callback implementation."""
         for reason_code in reason_code_list:
-            if reason_code.is_failure:
+            if hasattr(reason_code, 'is_failure') and reason_code.is_failure:
                 utils.i2m_log.warning(
                     "[%s] subscribe refused - reason code : %s", self, reason_code
                 )

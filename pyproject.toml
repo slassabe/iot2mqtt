@@ -52,7 +52,7 @@ Documentation = "https://github.com/slassabe/iot2mqtt/wiki"
 cli_iot2mqtt = "iot2mqtt.cli:main"
 
 [tool.setuptools]
-packages = ["iot2mqtt", "iot2mqtt.core"]
+packages = ["iot2mqtt", "iot2mqtt.core", "iot2mqtt.devices"]
 
 [tool.setuptools.package-data]
 iot2mqtt = ["py.typed"]

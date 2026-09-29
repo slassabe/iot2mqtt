@@ -88,33 +88,46 @@ You should see output similar to the screenshot below, indicating that the comma
 
 ![Alt text](_images/cli_iot2mqtt.png)
 
-## Supported Devices and Protocol
+## Supported Devices and Protocols
 
-Below is a table outlining the available codecs.
+The **iot2mqtt** library supports device integration across multiple protocols. Device modules are loaded dynamically using the `load_devices_for_protocols()` function.
 
-|Protocol | Model           | Availability   | Description |
-| ------- | --------------- | -------------- | ------------|
-| Z2M     | CTP-R01         | Release 0.14.0 | [Link](https://www.zigbee2mqtt.io/devices/CTP-R01.html)|
-| Z2M     | E3              | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/E3.html)|
-| ESPSOMFY| E3              | Release 0.12.0 | [Link](https://github.com/rstrouse/ESPSomfy-RTS)  |
-| Z2M     | HM1RC-2-E       | Release 0.11.0 | [Link](https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html)|
-| Homie   | Miflora         | In progress    |             |
-| Z2M     | NAS-AB02B2      | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html)|
-| RING    | RingAlarm       | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|
-| RING    | RingCamera      | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|
-| RING    | RingChime       | Release 0.15.0 | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features)|
-| TASMOTA | Shelly Plug S   | Release 0.9.0  | [Link](https://templates.blakadder.com/shelly_plug_S.html)|
-| SHELLY  | Shelly Plug S   | In progress    |             |
-| TASMOTA | Shelly Uni      | Release 0.9.0  | [Link](https://templates.blakadder.com/shelly_UNI.html)|
-| SHELLY  | Shelly Uni      | In progress    |             |
-| Z2M     | S26R2ZB         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/S26R2ZB.html) |
-| Z2M     | SRTS-A01        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SRTS-A01.html)|
-| Z2M     | SNZB-02         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html)|
-| Z2M     | SNZB-01         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
-| Z2M     | SNZB-03         | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
-| Z2M     | TS0601_soil     | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/TS0601_soil.html)|
-| Z2M     | ZBMINI-L        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/ZBMINI.html) |
-| Z2M     | ZBMINIL2        | Release 0.9.0  | [Link](https://www.zigbee2mqtt.io/devices/ZBMINIL2.html) |
+### Supported Protocols
+
+| Protocol | Description | Status |
+| -------- | ----------- | ------ |
+| Z2M | Zigbee2MQTT bridge devices | ✓ Supported |
+| ESPSOMFY | ESPSomfy RTS motorized shades | ✓ Supported |
+| RING | Ring security devices | ✓ Supported |
+| SHELLY | Shelly WiFi devices | ✓ Supported |
+| TASMOTA | Tasmota firmware devices | ✓ Supported |
+
+### Device Models
+
+| Protocol | Model | Device Type | Reference |
+| -------- | ----- | ----------- | --------- |
+| Z2M | CTP-R01 | Magic Cube | [Link](https://www.zigbee2mqtt.io/devices/CTP-R01.html) |
+| Z2M | E3 | Door Contact Sensor | [Link](https://www.zigbee2mqtt.io/devices/E3.html) |
+| Z2M | HM1RC-2-E | Alarm Button | [Link](https://www.zigbee2mqtt.io/devices/HM1RC-2-E.html) |
+| Z2M | HS1SA | Smoke Sensor | [Link](https://www.zigbee2mqtt.io/devices/HS1SA.html) |
+| Z2M | NAS-AB02B2 | Alarm | [Link](https://www.zigbee2mqtt.io/devices/NAS-AB02B2.html) |
+| Z2M | S26R2ZB | Smart Plug | [Link](https://www.zigbee2mqtt.io/devices/S26R2ZB.html) |
+| Z2M | SNZB-01 | Button | [Link](https://www.zigbee2mqtt.io/devices/SNZB-01.html) |
+| Z2M | SNZB-02 | Air Sensor | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02.html) |
+| Z2M | SNZB-02D | Air Sensor (Display) | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02D.html) |
+| Z2M | SNZB-02P | Air Sensor (Probe) | [Link](https://www.zigbee2mqtt.io/devices/SNZB-02P.html) |
+| Z2M | SNZB-03 | Motion Sensor | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03.html) |
+| Z2M | SNZB-03P | Motion Sensor Plus | [Link](https://www.zigbee2mqtt.io/devices/SNZB-03P.html) |
+| Z2M | SRTS-A01 | Thermostat / Blind Controller | [Link](https://www.zigbee2mqtt.io/devices/SRTS-A01.html) |
+| Z2M | TS0601_soil | Soil Sensor | [Link](https://www.zigbee2mqtt.io/devices/TS0601_soil.html) |
+| Z2M | ZBMINI-L | Switch Module | [Link](https://www.zigbee2mqtt.io/devices/ZBMINI.html) |
+| Z2M | ZBMINIL2 | Switch Module L2 | [Link](https://www.zigbee2mqtt.io/devices/ZBMINIL2.html) |
+| RING | RingAlarm | Alarm System | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features) |
+| RING | RingCamera | Camera | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features) |
+| RING | RingChime | Chime | [Link](https://github.com/tsightler/ring-mqtt/wiki#supported-devices-and-features) |
+| ESPSOMFY | E3 | Motorized Shades | [Link](https://github.com/rstrouse/ESPSomfy-RTS) |
+| TASMOTA | Shelly Plug S | Smart Plug | [Link](https://templates.blakadder.com/shelly_plug_S.html) |
+| TASMOTA | Shelly Uni | Multi-purpose Module | [Link](https://templates.blakadder.com/shelly_UNI.html) |
 
 ## Related projects
 

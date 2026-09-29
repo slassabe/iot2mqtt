@@ -147,13 +147,14 @@ Below is an example of how to encode an abstract `Switch` state into device-spec
 
 ```python
 import iot2mqtt as i2m
+from iot2mqtt.devices import shelly, zigbee
 
 # Define the abstract state for a Switch
 _state = i2m.abstract.Switch(power=i2m.abstract.POWER_ON)
 
 # Encode the state for a Shelly Plug-in
 _shelly_on = i2m.encoder.encode(
-    model=i2m.setup.Models.SHELLY_PLUGS,
+    model=shelly.SHELLY_PLUGS_MODEL,
     state=_state,
 )
 print(_shelly_on)  
@@ -161,7 +162,7 @@ print(_shelly_on)
 
 # Encode the state for a Sonoff Smart Plug
 _sonoff_on = i2m.encoder.encode(
-    model=i2m.setup.Models.SN_SMART_PLUG,
+    model=zigbee.SN_SMART_PLUG_MODEL,
     state=_state,
 )
 print(_sonoff_on) 
