@@ -396,7 +396,7 @@ class MQTTClientDeprecated(ClientHelper):
     ) -> None:
         """Define the default subscribtion callback implementation."""
         for reason_code in reason_code_list:
-            if hasattr(reason_code, 'is_failure') and reason_code.is_failure:
+            if hasattr(reason_code, "is_failure") and reason_code.is_failure:
                 utils.i2m_log.warning(
                     "[%s] subscribe refused - reason code : %s", self, reason_code
                 )

@@ -21,8 +21,9 @@ from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
-from iot2mqtt import abstract, dev
+from iot2mqtt import dev
 from iot2mqtt.core import utils
+from iot2mqtt.devices.common_abstract import DeviceState
 
 
 class Encoder(BaseModel):
@@ -42,12 +43,12 @@ class Encoder(BaseModel):
             f", converter={self.field_converters})"
         )
 
-    def transform(self, state: abstract.DeviceState) -> Dict:
+    def transform(self, state: DeviceState) -> Dict:
         """
         Transforms the given device state into an encoded dictionary.
 
         Args:
-            state (abstract.DeviceState): The current state of the device to be encoded.
+            state (DeviceState): The current state of the device to be encoded.
 
         Returns:
             Dict: The encoded state of the device as a dictionary.
@@ -135,13 +136,13 @@ class EncoderRegistry:
         return EncoderRegistry._registry.get(model)
 
 
-def encode(model: dev.Model, state: abstract.DeviceState) -> Dict[str, Any]:
+def encode(model: dev.Model, state: DeviceState) -> Dict[str, Any]:
     """
     Encode the state of a device model into a dictionary format using the appropriate encoder.
 
     Args:
         model (dev.Model): The device model for which the state needs to be encoded.
-        state (abstract.DeviceState): The current state of the device to be encoded.
+        state (DeviceState): The current state of the device to be encoded.
 
     Returns:
         Dict[str, Any]: The encoded state of the device as a dictionary. If no encoder is found,
@@ -149,7 +150,7 @@ def encode(model: dev.Model, state: abstract.DeviceState) -> Dict[str, Any]:
 
     """
     utils.check_parameter("model", model, dev.Model)
-    utils.check_parameter("state", state, abstract.DeviceState)
+    utils.check_parameter("state", state, DeviceState)
 
     _encoder = EncoderRegistry.get_encoder(model=model)
     if _encoder is None:

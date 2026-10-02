@@ -35,8 +35,9 @@ else:
 
 import paho.mqtt.client as mqtt
 
-from iot2mqtt import abstract, dev, encoder, messenger, processor, topics
+from iot2mqtt import dev, devices, encoder, messenger, processor, topics
 from iot2mqtt.core import mqtthelper, utils
+from iot2mqtt.devices.common_abstract import SWITCH_OFF, SWITCH_ON
 
 DEFAULT_ON_TIME = 0.0
 DEFAULT_OFF_TIME = 0.0
@@ -256,8 +257,6 @@ class Scrutinizer:
         protocols_expected: Optional[List[dev.Protocol]] = None,
         queue_timeout: int = QUEUE_TIMEOUT,  # timeout in sec.
     ) -> None:
-        from iot2mqtt import devices # To resolve circular import issue
-        
         self._mqtt_client = mqtt_client
         self._output_queue = output_queue
         self._queue_timeout = queue_timeout
@@ -786,7 +785,7 @@ class DeviceAccessor:
         self.trigger_change_state(
             device_id=device_id,
             protocol=protocol,
-            state=encoder.encode(model, abstract.SWITCH_ON if power_on else abstract.SWITCH_OFF),
+            state=encoder.encode(model, SWITCH_ON if power_on else SWITCH_OFF),
         )
 
     def _do_switch_power_change(

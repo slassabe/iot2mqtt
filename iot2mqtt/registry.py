@@ -3,7 +3,8 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Type
 
-from iot2mqtt import abstract, dev, encoder, processor
+from iot2mqtt import dev, encoder, processor
+from iot2mqtt.devices.common_abstract import DeviceState
 
 
 @dataclass
@@ -11,7 +12,7 @@ class DeviceInfo:
     """Metadata about a single registered device model."""
 
     model: dev.Model
-    device_state_class: Type[abstract.DeviceState]
+    device_state_class: Type[DeviceState]
     protocol: Optional[dev.Protocol]
     source: str  # e.g. "iot2mqtt.devices.zigbee2mqtt" or "user"
 
@@ -25,7 +26,7 @@ class DeviceRegistry:
     def register_state(
         cls,
         model_tag: str,
-        device_state_class: Type[abstract.DeviceState],
+        device_state_class: Type[DeviceState],
         protocol: Optional[dev.Protocol] = None,
     ) -> dev.Model:
         """
@@ -83,7 +84,7 @@ class DeviceRegistry:
         return encoder.EncoderRegistry.get_encoder(_model) is not None
 
     @classmethod
-    def get_device_class(cls, model_tag: str) -> Optional[Type[abstract.DeviceState]]:
+    def get_device_class(cls, model_tag: str) -> Optional[Type[DeviceState]]:
         """Get the DeviceState class for a registered model tag."""
         if model_tag not in cls._devices:
             return None

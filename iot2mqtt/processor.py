@@ -13,8 +13,18 @@ from typing import Dict, List, Optional, Type
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_core import PydanticSerializationError
 
-from iot2mqtt import abstract, dev, messenger, topics
+from iot2mqtt import dev, messenger, topics
 from iot2mqtt.core import exceptions, utils
+from iot2mqtt.devices.common_abstract import (
+    POWER_OFF,
+    POWER_ON,
+    Availability,
+    DeviceState,
+    Registry,
+    Switch,
+    Switch2Channels,
+)
+from iot2mqtt.devices.zigbee_abstract import Button, ButtonValues, Motion
 
 
 class Processor(metaclass=ABCMeta):
@@ -61,9 +71,7 @@ def _check_devices(msg: messenger.Message, device_ids: str) -> bool:
     return msg.device_id in device_id_list
 
 
-def _check_message_typing(
-    msg: messenger.Message, expected_type: Type[abstract.DeviceState]
-) -> bool:
+def _check_message_typing(msg: messenger.Message, expected_type: Type[DeviceState]) -> bool:
     utils.check_parameter("msg", msg, messenger.Message)
     if msg.refined is None:
         return False
@@ -77,7 +85,7 @@ def _check_message_typing(
     return True
 
 
-def is_message_typing(msg: messenger.Message, expected_type: Type[abstract.DeviceState]) -> bool:
+def is_message_typing(msg: messenger.Message, expected_type: Type[DeviceState]) -> bool:
     """
     Checks if the given message is of the expected type.
     """
@@ -101,7 +109,7 @@ def is_motion_detected(msg: messenger.Message, device_ids: str) -> bool:
     Returns:
         bool: True if motion is detected, False otherwise.
     """
-    if _check_devices(msg, device_ids) and _check_message_typing(msg, abstract.Motion):
+    if _check_devices(msg, device_ids) and _check_message_typing(msg, Motion):
         return msg.refined.occupancy
     return False
 
@@ -121,8 +129,8 @@ def is_button_action_expected(
     Returns:
         bool: True if the message contains the specified button action, False otherwise.
     """
-    utils.check_parameter("action", action, abstract.ButtonValues)
-    if _check_devices(msg, device_ids) and _check_message_typing(msg, abstract.Button):
+    utils.check_parameter("action", action, ButtonValues)
+    if _check_devices(msg, device_ids) and _check_message_typing(msg, Button):
         return msg.refined.action == action
     return False
 
@@ -144,10 +152,8 @@ def is_switch_power_expected(
     """
     utils.check_parameter("is_on", is_on, bool)
 
-    if _check_devices(msg, device_ids) and _check_message_typing(
-        msg, (abstract.Switch, abstract.Switch2Channels)
-    ):
-        return msg.refined.power == abstract.POWER_ON if is_on else abstract.POWER_OFF
+    if _check_devices(msg, device_ids) and _check_message_typing(msg, (Switch, Switch2Channels)):
+        return msg.refined.power == POWER_ON if is_on else POWER_OFF
     return False
 
 
@@ -465,7 +471,7 @@ class Discoverer(Processor):
         _discovery_result = _device_dict(_raw_data, device_type_list=_device_types)
         self.directory.update_devices(_discovery_result)
         _devices = _device_list(_raw_data, device_type_list=_device_types)
-        message.refined = abstract.Registry(device_ids=_devices)
+        message.refined = Registry(device_ids=_devices)
         return message
 
     def _discover_tasmota(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -485,7 +491,7 @@ class Discoverer(Processor):
             protocol=dev.Protocol.TASMOTA,
         )
         self.directory.update_devices([_device])
-        message.refined = abstract.Registry(device_ids=[_discovery.device_id])
+        message.refined = Registry(device_ids=[_discovery.device_id])
         return message
 
     def _discover_espsomfy(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -508,7 +514,7 @@ class Discoverer(Processor):
             protocol=dev.Protocol.ESPSOMFY,
         )
         self.directory.update_devices([_device])
-        message.refined = abstract.Registry(device_ids=[_device_id])
+        message.refined = Registry(device_ids=[_device_id])
         return message
 
     def _discover_ring(self, message: messenger.Message) -> Optional[messenger.Message]:
@@ -536,7 +542,7 @@ class Discoverer(Processor):
             location_id=_location_id,
         )
         self.directory.update_devices([_device])
-        message.refined = abstract.Registry(device_ids=[_device_id])
+        message.refined = Registry(device_ids=[_device_id])
         return message
 
 
@@ -550,12 +556,12 @@ class AvailabilityNormalizer(Processor):
     `Availability` object indicating whetherthe device is online or offline.
 
     Constants:
-        - ONLINE (abstract.Availability): Represents an online availability status.
-        - OFFLINE (abstract.Availability): Represents an offline availability status.
+        - ONLINE (Availability): Represents an online availability status.
+        - OFFLINE (Availability): Represents an offline availability status.
     """
 
-    ONLINE = abstract.Availability(is_online=True)
-    OFFLINE = abstract.Availability(is_online=False)
+    ONLINE = Availability(is_online=True)
+    OFFLINE = Availability(is_online=False)
 
     def _decode_availability(self, value: str, on_token: str, off_token: str) -> bool:
         if value not in (on_token, off_token):
@@ -617,7 +623,7 @@ class StateNormalizerFactory:
 
     """
 
-    _registry: Dict[dev.Model, Type[abstract.DeviceState]] = {}
+    _registry: Dict[dev.Model, Type[DeviceState]] = {}
 
     @classmethod
     def reset(cls) -> None:
@@ -626,13 +632,13 @@ class StateNormalizerFactory:
 
     def __init__(
         self,
-        initial_registry: Optional[Dict[dev.Model, Type[abstract.DeviceState]]] = None,
+        initial_registry: Optional[Dict[dev.Model, Type[DeviceState]]] = None,
     ) -> None:
         """
         Initialize the factory with an optional initial registry.
 
         Args:
-            initial_registry (Optional[Dict[dev.Model, Type[abstract.DeviceState]]]): An optional
+            initial_registry (Optional[Dict[dev.Model, Type[DeviceState]]]): An optional
                 dictionary to initialize the registry with. If provided, the dictionary will be
                 used to update the internal registry.
         """
@@ -640,7 +646,7 @@ class StateNormalizerFactory:
             self._registry.update(initial_registry)
 
     @classmethod
-    def get(cls, model: dev.Model) -> Optional[Type[abstract.DeviceState]]:
+    def get(cls, model: dev.Model) -> Optional[Type[DeviceState]]:
         """
         Retrieve the target abstract type for a given model.
 
@@ -648,19 +654,19 @@ class StateNormalizerFactory:
             model (dev.Model): The device model for which to retrieve the state normalizer.
 
         Returns:
-            Optional[Type[abstract.DeviceState]]: The state normalizer class for the given model,
+            Optional[Type[DeviceState]]: The state normalizer class for the given model,
             or None if the model is not found in the registry.
         """
         return cls._registry.get(model)
 
     @classmethod
-    def register(cls, model: dev.Model, abstract_type: Type[abstract.DeviceState]) -> None:
+    def register(cls, model: dev.Model, abstract_type: Type[DeviceState]) -> None:
         """
         Register a target abstract type for the given model.
 
         Args:
             model (dev.Model): The device model to register.
-            abstract_type (Type[abstract.DeviceState]): The state normalizer class to associate
+            abstract_type (Type[DeviceState]): The state normalizer class to associate
                 with the given model.
         """
         cls._registry[model] = abstract_type

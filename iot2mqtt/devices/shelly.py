@@ -11,11 +11,12 @@ Devices communicate via native Shelly protocol through MQTT bridge.
 """
 
 from iot2mqtt import abstract, dev, registry
+from iot2mqtt.devices.common_abstract import Switch, Switch2Channels
 
 SHELLY_PLUGS_TAG = "Shelly Plug S"  # Shelly Plug S WiFi smart plug
 
 SHELLY_PLUGS_MODEL = registry.DeviceRegistry.register_state(
-    model_tag=SHELLY_PLUGS_TAG, device_state_class=abstract.Switch, protocol=dev.Protocol.SHELLY
+    model_tag=SHELLY_PLUGS_TAG, device_state_class=Switch, protocol=dev.Protocol.SHELLY
 )
 registry.DeviceRegistry.register_encoder(
     SHELLY_PLUGS_TAG,
@@ -28,7 +29,7 @@ SHELLY_UNI_TAG = "Shelly Uni"  # Shelly Uni WiFi relay/dimmer
 
 SHELLY_UNI_MODEL = registry.DeviceRegistry.register_state(
     model_tag=SHELLY_UNI_TAG,
-    device_state_class=abstract.Switch2Channels,
+    device_state_class=Switch2Channels,
     protocol=dev.Protocol.SHELLY,
 )
 registry.DeviceRegistry.register_encoder(

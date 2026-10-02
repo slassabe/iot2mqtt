@@ -4,7 +4,7 @@ import signal
 import sys
 import time
 
-from iot2mqtt import __version__, central, exceptions, messenger, mqtthelper, dev
+from iot2mqtt import __version__, central, dev, exceptions, messenger, mqtthelper
 
 ANIMATION = "|/-\\"
 C_GREEN = "\033[0;32m"
