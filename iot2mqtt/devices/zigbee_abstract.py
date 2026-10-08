@@ -42,6 +42,20 @@ class Alarm(DeviceState):
     volume: Optional[Literal["low", "medium", "high"]] = None
 
 
+class AlarmVolumes(str, Enum):
+    """
+    Enumeration representing possible alarm volume levels.
+
+    Attributes:
+        LOW: Low volume level.
+        MEDIUM: Medium volume level.
+        HIGH: High volume level.
+    """
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
 class AlarmButtonlValues(str, Enum):
     """
     Enumeration representing possible alarm controler actions.
