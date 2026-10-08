@@ -13,8 +13,6 @@ from pydantic import (
     field_validator,
 )
 
-from iot2mqtt.devices.common_abstract import DeviceState
-
 
 class RingDeviceState(BaseModel):
     """
@@ -106,7 +104,9 @@ class SnapshotAttributes(RingDeviceState):
 class RingInfo(RingDeviceState):
     # {'info': RingInfo(last_seen=None,
     #       stream_Source='rtsp://172.18.0.6:8554/187f8877c231_live',
-    #       still_Image_URL='https://localhost:8123{{ states.camera.rez-de-chaussée_snapshot.attributes.entity_picture }}')}
+    #       still_Image_URL='https://localhost:8123{{ 
+    #          states.camera.rez-de-chaussée_snapshot.attributes.entity_picture 
+    #       }}')}
     stream_Source: Optional[str] = None
     still_Image_URL: Optional[str] = None
 

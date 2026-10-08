@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 # coding=utf-8
 """
 This module provides functionality for encoding and validating device states, managing timers,
@@ -13,7 +12,8 @@ Classes
 Functions
 ---------
 
-- encode: Encodes the state of a device model into a dictionary format using the appropriate encoder.
+- encode: Encodes the state of a device model into a dictionary format using the 
+  appropriate encoder.
 
 """
 

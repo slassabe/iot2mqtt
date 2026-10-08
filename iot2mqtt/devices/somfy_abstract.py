@@ -86,7 +86,6 @@ __all__ = [
     "SomfyDevice",
     "SomfyGroup",
     "SomfyShade",
-    "_validate_somfy_value",
     "SomfyInt",
     "SomfyBool",
 ]

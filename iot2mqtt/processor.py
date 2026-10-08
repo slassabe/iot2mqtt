@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 # coding=utf-8
 """
 This module provides various classes and functions for processing IoT messages within the

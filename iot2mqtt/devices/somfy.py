@@ -11,7 +11,7 @@ Registers Somfy RTS motorized shades via ESPSomfy-RTS bridge:
 Enables automated window covering management.
 """
 
-from iot2mqtt import abstract, dev, registry
+from iot2mqtt import dev, registry
 from iot2mqtt.devices import fields
 from iot2mqtt.devices.somfy_abstract import SomfyShade
 

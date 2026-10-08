@@ -56,6 +56,7 @@ class AlarmVolumes(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
 
+
 class AlarmButtonlValues(str, Enum):
     """
     Enumeration representing possible alarm controler actions.

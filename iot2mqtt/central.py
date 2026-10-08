@@ -593,7 +593,8 @@ class DeviceAccessor:
         """
 
         def _publish_it(topic: str, payload: str) -> None:
-            # The debug log for publishing state retrieval is commented out to reduce verbosity in the logs.
+            # The debug log for publishing state retrieval is commented out to reduce verbosity 
+            # in the logs.
             # utils.i2m_log.debug(
             #     "Publishing state retrieval to %s - state : %s", topic, payload
             # )

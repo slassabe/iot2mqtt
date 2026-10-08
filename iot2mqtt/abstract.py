@@ -14,24 +14,100 @@ modules. Internal code should prefer importing directly from:
 External consumers can continue using: from iot2mqtt import abstract
 """
 
-# Explicitly re-export all __all__ entries to ensure complete API coverage
-from iot2mqtt.devices import (
-    common_abstract,
-    ring_abstract,
-    somfy_abstract,
-    tasmota_abstract,
-    zigbee_abstract,
+from iot2mqtt.devices.common_abstract import (
+    ADC,
+    POWER_OFF,
+    POWER_ON,
+    SWITCH_OFF,
+    SWITCH_ON,
+    Availability,
+    DeviceState,
+    Registry,
+    Switch,
+    Switch2Channels,
 )
-from iot2mqtt.devices.common_abstract import *  # noqa: F401, F403
-from iot2mqtt.devices.ring_abstract import *  # noqa: F401, F403
-from iot2mqtt.devices.somfy_abstract import *  # noqa: F401, F403
-from iot2mqtt.devices.tasmota_abstract import *  # noqa: F401, F403
-from iot2mqtt.devices.zigbee_abstract import *  # noqa: F401, F403
+from iot2mqtt.devices.ring_abstract import (
+    BatteryAttributes,
+    Camera,
+    Chime,
+    DingAttributes,
+    EventSelectAttributes,
+    MotionAttributes,
+    MotionInfo,
+    RingAlarm,
+    RingDeviceState,
+    RingInfo,
+    SnapshotAttributes,
+    StreamAttributes,
+    WirelessAttributes,
+)
+from iot2mqtt.devices.somfy_abstract import (
+    SomfyBool,
+    SomfyDevice,
+    SomfyGroup,
+    SomfyInt,
+    SomfyShade,
+)
+from iot2mqtt.devices.zigbee_abstract import (
+    AirSensor,
+    Alarm,
+    AlarmButton,
+    AlarmButtonlValues,
+    Button,
+    ButtonValues,
+    DoorSensor,
+    MagicCube,
+    Motion,
+    SmokeSensor,
+    SoilSensor,
+    SrtsA01,
+    WaterLevel,
+)
 
-__all__ = (
-    common_abstract.__all__
-    + zigbee_abstract.__all__
-    + ring_abstract.__all__
-    + somfy_abstract.__all__
-    + tasmota_abstract.__all__
-)
+__all__ = [
+    # Common
+    "DeviceState",
+    "Availability",
+    "Registry",
+    "Switch",
+    "Switch2Channels",
+    "ADC",
+    "POWER_ON",
+    "POWER_OFF",
+    "SWITCH_ON",
+    "SWITCH_OFF",
+    # Zigbee
+    "AirSensor",
+    "Alarm",
+    "AlarmButton",
+    "AlarmButtonlValues",
+    "Button",
+    "ButtonValues",
+    "DoorSensor",
+    "MagicCube",
+    "Motion",
+    "SmokeSensor",
+    "SoilSensor",
+    "SrtsA01",
+    "WaterLevel",
+    # Ring
+    "RingDeviceState",
+    "MotionInfo",
+    "StreamAttributes",
+    "MotionAttributes",
+    "BatteryAttributes",
+    "WirelessAttributes",
+    "EventSelectAttributes",
+    "DingAttributes",
+    "SnapshotAttributes",
+    "RingInfo",
+    "Camera",
+    "Chime",
+    "RingAlarm",
+    # Somfy
+    "SomfyDevice",
+    "SomfyGroup",
+    "SomfyShade",
+    "SomfyInt",
+    "SomfyBool",
+]

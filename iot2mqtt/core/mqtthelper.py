@@ -329,9 +329,9 @@ class MQTTClientDeprecated(ClientHelper):
         Define the message received callback implementation.
 
         Args:
-            client (mqtt.Client): The client instance for this callback.
-            userdata (Any): The private user data as set in Client() or userdata_set().
-            message (mqtt.MQTTMessage): The received message with members: topic, payload, qos, retain.
+            client : The client instance for this callback.
+            userdata : The private user data as set in Client() or userdata_set().
+            message : The received message with members: topic, payload, qos, retain.
 
         """
         for on_message_handler in self._default_message_callbacks:

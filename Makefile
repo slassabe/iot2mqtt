@@ -86,11 +86,11 @@ clean: ## Clean build artifacts and caches
 	find . -type d -name __pycache__ -delete
 	find . -name "*.pyc" -delete
 
-format: dev ## Format code
+format: ## Format code
 	$(PYTHON) -m black $(SRC_DIR)
 	$(PYTHON) -m isort $(SRC_DIR)
 
-lint: dev ## Lint code
+lint: ## Lint code
 	$(PYTHON) -m flake8 $(SRC_DIR)
 	$(PYTHON) -m pylint $(SRC_DIR)
 	$(PYTHON) -m mypy $(SRC_DIR) || true

@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 # coding=utf-8
 """
 This module defines various enumerations and classes related to IoT device models, protocols,

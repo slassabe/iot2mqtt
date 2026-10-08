@@ -10,7 +10,7 @@ Registers Shelly smart home devices:
 Devices communicate via native Shelly protocol through MQTT bridge.
 """
 
-from iot2mqtt import abstract, dev, registry
+from iot2mqtt import dev, registry
 from iot2mqtt.devices.common_abstract import Switch, Switch2Channels
 
 SHELLY_PLUGS_TAG = "Shelly Plug S"  # Shelly Plug S WiFi smart plug
