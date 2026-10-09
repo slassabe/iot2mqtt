@@ -3,11 +3,8 @@
 """
 Shelly device registrations (WiFi protocol).
 
-Registers Shelly smart home devices:
-  - Shelly Plug S: WiFi smart plug
-  - Shelly Uni: WiFi relay/dimmer with dual channels
-
-Devices communicate via native Shelly protocol through MQTT bridge.
+Registers Shelly smart home devices for MQTT bridge integration via native
+Shelly protocol: smart plugs and multi-channel relays/dimmers.
 """
 
 from iot2mqtt import dev, registry

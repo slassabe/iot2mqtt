@@ -1,17 +1,10 @@
 # coding=utf-8
 
 """
-Re-export facade for backward compatibility.
+Re-export facade for abstract device classes.
 
-This module re-exports all abstract device classes from their protocol-specific
-modules. Internal code should prefer importing directly from:
-  - iot2mqtt.devices.common_abstract
-  - iot2mqtt.devices.zigbee_abstract
-  - iot2mqtt.devices.ring_abstract
-  - iot2mqtt.devices.somfy_abstract
-  - iot2mqtt.devices.tasmota_abstract
-
-External consumers can continue using: from iot2mqtt import abstract
+Provides backward compatibility by re-exporting device state classes from their
+protocol-specific modules. New code should import directly from the specific modules.
 """
 
 from iot2mqtt.devices.common_abstract import (

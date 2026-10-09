@@ -1,5 +1,6 @@
 # coding=utf-8
 import argparse
+import json
 import signal
 import sys
 import time
@@ -13,16 +14,28 @@ C_BOLD = "\033[1m"
 
 
 def animate_cursor(position: int):
+    """Display animated cursor at current position."""
     _anim = ANIMATION[position % len(ANIMATION)]
     print(f"\r{C_GREEN}{_anim}{C_END}", end="")
 
 
 def signal_handler(sig, frame):
+    """Exit gracefully on SIGINT signal."""
     print("\nSignal received, exiting...")
     sys.exit(0)
 
 
 def _format(msg: messenger.Message, verbose: bool, readable: bool = True) -> str:
+    """Format message for display as human-readable text or JSON.
+
+    Args:
+        msg: Message to format.
+        verbose: Include raw and protocol data if True.
+        readable: Format as readable text if True, else JSON; defaults to True.
+
+    Returns:
+        Formatted message string or dict.
+    """
     if readable:
         if verbose:
             return (
@@ -41,28 +54,51 @@ def _format(msg: messenger.Message, verbose: bool, readable: bool = True) -> str
         )
     # Assuming json formatting
     if verbose:
-        return {
+        return json.dumps(
+            {
+                "device_id": msg.device_id,
+                "message_type": msg.message_type.value,
+                "protocol": msg.protocol.value,
+                "model": msg.model,
+                "raw_item": str(msg.raw_item),
+                "refined": msg.refined.model_dump(mode="json"),
+            }
+        )
+    return json.dumps(
+        {
             "device_id": msg.device_id,
             "message_type": msg.message_type.value,
-            "protocol": msg.protocol.value,
-            "model": msg.model,
-            "raw_item": msg.raw_item,
-            "refined": msg.refined,
+            "refined": msg.refined.model_dump(mode="json"),
         }
-    return {
-        "device_id": msg.device_id,
-        "message_type": msg.message_type.value,
-        "refined": msg.refined,
-    }
+    )
 
 
 def _handle_msg(msg: messenger.Message, devices: str, verbose: bool, readable: bool) -> None:
+    """Filter and display a message if it matches the device filter.
+
+    Prints the formatted message only if no device filter is set or the message's
+    device_id is in the comma-separated devices list.
+    """
     if devices and msg.device_id not in devices:
         return
     print(_format(msg=msg, verbose=verbose, readable=readable))
 
 
 def main():
+    """CLI entry point for iot2mqtt message monitoring.
+
+    Connects to an MQTT broker, subscribes to Zigbee2MQTT topics, processes messages,
+    and displays them in readable or JSON format with optional verbosity and device filtering.
+
+    Supports the following command-line options:
+    - -b/--broker: MQTT broker hostname (default: localhost)
+    - -d/--devices: Comma-separated device IDs to filter
+    - -l/--loop: Run for specified number of seconds
+    - -r/--readable: Display as readable text (default: JSON)
+    - -v/--verbose: Include raw and protocol details in output
+
+    Exits gracefully on SIGINT (Ctrl+C).
+    """
     # Register the signal handler
     signal.signal(signal.SIGINT, signal_handler)
 

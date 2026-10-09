@@ -1,23 +1,10 @@
 # coding=utf-8
 
 """
-Module for managing MQTT topics and processing messages for IoT devices.
+MQTT message processing and device control for IoT devices.
 
-This module includes classes and functions to manage MQTT topic configurations,
-subscribe to topics, process incoming messages, and trigger state changes on devices.
-It supports multiple protocols such as Zigbee2MQTT and Tasmota.
-
-Classes
--------
-
-- Scrutinizer: Subscribes to MQTT topics and processes incoming messages.
-- DeviceAccessor: Accesses device state via MQTT.
-
-Functions
----------
-
-- get_refined_data_queue: Returns a queue of refined messages by processing raw messages from MQTT.
-
+Manages MQTT topic subscriptions, message formatting, processing, and device
+state retrieval/control across multiple protocols (Zigbee2MQTT, Tasmota, ESPSomfy, Ring).
 """
 
 import json
@@ -50,9 +37,7 @@ DataItem: TypeAlias = Union[Dict, str, int, List[Dict]]
 
 
 class MessageStructure(Enum):
-    """
-    Incoming MQTT message determining the parsing of the messages.
-    """
+    """Message format types for MQTT parsing."""
 
     JSON = "json"
     RAW = "raw"
@@ -61,8 +46,9 @@ class MessageStructure(Enum):
 
 
 class MessageFormater(ABC):
-    """
-    Abstract base class for parsing incoming MQTT messages.
+    """Abstract base class for formatting incoming MQTT messages.
+
+    Subclasses implement format-specific parsing logic for different protocols.
     """
 
     @staticmethod
@@ -73,16 +59,12 @@ class MessageFormater(ABC):
         topic: str,
         raw_payload: str,
     ) -> Optional[DataItem]:
-        """
-        Parse the incoming MQTT message according to the specified protocol and message type.
-        """
+        """Parse incoming message according to protocol and message type."""
         pass
 
 
 class JsonMessageFormater(MessageFormater):
-    """
-    Format incoming MQTT messages in JSON format.
-    """
+    """Format incoming JSON MQTT messages."""
 
     @staticmethod
     def modify_incoming_message(
@@ -103,9 +85,7 @@ class JsonMessageFormater(MessageFormater):
 
 
 class RawMessageFormater(MessageFormater):
-    """
-    Format incoming MQTT messages in raw format.
-    """
+    """Format incoming raw text MQTT messages."""
 
     @staticmethod
     def modify_incoming_message(
@@ -121,9 +101,7 @@ class RawMessageFormater(MessageFormater):
 
 
 class ESPSomfyMessageFormater(MessageFormater):
-    """
-    Format incoming STATE and DISCO ESPSomfy messages.
-    """
+    """Format incoming ESPSomfy STATE and DISCO MQTT messages."""
 
     @staticmethod
     def modify_incoming_message(
@@ -146,6 +124,8 @@ class ESPSomfyMessageFormater(MessageFormater):
 
 
 class RingTags(Enum):
+    """Ring MQTT topic component tags."""
+
     STATE = "state"
     INFO = "info"
     ATTRIBUTES = "attributes"
@@ -234,18 +214,10 @@ class RingMessageFormater(MessageFormater):
 
 
 class Scrutinizer:
-    """
-    A class responsible for subscribing to MQTT topics and processing incoming messages.
+    """Subscribe to MQTT topics and process incoming messages into output queue.
 
-    The Scrutinizer class subscribes to various MQTT topics based on protocol and message type,
-    processes incoming messages, and places the processed messages into an output queue of
-    raw data.
-
-    Args:
-        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance.
-        output_queue (Queue): The queue where the raw data is placed.
-        protocols_expected (List[dev.Protocol], optional): List of expected protocols. None for all.
-        queue_timeout (int, optional): Timeout for queue operations in seconds. Defaults to 1.
+    Manages topic subscriptions for multiple protocols and routes messages through
+    the appropriate formatter based on protocol and message type.
     """
 
     # Reference to Frank Zappa - The Central Scrutinizer ❤
@@ -331,15 +303,10 @@ class Scrutinizer:
         message_type: messenger.MessageType,
         target_message_structure: MessageStructure,
     ) -> None:
-        """
-        Process an incoming MQTT message and put the result in the output queue.
-        Args:
-            client (mqtt.Client): The MQTT client instance.
-            userdata (Any): User data associated with the client.
-            mqtt_message (mqtt.MQTTMessage): The incoming MQTT message.
-            protocol (dev.Protocol): The protocol associated with the message.
-            message_type (messenger.MessageType): The type of the message.
-            target_message_structure (MessageStructure): The target structure of the message.
+        """Process incoming MQTT message and queue the result.
+
+        Formats the raw payload, extracts device and model information from the topic,
+        and places the processed message into the output queue.
         """
         topic = mqtt_message.topic
         try:
@@ -384,10 +351,7 @@ class Scrutinizer:
             utils.i2m_log.error("Output queue is full. Dropping message for topic %s", topic)
 
     def _on_z2m_avail(self, *argc, **kwargs) -> None:
-        """
-        Process zigbee2mqtt availability messages:
-        zigbee2mqtt/<device_id>/availability: <value>
-        """
+        """Handle Zigbee2MQTT availability messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -397,10 +361,7 @@ class Scrutinizer:
         )
 
     def _on_tasmota_avail(self, *argc, **kwargs) -> None:
-        """
-        Process Tasmota availability messages:
-        tele/<device_id>/LWT: <value>
-        """
+        """Handle Tasmota availability messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -410,10 +371,7 @@ class Scrutinizer:
         )
 
     def _on_espsomfy_avail(self, *argc, **kwargs) -> None:
-        """
-        Process ESPSomfy availability messages:
-        ESPSomfy/status: <value>
-        """
+        """Handle ESPSomfy availability messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -423,10 +381,7 @@ class Scrutinizer:
         )
 
     def _on_ring_avail(self, *argc, **kwargs) -> None:
-        """
-        Process RING availability messages:
-        ring/<location_id>/<product_category>/<device_id>/status: <value>
-        """
+        """Handle Ring availability messages and trigger discovery."""
         self._process_message(
             *argc,
             **kwargs,
@@ -444,10 +399,7 @@ class Scrutinizer:
         )
 
     def _on_z2m_state(self, *argc, **kwargs) -> None:
-        """
-        Process zigbee2mqtt state messages:
-        zigbee2mqtt/<device_id>: {<property>: <value>}
-        """
+        """Handle Zigbee2MQTT state messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -457,10 +409,7 @@ class Scrutinizer:
         )
 
     def _on_tasmota_state(self, *argc, **kwargs) -> None:
-        """
-        Process Tasmota state messages:
-        stat/<device_id>/RESULT: {<property>: <value>}
-        """
+        """Handle Tasmota state messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -470,10 +419,7 @@ class Scrutinizer:
         )
 
     def _on_espsomfy_state(self, *argc, **kwargs) -> None:
-        """
-        Process ESPSomfy state messages:
-        ESPSomfy/shades/<device_id>/<property>: <value>
-        """
+        """Handle ESPSomfy state messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -483,10 +429,7 @@ class Scrutinizer:
         )
 
     def _on_ring_state(self, *argc, **kwargs) -> None:
-        """
-        Process RING state messages:
-        ESPSomfy/shades/<device_id>/<property>: <value>
-        """
+        """Handle Ring state messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -496,10 +439,7 @@ class Scrutinizer:
         )
 
     def _on_z2m_disco(self, *argc, **kwargs) -> None:
-        """
-        Process zigbee2mqtt discovery messages:
-        zigbee2mqtt/bridge/devices: [{<property>: <value>}]
-        """
+        """Handle Zigbee2MQTT discovery messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -509,10 +449,7 @@ class Scrutinizer:
         )
 
     def _on_tasmota_disco(self, *argc, **kwargs) -> None:
-        """
-        Process Tasmota discovery messages:
-        tasmota/discovery/<device_id>/config: {<property>: <value>}
-        """
+        """Handle Tasmota discovery messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -522,10 +459,7 @@ class Scrutinizer:
         )
 
     def _on_espsomfy_disco(self, *argc, **kwargs) -> None:
-        """
-        Process ESPSomfy discovery messages:
-        homeassistant/cover/<device_id>/config: {<property>: <value>}
-        """
+        """Handle ESPSomfy discovery messages."""
         self._process_message(
             *argc,
             **kwargs,
@@ -549,51 +483,37 @@ class Scrutinizer:
 
 
 class DeviceAccessor:
+    """Access and control device state via MQTT.
+
+    Publishes state retrieval and state change commands to the appropriate MQTT topics
+    based on the device model and protocol.
+    """
+
     RETRY_COUNT_MAX = 3
     RETRY_ELAPSE = 60  # seconds
 
     _timer_mgr = utils.TimerManager()
-    """
-    A class responsible for accessing device state via MQTT.
-
-    This class provides methods to trigger the retrieval of the current state of a device
-    using the MQTT protocol. It interacts with the MQTT client to publish state retrieval
-    or state change commands to the appropriate MQTT topics based on the device model and
-    protocol.
-
-    Args:
-        mqtt_client (mqtthelper.ClientHelper): An instance of the MQTT client helper used
-            to publish messages to MQTT topics.
-    """
 
     def __init__(self, mqtt_client: mqtthelper.ClientHelper) -> None:
         self._mqtt_client = mqtt_client
 
     def trigger_get_state(self, device_id: str, protocol: dev.Protocol, model: dev.Model) -> None:
-        """
-        Triggers the retrieval of the current state of a device via MQTT.
+        """Publish state retrieval commands for a device.
 
-        This method publishes state retrieval commands to the appropriate MQTT topics based
-        on the device model and protocol. It uses the encoder registry to get the fields
-        that can be retrieved for the given device model and constructs the MQTT topics
-        accordingly.
+        Uses the encoder registry to get gettable fields and constructs the appropriate
+        MQTT topics for the given protocol.
 
         Args:
-            device_id (str): The id of the device for which the state is being retrieved.
-            protocol (dev.Protocol): The communication protocol used by the device (e.g., Z2M,
-                TASMOTA).
-            model (dev.Model): The model of the device.
+            device_id: Device identifier.
+            protocol: Communication protocol (Z2M, TASMOTA, ESPSOMFY, or RING).
+            model: Device model.
 
         Raises:
-            NotImplementedError: If the protocol is unknown or not supported.
-
-        Note:
-            If the encoder for the given device model is not found, a debug message is logged
-            and the method returns without publishing any messages.
+            NotImplementedError: If protocol is unknown.
         """
 
         def _publish_it(topic: str, payload: str) -> None:
-            # The debug log for publishing state retrieval is commented out to reduce verbosity 
+            # The debug log for publishing state retrieval is commented out to reduce verbosity
             # in the logs.
             # utils.i2m_log.debug(
             #     "Publishing state retrieval to %s - state : %s", topic, payload
@@ -628,18 +548,17 @@ class DeviceAccessor:
         raise NotImplementedError(_error_msg)
 
     def trigger_change_state(self, device_id: str, protocol: dev.Protocol, state: Dict) -> None:
-        """
-        Publish a state change message to the MQTT topic for the given device.
+        """Publish state change commands for a device.
+
+        Constructs MQTT command topics based on protocol and publishes the new state.
 
         Args:
-            device_id (str): The id of the device.
-            protocol (dev.Protocol): The communication protocol.
-            state (Dict): The new state to be published.
+            device_id: Device identifier.
+            protocol: Communication protocol (Z2M, TASMOTA, or ESPSOMFY).
+            state: Dictionary of state changes to apply.
 
-        Note:
-            Refer to the documentation of the :mod:`iot2mqtt.abstract` module to generate the state,
-            by the use of the `model_dump` method.
-
+        Raises:
+            NotImplementedError: If protocol is unknown.
         """
 
         def _publish_it(topic: str, payload: str) -> None:
@@ -674,22 +593,19 @@ class DeviceAccessor:
         location_id: str,
         model: str,
     ) -> None:
-        """
-        Publishes state changes for Ring devices to MQTT topics.
+        """Publish state changes for Ring devices to MQTT topics.
 
         Args:
-            device_id (str): The Ring device identifier
-            protocol (dev.Protocol): Must be Protocol.RING
-            state (Dict): State changes to apply to the device
-            location_id (str): The Ring location identifier
-            model (str): The Ring device model/category
+            device_id: Ring device identifier.
+            protocol: Must be Protocol.RING.
+            state: State changes to apply.
+            location_id: Ring location identifier.
+            model: Ring device model/category.
 
         Raises:
-            ValueError: If device_id, location_id or model are empty
-            NotImplementedError: If protocol is not Protocol.RING
+            ValueError: If device_id, location_id, or model are empty, or protocol is not RING.
 
-        The method constructs Ring-specific MQTT command topics in the format:
-        <base_topic>/<location_id>/<model>/<device_id>/<state_key>/command
+        Topic format: <base_topic>/<location_id>/<model>/<device_id>/<state_key>/command
         """
 
         def _publish_it(topic: str, payload: str) -> None:
@@ -759,15 +675,11 @@ class DeviceAccessor:
         device_ids: str,
         state: Dict,
     ) -> None:
-        """
-        Triggers state changes for multiple devices.
+        """Trigger state changes for multiple devices by ID.
 
         Args:
-            device_ids (str): A comma-separated string of device IDs to update
-            state (Dict): The state changes to apply to each device
-
-        The method splits the device_ids string and triggers state changes for each device
-        individually, with retry handling in case devices are not immediately available.
+            device_ids: Comma-separated device ID string.
+            state: State changes to apply to each device.
         """
         for _device_id in device_ids.split(","):
             self._do_trigger_change_state_helper(
@@ -862,32 +774,21 @@ class DeviceAccessor:
         on_time: float = DEFAULT_ON_TIME,
         off_time: float = DEFAULT_OFF_TIME,
     ) -> None:
-        """
-        Manage the power state change of switch devices.
+        """Manage power state changes for switch devices.
 
-        This function handles the power state change of switchs, optionally scheduling
-        the change to occur after a countdown. It also manages the timing for turning
-        the devices on and off based on the provided on_time and off_time parameters.
+        Handles immediate or delayed power state changes with optional on/off duration timers.
 
         Args:
-            device_ids (str): A comma-separated string of switch ids.
-            protocol (dev.Protocol): The protocol used by the device.
-            model (dev.Model): The model of the device.
-            power_on (bool): The desired power state (True for ON, False for OFF).
-            countdown (float, optional): The countdown time in seconds before the power state
-                change occurs. Defaults to 0.
-            on_time (float, optional): The duration in seconds to keep the device ON.
-                Defaults to DEFAULT_ON_TIME.
-            off_time (float, optional): The duration in seconds to keep the device OFF.
-                Defaults to DEFAULT_OFF_TIME.
-
-        Returns:
-            None
+            device_ids: Comma-separated device ID string.
+            protocol: Device protocol.
+            model: Device model.
+            power_on: Desired power state (True for ON, False for OFF).
+            countdown: Delay in seconds before change; defaults to 0.
+            on_time: Duration in seconds to keep device ON; defaults to DEFAULT_ON_TIME.
+            off_time: Duration in seconds to keep device OFF; defaults to DEFAULT_OFF_TIME.
 
         Note:
-            The discovery step is not required for this function to work, but the protocol and
-            model must be provided compared to :func:`switch_power_change_helper` function.
-
+            Requires device discovery for the device protocol to be completed first.
         """
         for device_id in device_ids.split(","):
             self._do_switch_power_change(
@@ -908,29 +809,20 @@ class DeviceAccessor:
         on_time: float = DEFAULT_ON_TIME,
         off_time: float = DEFAULT_OFF_TIME,
     ) -> None:
-        """
-        Helper function to change the power state of switch devices.
+        """Manage power state changes for switch devices by ID lookup.
 
-        This function retrieves devices from the device directory based on the provided
-        device names, and then calls the `switch_power_change` function to change their
-        power state.
+        Retrieves devices from the device directory and calls switch_power_change with
+        the device's protocol and model.
 
         Args:
-            device_ids (str): A comma-separated string of switch ids.
-            power_on (bool): The desired power state. True to power on, False to power off.
-            countdown (float, optional): The countdown period in seconds before changing
-                the power state. Defaults to 0.
-            on_time (float, optional): The duration in seconds for which the device should
-                remain powered on. Defaults to DEFAULT_ON_TIME.
-            off_time (float, optional): The duration in seconds for which the device should
-                remain powered off. Defaults to DEFAULT_OFF_TIME.
-
-        Returns:
-            None
+            device_ids: Comma-separated device ID string.
+            power_on: Desired power state (True for ON, False for OFF).
+            countdown: Delay in seconds before change; defaults to 0.
+            on_time: Duration in seconds to keep device ON; defaults to DEFAULT_ON_TIME.
+            off_time: Duration in seconds to keep device OFF; defaults to DEFAULT_OFF_TIME.
 
         Note:
-            The discovery step must be performed before calling this function.
-
+            Device discovery must be performed before calling this function.
         """
         for device_id in device_ids.split(","):
             # Retrieve the device from the device directory
@@ -958,23 +850,20 @@ def is_message_expected(
     models_expected: Optional[List[dev.Model]] = None,
     devices_expected: Optional[List[str]] = None,
 ) -> bool:
-    """
-    Validates if a message matches the expected criteria for message type,
-    protocol, model and device.
+    """Validate if a message matches expected criteria.
+
+    Checks if message matches type, protocol, model, and device filters. If any filter
+    list is None, that criteria is not checked. Returns True if all specified criteria match.
 
     Args:
-        message: The messenger.Message object to validate
-        types_expected: List of allowed message types
-        protocols_expected: List of allowed protocols
-        models_expected: List of allowed device models
-        devices_expected: List of allowed device IDs
+        message: Message to validate.
+        types_expected: Allowed message types; None to skip check.
+        protocols_expected: Allowed protocols; None to skip check.
+        models_expected: Allowed device models; None to skip check.
+        devices_expected: Allowed device IDs; None to skip check.
 
     Returns:
-        bool: True if message matches all specified criteria, False otherwise
-
-    Note:
-        If any of the expected lists are None, that criteria is not checked.
-        The message must have non-None values for message_type, protocol and model.
+        True if message matches all specified criteria, False otherwise.
     """
 
     def _validate_list_membership(value: Any, expected_list) -> bool:
@@ -1015,27 +904,23 @@ def get_refined_data_queue(
     devices_expected: Optional[List[str]] = None,
     discovery_settle_seconds: float = 1.0,
 ) -> Queue:
-    """
-    Creates and returns a queue of refined messages by processing raw messages from MQTT.
+    """Create a queue of refined messages from raw MQTT messages.
 
-    This function sets up a message processing pipeline that:
-    1. Captures raw MQTT messages via a Scrutinizer
-    2. Processes discovery messages to identify devices
-    3. Resolves device models and processes availability/state messages
-    4. Normalizes messages into standardized formats
+    Sets up a multi-stage message processing pipeline:
+    1. Raw message capture via Scrutinizer
+    2. Discovery message processing to identify devices
+    3. Device model resolution for state/availability messages
+    4. Message normalization to standardized formats
 
     Args:
-        mqtt_client (mqtthelper.ClientHelper): The MQTT client helper instance
-        protocols_expected (List[dev.Protocol], optional): List of protocols to filter messages by
-        models_expected (List[dev.Model], optional): List of device models to filter messages by
-        devices_expected (List[str], optional): List of device IDs to filter messages by
+        mqtt_client: MQTT client helper instance.
+        protocols_expected: Protocols to filter; None to accept all.
+        models_expected: Device models to filter; None to accept all.
+        devices_expected: Device IDs to filter; None to accept all.
+        discovery_settle_seconds: Delay after discovery to allow device registration.
 
     Returns:
-        Queue: A queue containing the refined (processed) messages that match the specified filters
-
-    Note:
-        The pipeline includes a 1-second delay after discovery messages to ensure all devices
-        are properly identified before processing state messages.
+        Queue containing refined messages matching all specified filters.
     """
     _raw_data_queue = Queue()
     _layer1_queue = Queue()
@@ -1196,8 +1081,10 @@ def _build_normalizer_stage(
 def _get_device_state(
     message: messenger.Message, accessor: DeviceAccessor
 ) -> Optional[messenger.Message]:
-    """
-    Ask for state device
+    """Trigger state retrieval for devices from discovery message.
+
+    For each device in the discovery message, publishes a state retrieval request.
+    Returns the message unchanged.
     """
     _refined_data = message.refined
     if message.message_type != messenger.MessageType.DISCO:

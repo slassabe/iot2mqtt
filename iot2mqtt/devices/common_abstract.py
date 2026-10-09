@@ -1,12 +1,18 @@
 # coding=utf-8
 
 """
+Common abstract device state classes and shared constants.
 
-Constants
----------
+This module provides the base classes for device state representations
+and shared power state constants used across device implementations.
 
-- POWER_ON: String constant representing the "ON" state.
-- POWER_OFF: String constant representing the "OFF" state.
+Key entry points:
+  - DeviceState: Base class for all device state models.
+  - Availability: Device online/offline status.
+  - Registry: Collection of discovered device identifiers.
+  - Switch, Switch2Channels: Power switch state models.
+  - ADC: Analog-to-Digital Converter state.
+  - POWER_ON, POWER_OFF: Standard power state constants.
 """
 
 from datetime import datetime
@@ -28,9 +34,7 @@ class DeviceState(BaseModel):
     providing common attributes and functionality.
 
     Attributes:
-        last_seen (Optional[datetime]): The timestamp of when the device was
-                                        last seen. This field can be accessed
-                                        using aliases "last_seen" or "Time".
+        last_seen: Timestamp when the device was last seen (aliases: "last_seen", "Time").
     """
 
     last_seen: Optional[datetime] = Field(
@@ -43,7 +47,7 @@ class Availability(BaseModel):
     Represents the availability status of a device.
 
     Attributes:
-        is_online (bool): Indicates whether the device is online. This field is immutable.
+        is_online: Whether the device is currently online (immutable after creation).
     """
 
     is_online: bool = Field(frozen=True)
@@ -51,10 +55,10 @@ class Availability(BaseModel):
 
 class Registry(BaseModel):
     """
-    Represents a registry of dicovered devices.
+    Represents a registry of discovered devices.
 
     Attributes:
-        device_ids (List[str]): A list of device ids.
+        device_ids: List of unique device identifiers.
     """
 
     device_ids: List[str] = []
@@ -73,9 +77,8 @@ class Switch(DeviceState):
     Represents the state of a switch device.
 
     Attributes:
-        power_on_behavior (Optional[str]): The behavior of the switch when power is restored.
-        power (str): The current power state of the switch: "ON" or "OFF"
-            This field can be accessed using aliases "power", "state", or "POWER".
+        power_on_behavior: Behavior when power is restored after outage.
+        power: Current power state ("ON" or "OFF"). Aliases: "power", "state", "POWER".
     """
 
     power_on_behavior: Optional[str] = None
@@ -93,10 +96,8 @@ class Switch2Channels(DeviceState):
     Represents the state of a switch device with two channels.
 
     Attributes:
-        power1 (str): The current power state of the first channel: "ON" or "OFF"
-            This field can be accessed using aliases "power1" or "POWER1".
-        power2 (str): The current power state of the second channel: "ON" or "OFF"
-            This field can be accessed using aliases "power2" or "POWER2".
+        power1: Current power state of the first channel ("ON" or "OFF"). Aliases: "power1", "POWER1".
+        power2: Current power state of the second channel ("ON" or "OFF"). Aliases: "power2", "POWER2".
     """
 
     power1: Optional[Literal["ON", "OFF"]] = Field(
@@ -115,8 +116,7 @@ class ADC(DeviceState):
     Represents the state of an ADC (Analog-to-Digital Converter) device.
 
     Attributes:
-        Range (Optional[float]): The range value of the ADC.
-        voltage (float): The computed voltage based on the range value.
+        Range: Raw ADC range value. Voltage is computed by dividing by 100.
     """
 
     Range: Optional[float] = Field(default=None)
@@ -125,10 +125,12 @@ class ADC(DeviceState):
     @property
     def voltage(self) -> float:
         """
-        Calculate the voltage based on the range.
+        Compute voltage from the ADC range value.
+
+        Divides the raw range value by 100 to convert to volts.
 
         Returns:
-            float: The calculated voltage in volts.
+            Voltage in volts.
         """
         return self.Range / 100
 

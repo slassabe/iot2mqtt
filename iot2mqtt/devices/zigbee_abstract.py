@@ -11,29 +11,14 @@ from iot2mqtt.devices.common_abstract import DeviceState
 
 
 class AirSensor(DeviceState):
-    """
-    Represents the state of an air sensor device.
-
-    Attributes:
-        humidity (Optional[float]): The humidity level measured by the sensor.
-        temperature (Optional[float]): The temperature measured by the sensor.
-    """
+    """Air sensor with humidity and temperature measurements."""
 
     humidity: Optional[float] = None
     temperature: Optional[float] = None
 
 
 class Alarm(DeviceState):
-    """
-    Represents the state of an alarm device.
-
-    Attributes:
-        alarm (Optional[bool]): Indicates whether the alarm is active.
-        battery_low (Optional[bool]): Indicates whether the battery is low.
-        duration (Optional[int]): Duration of the alarm.
-        melody (Optional[int]): Melody of the alarm.
-        volume (Optional[Literal["low", "medium", "high"]]): Volume level of the alarm.
-    """
+    """Alarm device with volume, melody, duration, and battery status."""
 
     alarm: Optional[bool] = None
     battery_low: Optional[bool] = None
@@ -43,14 +28,7 @@ class Alarm(DeviceState):
 
 
 class AlarmVolumes(str, Enum):
-    """
-    Enumeration representing possible alarm volume levels.
-
-    Attributes:
-        LOW: Low volume level.
-        MEDIUM: Medium volume level.
-        HIGH: High volume level.
-    """
+    """Possible alarm volume levels: low, medium, high."""
 
     LOW = "low"
     MEDIUM = "medium"
@@ -58,15 +36,7 @@ class AlarmVolumes(str, Enum):
 
 
 class AlarmButtonlValues(str, Enum):
-    """
-    Enumeration representing possible alarm controler actions.
-
-    Attributes:
-        EMERGENCY_ACTION: Represents an emergency alarm action.
-        DISARM_ACTION: Represents a disarm action.
-        ARM_DAYZONES_ACTION: Represents an arm day zones action.
-        ARM_ALL_ACTION: Represents an arm all zones action.
-    """
+    """Alarm controller actions: emergency, disarm, arm day zones, or arm all zones."""
 
     EMERGENCY_ACTION = "emergency"
     DISARM_ACTION = "disarm"
@@ -75,29 +45,15 @@ class AlarmButtonlValues(str, Enum):
 
 
 class AlarmButton(DeviceState):
-    """
-    Represents the state of a alarm controler device.
-
-    Attributes:
-    battery (Optional[int]): The battery level of the device.
-    action (AlarmButtonlValues): The action performed by the alarm controler.
-    linkquality (Optional[int]): The link quality of the device.
-    """
+    """Alarm controller device with battery, link quality, and action state."""
 
     battery: Optional[float] = None
-    action: AlarmButtonlValues = None
+    action: Optional[AlarmButtonlValues] = None
     linkquality: Optional[int] = None
 
 
 class ButtonValues(str, Enum):
-    """
-    Enumeration representing possible button actions.
-
-    Attributes:
-        SINGLE_ACTION: Represents a single button press action.
-        DOUBLE_ACTION: Represents a double button press action.
-        LONG_ACTION: Represents a long button press action.
-    """
+    """Button press actions: single, double, or long press."""
 
     SINGLE_ACTION = "single"
     DOUBLE_ACTION = "double"
@@ -105,39 +61,15 @@ class ButtonValues(str, Enum):
 
 
 class Button(DeviceState):
-    """
-    Represents the state of a button device.
+    """Button device with action state (single, double, or long press)."""
 
-    Attributes:
-        action (ButtonValues): The action performed by the button.
-    """
-
-    action: ButtonValues = None
+    action: Optional[ButtonValues] = None
 
 
 class DoorSensor(DeviceState):
-    """
-    Represents the state of a door sensor device.
+    """Door/window contact sensor with battery, tamper detection, and link quality.
 
-    This class models the state information for door/window contact sensors, including
-    contact status, battery information, tamper detection, and signal quality.
-
-    Attributes:
-        contact (Optional[bool]): Contact state of the sensor.
-            - True: Contact is closed (door/window closed)
-            - False: Contact is open (door/window open)
-            - None: Contact state unknown
-        battery (Optional[int]): Remaining battery percentage (0-100).
-        voltage (Optional[int]): Battery voltage in millivolts.
-        tamper (Optional[bool]): Tamper detection status.
-            - True: Device has been tampered
-            - False: No tampering detected
-            - None: Tamper status unknown
-        battery_low (Optional[bool]): Low battery warning indicator.
-            - True: Battery is critically low
-            - False: Battery level is okay
-            - None: Battery status unknown
-        linkquality (Optional[int]): Signal strength/link quality indicator (0-255).
+    Contact state indicates door/window open (False) or closed (True).
     """
 
     contact: Optional[bool] = None
@@ -149,9 +81,7 @@ class DoorSensor(DeviceState):
 
 
 class MagicCube(DeviceState):
-    """
-    Represents the state of a Cube T1 Pro device from Aquara.
-    """
+    """Aquara Cube T1 Pro device with motion, orientation, and action detection."""
 
     # Batterie restante en %
     battery: Optional[int] = None
@@ -189,22 +119,14 @@ class MagicCube(DeviceState):
 
 
 class Motion(DeviceState):
-    """
-    Represents the generic states of a motion sensor device.
-
-    Attributes:
-        battery (Optional[int]): Remaining battery percentage (0-100).
-        occupancy (Optional[bool]): Indicates whether motion is detected.
-    """
+    """Motion sensor with occupancy detection and battery status."""
 
     battery: Optional[int] = None
     occupancy: Optional[bool] = None
 
 
 class SmokeSensor(DeviceState):
-    """
-    Represents the state of a smoke sensor device.
-    """
+    """Smoke sensor with test mode and battery status."""
 
     smoke: Optional[bool] = None
     battery_low: Optional[bool] = None
@@ -213,13 +135,7 @@ class SmokeSensor(DeviceState):
 
 
 class SoilSensor(DeviceState):
-    """
-    Represents the state of an soil sensor device.
-
-    Attributes:
-        moisture (Optional[float]): The moisture level measured by the sensor.
-        temperature (Optional[float]): The temperature measured by the sensor.
-    """
+    """Soil sensor with moisture and temperature measurements."""
 
     moisture: Optional[float] = Field(
         default=None, validation_alias=AliasChoices("moisture", "soil_moisture")
@@ -228,8 +144,9 @@ class SoilSensor(DeviceState):
 
 
 class SrtsA01(DeviceState):
-    """
-    Represents the state of a Smart radiator thermostat AQARA SRTS-A01.
+    """Aquara SRTS-A01 smart radiator thermostat with temperature and valve control.
+
+    Supports remote temperature input, scheduling, child lock, and window detection.
     """
 
     # Température d'absence pré-définie
@@ -287,14 +204,9 @@ class SrtsA01(DeviceState):
 
 
 class WaterLevel(DeviceState):
-    """
-    Represents the state of a Water level sensor (subset of ME201WZ capabilities)
-    assuming installation_height and liquid_depth_max should be set via Z2M or CLI
-    command:
-    $ CONTROLLER_ID=0xa4c138cc15efc8de
-    $ mosquitto_pub -m "{\"installation_height\":1.3\", \"liquid_depth_max\":1.1\", \
-        \"max_set\":90, \"mini_set\":20\"}" -t "zigbee2mqtt/$CONTROLLER_ID/set"
+    """Water level sensor with installation height and liquid depth measurements.
 
+    Requires installation_height and liquid_depth_max to be configured via Z2M.
     """
 
     installation_height: Optional[float] = None

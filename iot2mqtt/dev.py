@@ -1,17 +1,9 @@
 # coding=utf-8
 """
-This module defines various enumerations and classes related to IoT device models, protocols,
-and actions. It also includes custom exceptions for handling specific error cases.
+IoT device models, protocols, and device definitions.
 
-Classes and Enums
------------------
-
-- Model: Represents a model of an IoT device.
-- ModelFactory: Singleton class responsible for managing instances of Model objects.
-- Protocol: Enumeration representing different communication protocols used by IoT devices.
-- Device: Represents a generic IoT device in the system.
-- ButtonAction: Enumeration defining button action values.
-
+Provides model management with singleton factory, protocol enumeration for various
+IoT platforms, and base device classes for representing IoT devices in the system.
 """
 
 from enum import Enum
@@ -22,22 +14,16 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Model(BaseModel, frozen=True):
-    """
-    Represents a model of an IoT device.
-
-    Args:
-        tag (str): The tag associated with the device model.
-    """
+    """Frozen model representing an IoT device model identified by tag."""
 
     tag: str = Field(frozen=True)
 
 
 class ModelFactory:
-    """
-    ModelFactory is a singleton class responsible for managing instances of Model objects.
-
-    This class ensures that only one instance of each Model is created and provides a thread-safe
-    mechanism for accessing these instances.
+    """Thread-safe singleton factory for Model instances.
+    
+    Ensures only one Model instance exists per tag and provides thread-safe access
+    with an UNKNOWN model constant for unrecognized models.
     """
 
     _model_instances: Dict[str, Model] = {}
@@ -46,16 +32,15 @@ class ModelFactory:
 
     @classmethod
     def get(cls, tag: str) -> Model:
-        """
-        Retrieve a Model instance by its tag. If the tag does not exist, create a new Model
-        instance with the given tag.
+        """Retrieve or create a Model instance by tag.
+
+        Returns existing instance if tag exists, otherwise creates and caches new instance.
 
         Args:
-            tag (str): The tag associated with the Model instance.
+            tag: Model identifier.
 
         Returns:
-            Model: The Model instance associated with the given tag, or a new instance if the
-            tag does not exist.
+            Model instance associated with the tag.
         """
 
         with cls._lock:
@@ -67,18 +52,10 @@ class ModelFactory:
 
 
 class Protocol(Enum):
-    """
-    Enumeration for different communication protocols used by IoT devices.
-
-    This enum class represents various communication protocols that IoT devices can use to interact
-    with each other and with central systems. Each protocol is represented as a string constant.
-
-    Attributes:
-        ESPSOMFY (str): The protocol used by ESPHome Somfy RTS devices.
-        RING (str): The protocol used by Ring devices.
-        SHELLY (str): The protocol used by Shelly smart home devices.
-        TASMOTA (str): The protocol used by Tasmota firmware for ESP8266/ESP32 boards.
-        Z2M (str): The Zigbee2MQTT protocol for Zigbee devices.
+    """IoT device communication protocols.
+    
+    Enumeration of protocols supported by the system: ESPSomfy, Ring, Shelly, Tasmota,
+    and Zigbee2MQTT.
     """
 
     ESPSOMFY = "ESPSomfy"
@@ -94,18 +71,10 @@ class Protocol(Enum):
 
 
 class Device(BaseModel):
-    """
-    Represents a generic IoT device in the system.
-
-    This class serves as a base model for all types of IoT devices. It defines common properties
-    and methods that all devices should have. Specific device types should inherit from this class
-    and add their own unique properties and methods.
-
-    Attributes:
-        name (str): The human-readable name of the device. This field is immutable.
-        protocol (Protocol): The communication protocol used by the device. This field is immutable.
-        address (Optional[str]): The network address of the device. Defaults to None.
-        model (Optional[Model]): The model of the device. Defaults to None.
+    """Base model for IoT devices with protocol and addressing information.
+    
+    Common properties for all device types: immutable name and protocol, plus optional
+    network address and model information.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -117,25 +86,13 @@ class Device(BaseModel):
 
 
 class RingDevice(Device):
-    """
-    Represents a Ring device in the system.
-    """
+    """Ring device with location identifier."""
 
     location_id: str = Field(frozen=True)
 
 
 class ButtonAction(Enum):
-    """
-    Enumeration defining button action values.
-
-    This enum defines string constants for possible button actions
-    like single press, double press, long press, etc.
-
-    Attributes:
-        SINGLE_ACTION (str): Represents a single button press action.
-        DOUBLE_ACTION (str): Represents a double button press action.
-        LONG_ACTION (str): Represents a long button press action.
-    """
+    """Button press action types: single, double, or long press."""
 
     SINGLE_ACTION = "single"
     DOUBLE_ACTION = "double"

@@ -2,12 +2,8 @@
 """
 Ring device registrations (Ring Bridge protocol).
 
-Registers Ring security devices via ring-mqtt bridge:
-  - RingAlarm: Security system control
-  - RingCamera: Video doorbell with motion/sound
-  - RingChime: Indoor chime notification hub
-
-Provides bidirectional control for smart home integration.
+Registers Ring security devices for MQTT bridge integration: alarm control,
+video doorbell with motion detection, and chime notifications.
 """
 
 from iot2mqtt import dev, registry

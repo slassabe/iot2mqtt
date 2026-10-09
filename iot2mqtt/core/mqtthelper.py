@@ -2,10 +2,11 @@
 # coding=utf-8
 
 """
-This module provides helper classes and functions for managing MQTT client operations
-using the paho.mqtt.client library. It includes context and security configurations,
-as well as client management for connecting, disconnecting, and handling MQTT events.
+MQTT client helpers using paho.mqtt.client library.
 
+Provides context and security configuration classes, connection retry policies,
+and a ClientHelper class that extends paho's MQTT client with connection management
+and event handler registration.
 """
 
 import dataclasses
@@ -21,22 +22,10 @@ from iot2mqtt.core import exceptions, utils
 
 @dataclasses.dataclass
 class MQTTContext:
-    """
-    MQTTContext holds the configuration for the MQTT client.
+    """Configuration for MQTT client connection parameters and state.
 
-    Attributes:
-        hostname (str): The hostname of the MQTT broker. Defaults to "127.0.0.1".
-        client_id (str): The client ID to use for the MQTT connection. Defaults to an empty string.
-        port (int): The port number to connect to the MQTT broker. Defaults to 1883.
-        keepalive (int): The keepalive interval in seconds for the MQTT connection. Defaults to 60.
-        clean_start (bool): Indicates whether to start with a clean session. Defaults to False.
-        connected (bool): Indicates whether the client is currently connected. Initialized to False.
-        started (bool): Indicates whether the client has started. Initialized to False.
-        loop_forever_used (bool): Indicates whether the loop_forever method has been used.
-            Initialized to False.
-
-    Methods:
-        __post_init__: Validates the parameters after initialization.
+    Connection state fields (connected, started, loop_forever_used) are initialized
+    in __post_init__ and track the client's runtime state.
     """
 
     hostname: str = "127.0.0.1"
@@ -59,15 +48,7 @@ class MQTTContext:
 
 @dataclasses.dataclass
 class SecurityContext:
-    """
-    SecurityContext holds the security-related configuration for the MQTT client.
-
-    Attributes:
-        tls (bool): Indicates whether TLS should be used for the connection. Defaults to False.
-        user_name (Optional[str]): The username for MQTT authentication. Defaults to None.
-        user_pwd (Optional[str]): The password for MQTT authentication. Defaults to None.
-
-    """
+    """Security configuration for MQTT client including TLS and authentication."""
 
     tls: bool = False
     user_name: Optional[str] = None
@@ -80,33 +61,17 @@ class SecurityContext:
 
 
 class ConnectionRetryPolicy:
-    """
-    ConnectionRetryPolicy defines the retry policy for connecting to the MQTT broker.
-
-    Attributes:
-        MAX_RETRY (int): The maximum number of retry attempts for connecting to the broker.
-        RETRY_DELAY (int): The delay in seconds between retry attempts.
-    """
+    """Connection retry policy with maximum attempts and delay between retries."""
 
     MAX_RETRY = 5
     RETRY_DELAY = 5  # seconds
 
 
 class ClientHelper(mqtt.Client):
-    """
-    ClientHelper is a helper class for managing MQTT client operations.
+    """MQTT client helper extending paho.mqtt.client.Client with connection management.
 
-    This class extends the paho.mqtt.client.Client class and provides additional functionality
-    for handling MQTT connections, disconnections, and event callbacks.
-
-    This constructor sets up the MQTT client with the provided context and security settings.
-    It also initializes the connection and disconnection handlers.
-
-    Parameters:
-        context (MQTTContext): The context containing MQTT connection parameters such as
-            hostname, port
-        security_ctxt (SecurityContext): The security context containing TLS and authentication
-            settings.
+    Sets up the MQTT client with connection and disconnection handlers that can be
+    registered via connect_handler_add() and disconnect_handler_add().
     """
 
     def __init__(self, context: MQTTContext, security_ctxt: SecurityContext) -> None:
@@ -144,16 +109,14 @@ class ClientHelper(mqtt.Client):
         return super().loop_forever(*argv, **kwargs)
 
     def start(self) -> int:
-        """
-        Starts the client MQTT network loop.
-
-        Connects the client if not already connected, and starts the network loop.
+        """Start the MQTT client network loop and connect to the broker.
 
         Returns:
-            int: The result of calling client.loop_start().
+            Result code from loop_start() or connection attempt.
 
         Raises:
-            RuntimeError: If loop_start fails or connection is refused.
+            RuntimeError: If loop_start fails.
+            ConnectionException: If connection is refused.
         """
         if self._context.started:
             utils.i2m_log.warning("[%s] already started", self)
@@ -174,14 +137,10 @@ class ClientHelper(mqtt.Client):
             raise exceptions.ConnectionException("[%s] connection refused") from exp
 
     def stop(self) -> int:
-        """
-        Stops the client MQTT connection.
-
-        Stops the async loop if it was not already running and calls disconnect()
-        to close the client connection.
+        """Stop the MQTT client connection and network loop if needed.
 
         Returns:
-            int: The result of calling disconnect().
+            Result code from disconnect() or loop_stop().
 
         Raises:
             RuntimeError: If loop_stop fails.
@@ -203,19 +162,16 @@ class ClientHelper(mqtt.Client):
         return _rc
 
     def _do_connect(self) -> int:
-        """
-        Connects the client to the MQTT broker according to the Connection policy.
+        """Connect to the MQTT broker with retry logic for DNS resolution failures.
 
-        This method attempts to connect to the MQTT broker using the connection parameters
-        specified in the context. If the connection fails due to a temporary DNS resolution
-        issue, it retries the connection according to the retry policy defined in
-        ConnectionRetryPolicy.
+        Attempts up to MAX_RETRY connections, retrying after RETRY_DELAY seconds
+        if socket.gaierror is encountered.
 
         Returns:
-            int: The result code of the connection attempt.
+            Connection result code.
 
         Raises:
-            exceptions.ConnectionException: If all retry attempts fail.
+            ConnectionException: If all retry attempts fail.
         """
 
         for attempt in range(ConnectionRetryPolicy.MAX_RETRY):
@@ -249,34 +205,24 @@ class ClientHelper(mqtt.Client):
         reason_code: Any,
         properties: Any,
     ) -> None:
-        """Define the default connect callback implementation."""
+        """Default connect callback: update connection state and invoke registered handlers."""
         if reason_code == 0:
             self._context.connected = True
         for on_connect_handler in self.on_connect_handlers:
             on_connect_handler(client, userdata, flags, reason_code, properties)
 
     def connect_handler_add(self, handler: Callable) -> None:
-        """
-        Adds a handler to be called when the client successfully connects to the MQTT broker.
-
-        This method allows you to register a callback function that will be invoked whenever
-        the client establishes a connection to the MQTT broker.
-        """
+        """Register a callback to invoke when client successfully connects to broker."""
         self.on_connect_handlers.append(handler)
 
     def disconnect(self, *argc, **argv) -> int:
-        """
-        Disconnects the client from the MQTT broker.
+        """Disconnect from broker and log the result.
 
-        This method overrides the default disconnect method to add logging functionality.
-        It logs the result of the disconnection request and then returns the result code.
-
-        Parameters:
-            *argc: Variable length argument list passed to the superclass disconnect method.
-            **argv: Arbitrary keyword arguments passed to the superclass disconnect method.
+        Overrides parent disconnect() to add logging. Arguments are passed through
+        to the parent class method.
 
         Returns:
-            int: The result code of the disconnection request.
+            Disconnection result code.
         """
         _rc = super().disconnect(*argc, **argv)
         utils.i2m_log.debug("[%s] Disconnection request returns : %s", self, _rc)
@@ -290,29 +236,18 @@ class ClientHelper(mqtt.Client):
         reason_code: Any,
         properties: Any,
     ) -> None:
-        """Define the default disconnect callback implementation."""
+        """Default disconnect callback: update connection state and invoke registered handlers."""
         self._context.connected = False
         for on_disconnect_handler in self.on_disconnect_handlers:
             on_disconnect_handler(client, userdata, disconnect_flags, reason_code, properties)
 
     def disconnect_handler_add(self, handler: Callable) -> None:
-        """
-        Adds a handler to be called when the client disconnects from the MQTT broker.
-
-        This method allows you to register a callback function that will be invoked whenever
-        the client disconnects from the MQTT broker.
-
-        Returns:
-            None
-        """
+        """Register a callback to invoke when client disconnects from broker."""
         self.on_disconnect_handlers.append(handler)
 
 
 class MQTTClientDeprecated(ClientHelper):
-    """
-    This class provides additional helper methods for MQTT operations.
-    Could evolve to a more generic class in the future.
-    """
+    """Extended MQTT client with message and subscribe event handling."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -325,47 +260,30 @@ class MQTTClientDeprecated(ClientHelper):
     def _handle_on_message_helper(
         self, client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
     ) -> None:
-        """
-        Define the message received callback implementation.
-
-        Args:
-            client : The client instance for this callback.
-            userdata : The private user data as set in Client() or userdata_set().
-            message : The received message with members: topic, payload, qos, retain.
-
-        """
+        """Invoke all registered message handlers for received message."""
         for on_message_handler in self._default_message_callbacks:
             on_message_handler(client, userdata, message)
 
     def default_message_callback_add(self, callback: Callable) -> None:
-        """
-        Adds a callback function to the list of default message callbacks.
-
-        Args:
-            callback (Callable): The callback function to be added.
-
-        Returns:
-            None
-        """
+        """Register a callback to invoke when message is received."""
         self._default_message_callbacks.append(callback)
 
     def publish_and_wait(
         self, topic: str, payload: str, timeout: float, **kwargs
     ) -> mqtt.MQTTMessageInfo:
-        """
-        Publish a message on a topic and wait for it to be published.
+        """Publish a message and wait for confirmation up to timeout seconds.
 
         Args:
-            topic (str): The topic on which to publish the message.
-            payload (str): The message payload.
-            timeout (float): The maximum time to wait for the message to be published.
-            **kwargs: Additional keyword arguments to pass to the publish method.
+            topic: Topic to publish to.
+            payload: Message payload.
+            timeout: Maximum seconds to wait for publication confirmation.
+            **kwargs: Additional arguments passed to publish().
 
         Returns:
-            mqtt.MQTTMessageInfo: Information about the published message.
+            Message info object with publication status.
 
         Raises:
-            ValueError: If any of the parameters are of incorrect type.
+            ValueError: If parameters are of incorrect type.
         """
 
         def timed_out() -> bool:
@@ -394,7 +312,7 @@ class MQTTClientDeprecated(ClientHelper):
         reason_code_list: List[Any],
         properties: Any,
     ) -> None:
-        """Define the default subscribtion callback implementation."""
+        """Default subscribe callback: log status and invoke registered handlers."""
         for reason_code in reason_code_list:
             if hasattr(reason_code, "is_failure") and reason_code.is_failure:
                 utils.i2m_log.warning(
@@ -406,15 +324,5 @@ class MQTTClientDeprecated(ClientHelper):
             on_subscribe_handler(client, userdata, mid, reason_code_list, properties)
 
     def subscribe_handler_add(self, handler: Callable):
-        """
-        Adds a subscribe handler.
-
-        Subscribe handlers are called when a subscription is received from the MQTT broker.
-
-        Args:
-            handler (Callable): The callback function to handle the subscribe event.
-
-        Returns:
-            None
-        """
+        """Register a callback to invoke when subscription is acknowledged by broker."""
         self.on_subscribe_handlers.append(handler)

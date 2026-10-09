@@ -3,13 +3,8 @@
 """
 Zigbee device registrations (Z2M protocol).
 
-Registers Zigbee devices via zigbee2mqtt bridge:
-  - Sensors: AirSensor, SmokeSensor, DoorSensor, Motion, SoilSensor, WaterLevel
-  - Controls: Switch (Sonoff), Alarm, Thermostat (SRTS-A01)
-  - Inputs: Button, MagicCube
-
-Each device maps to an abstract device class and defines settable/gettable fields
-for bidirectional communication.
+Registers Zigbee devices via zigbee2mqtt bridge for sensors, controls, and input
+devices with bidirectional MQTT communication.
 """
 
 from iot2mqtt import dev, registry

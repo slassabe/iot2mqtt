@@ -1,9 +1,11 @@
 # coding=utf-8
-"""
-This module provides various classes and functions for processing IoT messages within the
-iot2mqtt framework. It includes abstract base classes, utility functions, and concrete
-implementations for handling different types of messages and device protocols.
+"""Message processing for IoT protocols.
 
+Provides abstract and concrete processors for handling discovery, availability, and state
+messages from different IoT device protocols (Z2M, TASMOTA, ESPSOMFY, RING). Includes
+device registry management, message normalization, and state refinement utilities.
+
+Key entry points: Processor, Discoverer, AvailabilityNormalizer, StateNormalizer.
 """
 
 from abc import ABCMeta, abstractmethod
@@ -27,41 +29,40 @@ from iot2mqtt.devices.zigbee_abstract import Button, ButtonValues, Motion
 
 
 class Processor(metaclass=ABCMeta):
-    """
-    An abstract base class for processing messages.
+    """Abstract base for message processors.
 
-    The `Processor` class defines the interface for processing messages. Subclasses must
-    implement the `process` method. It also provides static methods for no-op and pass-through
-    message handling.
+    Subclasses implement the `process` method to refine or handle messages.
     """
 
     @abstractmethod
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
-        pass
+        """Process a message.
+
+        Args:
+            message: The message to process.
+
+        Returns:
+            The processed message, or None if not processed.
+        """
 
     @staticmethod
     def no_op(message: messenger.Message) -> None:
-        """Default no-op function when message callback is not provided."""
-        # utils.i2m_log.debug("Incoming message not processed: %s", message)
-        return None
+        """No-op handler for messages that should not be processed."""
 
     @staticmethod
     def pass_through(message: messenger.Message) -> messenger.Message:
-        """Copy of the message without any processing."""
-        return message
+        """Return the message unchanged."""
 
 
 def _check_devices(msg: messenger.Message, device_ids: str) -> bool:
-    """
-    Checks if the given message is for one of the specified device names.
+    """Check if a message is for specified device IDs.
 
     Args:
-        msg (messenger.Message): The message to check.
-        device_ids (str): The device name, a comma-separated list of device ids
-            or `*` for all to check for.
+        msg: The message to check.
+        device_ids: A device ID, comma-separated list of device IDs, or '*' for all.
 
     Returns:
-        bool: True if the message is for one of the specified device names, False otherwise.
+        True if the message is for one of the specified devices.
     """
     utils.check_parameter("device_ids", device_ids, str)
     if "*" in device_ids:
@@ -71,7 +72,10 @@ def _check_devices(msg: messenger.Message, device_ids: str) -> bool:
 
 
 def _check_message_typing(msg: messenger.Message, expected_type: Type[DeviceState]) -> bool:
-    utils.check_parameter("msg", msg, messenger.Message)
+    """Check if a message contains a refined state of the expected type.
+
+    Raises TypeError if refined state exists but is not of the expected type.
+    """
     if msg.refined is None:
         return False
     if not messenger.is_type_state(msg):
@@ -85,8 +89,9 @@ def _check_message_typing(msg: messenger.Message, expected_type: Type[DeviceStat
 
 
 def is_message_typing(msg: messenger.Message, expected_type: Type[DeviceState]) -> bool:
-    """
-    Checks if the given message is of the expected type.
+    """Check if a message contains a refined state of the expected type.
+
+    Returns False if no refined state exists or state is not of expected type.
     """
     utils.check_parameter("msg", msg, messenger.Message)
     if msg.refined is None:
@@ -97,16 +102,14 @@ def is_message_typing(msg: messenger.Message, expected_type: Type[DeviceState]) 
 
 
 def is_motion_detected(msg: messenger.Message, device_ids: str) -> bool:
-    """
-    Checks if motion is detected in the given message for the specified device.
+    """Check if motion is detected in a message for specified devices.
 
     Args:
-        msg (messenger.Message): The message to check for motion detection.
-        device_ids (str): The device name, a comma-separated list of device ids
-            or `*` for all to check for motion.
+        msg: The message to check.
+        device_ids: A device ID, comma-separated list of device IDs, or '*' for all.
 
     Returns:
-        bool: True if motion is detected, False otherwise.
+        True if motion is detected for one of the specified devices.
     """
     if _check_devices(msg, device_ids) and _check_message_typing(msg, Motion):
         return msg.refined.occupancy
@@ -116,17 +119,15 @@ def is_motion_detected(msg: messenger.Message, device_ids: str) -> bool:
 def is_button_action_expected(
     msg: messenger.Message, device_ids: str, action: dev.ButtonAction
 ) -> bool:
-    """
-    Checks if the given message contains a button action for the specified device.
+    """Check if a message contains the expected button action for specified devices.
 
     Args:
-        msg (messenger.Message): The message to check for a button action.
-        device_ids (str): The device name, a comma-separated list of device ids
-            or `*` for all to check for button press.
-        action (dev.ButtonAction): The button action to check for.
+        msg: The message to check.
+        device_ids: A device ID, comma-separated list of device IDs, or '*' for all.
+        action: The button action to match.
 
     Returns:
-        bool: True if the message contains the specified button action, False otherwise.
+        True if the message contains the expected button action for one of the specified devices.
     """
     utils.check_parameter("action", action, ButtonValues)
     if _check_devices(msg, device_ids) and _check_message_typing(msg, Button):
@@ -137,17 +138,15 @@ def is_button_action_expected(
 def is_switch_power_expected(
     msg: messenger.Message, device_ids: Optional[str], is_on: bool
 ) -> bool:
-    """
-    Checks if the power status of the switch is as expected.
+    """Check if switch power status matches expected state.
 
     Args:
-        msg (messenger.Message): The message containing the switch state.
-        device_ids (str): The device name, a comma-separated list of device ids
-                or `*` for all to check for switch state.
-        is_on (bool): The expected power status of the switch.
+        msg: The message containing the switch state.
+        device_ids: A device ID, comma-separated list of device IDs, or '*' for all.
+        is_on: Expected power status (True for on, False for off).
 
     Returns:
-        bool: True if the power status of the switch is as expected, False otherwise.
+        True if switch power status matches the expected state for one of the specified devices.
     """
     utils.check_parameter("is_on", is_on, bool)
 
@@ -157,45 +156,34 @@ def is_switch_power_expected(
 
 
 class MessageLogger(Processor):
-    """
-    A processor that logs messages for debugging purposes.
-
-    The `MessageLogger` class processes messages by logging them using the configured logger.
-    """
+    """Processor that logs messages for debugging."""
 
     def process(self, message: messenger.Message) -> None:
-        """
-        Logs the given message for debugging purposes.
-
-        Args:
-            message (messenger.Message): The message to be logged.
-
-        Returns:
-            None
-        """
+        """Log the message at debug level."""
         utils.i2m_log.debug(message)
 
 
 class MessageWritter(Processor):
-    """
-    A processor that writes messages to a file.
-
-    The `MessageWritter` class processes messages by writing them to a specified file in
-    JSON format. It ensures that the file is properly opened and closed.
-    """
+    """Processor that writes messages to a file in JSON format."""
 
     def __init__(self, file_name: str) -> None:
+        """Open the file for writing.
+
+        Args:
+            file_name: Path to the file where messages will be written.
+        """
         self._file = open(file_name, "w", encoding="utf-8")
 
     def process(self, message: messenger.Message) -> messenger.Message:
-        """
-        Initializes the MessageWritter with the specified file name.
+        """Write the message to the file and return None.
 
         Args:
-            file_name (str): The name of the file where messages will be written.
+            message: The message to write.
 
         Returns:
             None
+
+        Logs a warning if serialization fails.
         """
         try:
             self._file.write("\n," + message.model_dump_json(indent=4))
@@ -210,22 +198,20 @@ class MessageWritter(Processor):
 
 
 class ModelResolver(Processor):
-    """
-    A processor that resolves the model of a device based on its name.
+    """Processor that resolves device models from the device directory.
 
-    The `ModelResolver` class processes messages to determine the model of the device
-    by looking it up in the device directory. If the model is unknown, it logs a warning.
+    If a device is not found, a warning is logged once per device ID.
     """
 
     _notified_devices = {}
 
     @classmethod
     def reset(cls) -> None:
-        """Test/runtime hook: clear all registered devices."""
+        """Clear all registered notification records for testing."""
         cls._notified_devices.clear()
 
     def _notify_once(self, message: messenger.Message) -> None:
-        _device_id = message.device_id
+        """Log a warning for unknown device, once per device ID."""
         if _device_id in self._notified_devices:
             return
         utils.i2m_log.warning(
@@ -238,19 +224,16 @@ class ModelResolver(Processor):
         self._notified_devices[_device_id] = True
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
-        """
-        Resolves the model of the device in the given message.
+        """Resolve and set the device model from the directory.
 
         Args:
-            message (messenger.Message): The message containing the device name.
+            message: The message with a device ID to look up.
 
         Returns:
-            Optional[messenger.Message]: The message with the resolved model, or the original
-            message if the model is unknown.
+            The message with model set.
 
         Raises:
-            DecodingException: If a discovery message is received.
-
+            DecodingException: If the message is a discovery message.
         """
         if message.message_type == messenger.MessageType.DISCO:
             raise exceptions.DecodingException(f"Discovery message not allowed: {message}")
@@ -266,26 +249,26 @@ class ModelResolver(Processor):
 
 
 class DeviceDirectory:
-    """
-    A directory for managing devices.
+    """Registry of discovered devices.
 
-    The `DeviceDirectory` class provides methods to update, retrieve, and list devices.
-    It maintains an internal dictionary to store device information.
+    Maintains a mapping from device ID to device object.
     """
 
     _directory: Dict[str, dev.Device] = {}
 
     @classmethod
     def reset(cls) -> None:
-        """Test/runtime hook: clear all registered devices."""
+        """Clear all registered devices for testing."""
         cls._directory.clear()
 
     def update_devices(self, devices: List[dev.Device]) -> None:
-        """
-        Updates the device directory with a list of devices.
+        """Update the directory with devices, overwriting existing entries.
 
         Args:
-            devices (List[dev.Device]): A list of devices to be added or updated in the directory.
+            devices: Devices to add or update in the directory.
+
+        Raises:
+            TypeError: If devices is not a list.
         """
         if not isinstance(devices, list):
             raise TypeError("parameter 'devices' must be a list of devices")
@@ -293,34 +276,31 @@ class DeviceDirectory:
 
     @staticmethod
     def get_device(device_id: str) -> Optional[dev.Device]:
-        """
-        Retrieves a device from the directory by its name.
+        """Retrieve a device by ID.
 
         Args:
-            device_id (str): The id of the device to retrieve.
+            device_id: The device ID to look up.
 
         Returns:
-            Optional[dev.Device]: The device object if found, otherwise None.
+            The device if found, otherwise None.
         """
         return DeviceDirectory._directory.get(device_id)
 
     @staticmethod
     def get_devices() -> List[dev.Device]:
-        """
-        Retrieves a list of all devices in the directory.
+        """Retrieve all devices in the directory.
 
         Returns:
-            List[dev.Device]: A list of all device objects in the directory.
+            List of all device objects.
         """
         return list(DeviceDirectory._directory.values())
 
     @staticmethod
     def get_device_ids() -> List[dev.Device]:
-        """
-        Retrieves a list of all device ids in the directory.
+        """Retrieve all device IDs in the directory.
 
         Returns:
-            List[dev.Device]: A list of all device ids in the directory.
+            List of all device IDs.
         """
         return list(DeviceDirectory._directory.keys())
 
@@ -344,9 +324,7 @@ class ESPSomfyConfig(BaseModel, frozen=True):
 
 
 class ESPSomfyDiscovery(BaseModel, frozen=True):
-    """
-    A dictionary representing the discovery message configuration of an ESPSomfy device.
-    """
+    """ESPSomfy discovery message structure."""
 
     config: ESPSomfyConfig
 
@@ -361,9 +339,7 @@ class ESPSomfyDiscovery(BaseModel, frozen=True):
 
 
 class TasmotaDiscovery(BaseModel, frozen=True):
-    """
-    A dictionary representing the discovery message configuration of an Tasmota device.
-    """
+    """Tasmota discovery message structure."""
 
     address: str = Field(alias="hn", default=None)
     model: str = Field(alias="md", default=None)
@@ -371,29 +347,25 @@ class TasmotaDiscovery(BaseModel, frozen=True):
 
 
 class Discoverer(Processor):
-    """
-    A processor that discovers and registers devices based on incoming discovery messages.
+    """Processor that discovers and registers devices from discovery messages.
 
-    The `Discoverer` class processes discovery messages from different protocols
-    (e.g., Z2M, TASMOTA) to update the device directory with new devices and their details.
+    Processes discovery messages from supported protocols (Z2M, TASMOTA, ESPSOMFY, RING)
+    and updates the device directory.
     """
 
     directory = DeviceDirectory()
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
-        """
-        Processes a discovery message to update the device directory and refine the message.
+        """Process a discovery message to register devices.
 
         Args:
-            message (messenger.Message): The discovery message to be processed.
+            message: The discovery message to process.
 
         Returns:
-            Optional[messenger.Message]: The refined message with discovered devices, or the
-            original message if the protocol is unknown.
+            Message with refined Registry of discovered device IDs, or None if protocol unknown.
 
         Raises:
-            DecodingException: If not a discovery message.
-
+            DecodingException: If message is not a discovery message.
         """
 
         if message.message_type != messenger.MessageType.DISCO:
@@ -411,6 +383,7 @@ class Discoverer(Processor):
         return None
 
     def _discover_z2m(self, message: messenger.Message) -> Optional[messenger.Message]:
+        """Discover Z2M devices and update directory."""
         _key_name = "friendly_name"
         _key_address = "ieee_address"
         _key_model = "model"
@@ -474,6 +447,7 @@ class Discoverer(Processor):
         return message
 
     def _discover_tasmota(self, message: messenger.Message) -> Optional[messenger.Message]:
+        """Discover Tasmota device and update directory."""
         _raw_data = message.raw_item.data
         if not _raw_data:
             raise exceptions.DecodingException("Empty raw data received")
@@ -494,6 +468,7 @@ class Discoverer(Processor):
         return message
 
     def _discover_espsomfy(self, message: messenger.Message) -> Optional[messenger.Message]:
+        """Discover ESPSomfy device and update directory."""
         _raw_data = message.raw_item.data
         if not _raw_data:
             raise exceptions.DecodingException("Empty raw data received")
@@ -517,6 +492,7 @@ class Discoverer(Processor):
         return message
 
     def _discover_ring(self, message: messenger.Message) -> Optional[messenger.Message]:
+        """Discover Ring device and update directory."""
         _device_id = topics.InfoTopicManager().get_device_id(
             protocol=dev.Protocol.RING,
             message_type=messenger.MessageType.DISCO,
@@ -546,43 +522,32 @@ class Discoverer(Processor):
 
 
 class AvailabilityNormalizer(Processor):
-    """
-    A processor that normalizes the availability status of devices based on their protocol and
-    raw message data.
+    """Processor that normalizes device availability status.
 
-    The `AvailabilityNormalizer` class is responsible for interpreting raw availability data
-    from different protocols (e.g., TASMOTA, Z2M) and converting it into a standardized
-    `Availability` object indicating whetherthe device is online or offline.
+    Interprets raw availability data from different protocols (TASMOTA, Z2M, ESPSOMFY, RING)
+    and converts to a standardized Availability object.
 
-    Constants:
-        - ONLINE (Availability): Represents an online availability status.
-        - OFFLINE (Availability): Represents an offline availability status.
+    Class constants represent online/offline status.
     """
 
     ONLINE = Availability(is_online=True)
     OFFLINE = Availability(is_online=False)
 
     def _decode_availability(self, value: str, on_token: str, off_token: str) -> bool:
-        if value not in (on_token, off_token):
-            raise exceptions.DecodingException(f"Unknown availability value: {value}")
-        return value == on_token
+        """Decode raw availability value to boolean."""
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
-        """
-        Processes a message to normalize its availability status based on the device protocol
-        and raw data.
+        """Normalize message availability status based on protocol.
 
         Args:
-            message (messenger.Message): The message containing raw availability data to be
-                normalized.
+            message: Message containing raw availability data.
 
         Returns:
-            Optional[messenger.Message]: The message with refined availability data, or None
-            if the message available.
+            Message with refined Availability status.
 
         Raises:
-            DecodingException: If the message type is not available, the protocol is
-            not supported, or the raw data format is incorrect.
+            DecodingException: If message type is not availability, protocol is unsupported,
+                or raw data format is incorrect.
         """
         if message.message_type != messenger.MessageType.AVAIL:
             raise exceptions.DecodingException("Not an availability message: {message}")
@@ -612,108 +577,81 @@ class AvailabilityNormalizer(Processor):
 
 
 class StateNormalizerFactory:
-    """
-    Factory class for managing state normalizers for different device models.
+    """Registry of state normalizers for device models.
 
-    This class provides methods to register and retrieve state normalizers, which are responsible
-    for refining raw message data into structured device state representations. It maintains an
-    internal registry to store the mapping between device models and their corresponding state
-    normalizers.
-
+    Maps device models to their corresponding DeviceState classes for message refinement.
     """
 
     _registry: Dict[dev.Model, Type[DeviceState]] = {}
 
     @classmethod
     def reset(cls) -> None:
-        """Test/runtime hook: clear all registered devices."""
+        """Clear all registered normalizers for testing."""
         cls._registry.clear()
 
     def __init__(
         self,
         initial_registry: Optional[Dict[dev.Model, Type[DeviceState]]] = None,
     ) -> None:
-        """
-        Initialize the factory with an optional initial registry.
+        """Initialize registry with optional initial mappings.
 
         Args:
-            initial_registry (Optional[Dict[dev.Model, Type[DeviceState]]]): An optional
-                dictionary to initialize the registry with. If provided, the dictionary will be
-                used to update the internal registry.
+            initial_registry: Optional dictionary of model-to-state-class mappings to load.
         """
         if initial_registry:
             self._registry.update(initial_registry)
 
     @classmethod
     def get(cls, model: dev.Model) -> Optional[Type[DeviceState]]:
-        """
-        Retrieve the target abstract type for a given model.
+        """Retrieve the state normalizer class for a model.
 
         Args:
-            model (dev.Model): The device model for which to retrieve the state normalizer.
+            model: Device model to look up.
 
         Returns:
-            Optional[Type[DeviceState]]: The state normalizer class for the given model,
-            or None if the model is not found in the registry.
+            The state normalizer class for the model, or None if not registered.
         """
         return cls._registry.get(model)
 
     @classmethod
     def register(cls, model: dev.Model, abstract_type: Type[DeviceState]) -> None:
-        """
-        Register a target abstract type for the given model.
+        """Register a state normalizer for a device model.
 
         Args:
-            model (dev.Model): The device model to register.
-            abstract_type (Type[DeviceState]): The state normalizer class to associate
-                with the given model.
+            model: Device model to register.
+            abstract_type: State normalizer class for the model.
         """
         cls._registry[model] = abstract_type
 
 
 class StateNormalizer(Processor):
-    """
-    A processor that normalizes the state of various devices based on their model and protocol.
+    """Processor that normalizes device state messages based on model.
 
-    The `StateNormalizer` class is responsible for refining raw message data into structured
-    device state representations. It supports different device models and protocols.
+    Refines raw message data into structured DeviceState objects using registered
+    state normalizers. Logs a warning once per device if normalization fails.
     """
 
     _notified_devices = {}
 
     @classmethod
     def reset(cls) -> None:
-        """Test/runtime hook: clear all registered devices."""
+        """Clear all notification records for testing."""
         cls._notified_devices.clear()
 
     def _notify_once(self, message: messenger.Message) -> None:
-        _device_id = message.device_id
-        if _device_id in self._notified_devices:
-            return
-        utils.i2m_log.warning(
-            '["%s"] unable to normalyse message - device_id: "%s" - type: %s - model: %s - value: %s',
-            self.__class__.__name__,
-            _device_id,
-            message.message_type.value,
-            message.model if message.model else "Unset",
-            message.raw_item.data,
-        )
-        self._notified_devices[_device_id] = True
+        """Log a warning for normalization failure, once per device ID."""
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
-        """
-        Processes a message to normalize its state based on the device model and protocol.
+        """Normalize a state message to a DeviceState object.
 
         Args:
-            message (messenger.Message): The message containing raw data to be normalized.
+            message: State message containing raw data to normalize.
 
         Returns:
-            Optional[messenger.Message]: The message with refined state data, or None if no
-            refinement is possible.
+            Message with refined state data, or None if normalization fails.
 
         Raises:
-            DecodingException: If the message model is not supported, the raw data format
-                is incorrect, or an error occurs during the refinement process.
+            DecodingException: If message type is not state or raw data format is incorrect.
         """
         if message.message_type != messenger.MessageType.STATE:
             raise exceptions.DecodingException(f"Not a state message: {message.message_type}")

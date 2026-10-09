@@ -1,20 +1,10 @@
 # coding=utf-8
 """
-This module provides functionality for encoding and validating device states, managing timers,
-and handling power state changes for various device models.
+Device state encoding and encoder registry management.
 
-Classes
--------
-
-- Encoder: Transforms and validates device states.
-- EncoderRegistry: Manages encoders for different device models.
-
-Functions
----------
-
-- encode: Encodes the state of a device model into a dictionary format using the 
-  appropriate encoder.
-
+Provides Encoder class for transforming and validating device states with field
+aliasing and conversion support, plus EncoderRegistry for managing encoders across
+device models.
 """
 
 from typing import Any, Callable, Dict, List, Optional
@@ -27,8 +17,10 @@ from iot2mqtt.devices.common_abstract import DeviceState
 
 
 class Encoder(BaseModel):
-    """
-    Encoder class for transforming and validating device states.
+    """Encode and validate device states with field aliasing and conversion.
+    
+    Transforms device state objects to dictionaries using optional field aliases
+    and converter functions for customization.
     """
 
     settable_fields: List[str] = Field(frozen=True)
@@ -44,14 +36,13 @@ class Encoder(BaseModel):
         )
 
     def transform(self, state: DeviceState) -> Dict:
-        """
-        Transforms the given device state into an encoded dictionary.
+        """Transform device state to dictionary with aliases and converters applied.
 
         Args:
-            state (DeviceState): The current state of the device to be encoded.
+            state: Device state to encode.
 
         Returns:
-            Dict: The encoded state of the device as a dictionary.
+            Encoded state as dictionary with aliases and converted values.
         """
         _encoded_state = {}
         for key, value in state.model_dump(exclude_none=True).items():
@@ -69,35 +60,17 @@ class Encoder(BaseModel):
 
 
 class EncoderRegistry:
-    """
-    A registry for managing encoders for different device models.
-
-    This class allows for the creation and retrieval of encoders that are responsible for
-    transforming and validating device states for various device models. Encoders are stored
-    in a registry and can be accessed using the device model as the key.
-
-    Attributes:
-        _registry (Dict[dev.Model, Encoder]): A dictionary that maps device models to their
-            corresponding encoders.
-
-    Args:
-        models (dev.Model): The device models for which the encoder is being created.
-        settable_fields (List[str]): List of fields that can be set for the device model.
-        gettable_fields (List[str]): List of fields that can be retrieved for the device model.
-        field_aliases (Optional[Dict[str, str]], optional): Optional dictionary of field
-            aliases. Defaults to None.
-        field_converters (Optional[Dict[str, Callable[[Any], Any]]], optional): Optional
-            dictionary of field converters. Defaults to None.
-
-    Raises:
-        ValidationError: If there is an error creating the encoder for the given models.
+    """Registry mapping device models to their corresponding encoders.
+    
+    Manages encoder creation and retrieval for device models with support for
+    field aliasing and conversion. Thread-safe for concurrent access.
     """
 
     _registry: Dict[dev.Model, Encoder] = {}
 
     @classmethod
     def reset(cls) -> None:
-        """Test/runtime hook: clear all registered devices."""
+        """Clear all registered encoders (for testing/runtime reset)."""
         cls._registry.clear()
 
     def __init__(
@@ -108,6 +81,17 @@ class EncoderRegistry:
         field_aliases: Optional[Dict[str, str]] = None,
         field_converters: Optional[Dict[str, Callable[[Any], Any]]] = None,
     ) -> None:
+        """Register an encoder for one or more device models.
+
+        Args:
+            models: Device model(s) to register encoder for.
+            settable_fields: Fields that can be set on the device.
+            gettable_fields: Fields that can be retrieved from the device.
+            field_aliases: Optional mapping of field names to aliases.
+            field_converters: Optional mapping of field names to conversion functions.
+
+        Logs error if encoder creation fails due to validation error.
+        """
         try:
             _encoder = Encoder(
                 settable_fields=settable_fields,
@@ -123,31 +107,29 @@ class EncoderRegistry:
 
     @staticmethod
     def get_encoder(model: dev.Model) -> Optional[Encoder]:
-        """
-        Retrieves the encoder for the given device model.
+        """Retrieve encoder for a device model.
 
         Args:
-            model (dev.Model): The device model for which the encoder is being retrieved.
+            model: Device model to get encoder for.
 
         Returns:
-            Optional[Encoder]: The encoder for the given device model, or  None if no encoder
-            is found.
+            Encoder instance if found, None otherwise.
         """
         return EncoderRegistry._registry.get(model)
 
 
 def encode(model: dev.Model, state: DeviceState) -> Dict[str, Any]:
-    """
-    Encode the state of a device model into a dictionary format using the appropriate encoder.
+    """Encode device state using the appropriate encoder.
+
+    Retrieves the encoder for the model and transforms the state. If no encoder is found,
+    returns the state as-is via model_dump().
 
     Args:
-        model (dev.Model): The device model for which the state needs to be encoded.
-        state (DeviceState): The current state of the device to be encoded.
+        model: Device model.
+        state: Device state to encode.
 
     Returns:
-        Dict[str, Any]: The encoded state of the device as a dictionary. If no encoder is found,
-        the state is returned as a dictionary without transformation.
-
+        Encoded state as dictionary. Returns untransformed state if no encoder found.
     """
     utils.check_parameter("model", model, dev.Model)
     utils.check_parameter("state", state, DeviceState)

@@ -1,15 +1,10 @@
 # coding=utf-8
 """
-Standard field names for device attributes.
+Canonical field identifiers for device attributes across all protocols and types.
 
-Defines canonical field identifiers used across all device protocols and types.
-These provide a protocol-agnostic interface for device properties like state,
-temperature, battery, etc.
-
-Sections:
-  - Generic IoT fields: ACTION, ALARM, BATTERY, STATE, etc.
-  - RING protocol: specific fields for Ring devices
-  - SOMFY protocol: specific fields for Somfy shades
+Provides protocol-agnostic constants for device properties (e.g., ACTION, ALARM,
+BATTERY, STATE, TEMPERATURE) used by Tasmota, Shelly, Ring, Somfy, and other
+device integrations.
 """
 
 # Abstract IOT device properties

@@ -3,12 +3,8 @@
 """
 Somfy device registrations (ESPSomfy protocol).
 
-Registers Somfy RTS motorized shades via ESPSomfy-RTS bridge:
-  - Position and tilt control
-  - Wind/sun detection and response
-  - Target presets
-
-Enables automated window covering management.
+Registers Somfy RTS motorized shades for MQTT bridge integration via ESPSomfy-RTS
+bridge, supporting position/tilt control and environmental response.
 """
 
 from iot2mqtt import dev, registry

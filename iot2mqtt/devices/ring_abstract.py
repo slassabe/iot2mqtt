@@ -15,30 +15,26 @@ from pydantic import (
 
 
 class RingDeviceState(BaseModel):
-    """
-    Represents the state of a Ring device.
-    """
+    """Base model for all Ring device state classes."""
 
     pass
 
 
 class MotionInfo(RingDeviceState):
-    """
-    Represents the state of a motion sensor device.
-    """
+    """Motion sensor state with detection status and last motion timestamp."""
 
     last_motion_time: Optional[str] = None
     detection_enabled: Optional[bool] = None
 
 
 class StreamAttributes(RingDeviceState):
+    """Live stream state including activation and failure status."""
+
     status: Optional[Literal["inactive", "activating", "active", "failed"]] = None
 
 
 class MotionAttributes(RingDeviceState):
-    """
-    Represents the state of a motion sensor device.
-    """
+    """Motion detection attributes including timestamp, person detection, and status."""
 
     # {'motion_attributes': {'lastMotion': 1739625899,
     #                        'lastMotionTime': '2025-02-15T13:24:59Z',
@@ -59,7 +55,7 @@ class MotionAttributes(RingDeviceState):
 
 
 class BatteryAttributes(RingDeviceState):
-    """Represents the state of a battery device."""
+    """Battery level and remaining life for battery-powered devices."""
 
     # Get battery level (0-100)
     batteryLevel: Optional[int] = None
@@ -68,11 +64,15 @@ class BatteryAttributes(RingDeviceState):
 
 
 class WirelessAttributes(RingDeviceState):
+    """Wireless network information including signal strength."""
+
     wirelessNetwork: Optional[str] = None
     wirelessSignal: Optional[int] = None
 
 
 class EventSelectAttributes(RingDeviceState):
+    """Video event details including recording URL and event ID."""
+
     # {"recordingUrl":"https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",
     #  "eventId":"1234"}
     recordingUrl: Optional[str] = None
@@ -80,6 +80,8 @@ class EventSelectAttributes(RingDeviceState):
 
 
 class DingAttributes(RingDeviceState):
+    """Doorbell ding events with timestamp information."""
+
     #  {'ding_attributes': {'lastDing': 1741776527,
     #                       'lastDingTime': '2025-03-12T10:48:47Z'}}
     lastDing: Optional[int] = None
@@ -96,23 +98,27 @@ class DingAttributes(RingDeviceState):
 
 
 class SnapshotAttributes(RingDeviceState):
+    """Snapshot metadata including capture timestamp and type."""
+
     # {'snapshot_attributes': {'timestamp': 1739874181, 'type': 'interval'}}
     timestamp: Optional[int] = None
     type: Optional[str] = None
 
 
 class RingInfo(RingDeviceState):
+    """Device connection information including stream source and image URLs."""
+
     # {'info': RingInfo(last_seen=None,
     #       stream_Source='rtsp://172.18.0.6:8554/187f8877c231_live',
-    #       still_Image_URL='https://localhost:8123{{ 
-    #          states.camera.rez-de-chaussée_snapshot.attributes.entity_picture 
+    #       still_Image_URL='https://localhost:8123{{
+    #          states.camera.rez-de-chaussée_snapshot.attributes.entity_picture
     #       }}')}
     stream_Source: Optional[str] = None
     still_Image_URL: Optional[str] = None
 
 
 class Camera(RingDeviceState):
-    """Represents the state of a camera device."""
+    """Ring camera device state including motion, stream, and snapshot controls."""
 
     # Doorbell Ding Detected
     ding: Optional[bool] = None
@@ -165,7 +171,7 @@ class Camera(RingDeviceState):
 
 
 class Chime(RingDeviceState):
-    """Represents the state of a chime device."""
+    """Ring chime device state including volume, snooze, and sound controls."""
 
     # Get/set volume (0-11)
     volume: Optional[int] = None
@@ -184,12 +190,7 @@ class Chime(RingDeviceState):
 
 
 class RingAlarm(RingDeviceState):
-    """
-    Modes Control Panel
-
-    Virtual alarm control panel for setting Ring location modes for locations
-    with Ring cameras but not Ring alarm.
-    """
+    """Virtual alarm control panel for setting location modes on Ring devices without native alarm."""
 
     # {'mode': 'armed_home'}
     mode: Optional[Literal["disarmed", "armed_home", "armed_away"]] = None

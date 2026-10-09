@@ -2,19 +2,10 @@
 # coding=utf-8
 
 """
-This module provides utility functions and classes for the iot2mqtt framework.
+Utility functions and classes for the iot2mqtt framework.
 
-Classes
--------
-
-- Singleton: A metaclass for creating singleton classes.
-
-Constants
----------
-
-- i2m_log: Logger instance for the iot2mqtt module.
-- DEBUG: Boolean flag indicating whether debugging is enabled.
-
+Provides singleton metaclass, parameter validation, timer management for device
+polling, and metrics collection utilities.
 """
 
 import logging
@@ -29,6 +20,8 @@ DEBUG = True
 
 @dataclass
 class MetricsCollector:
+    """Collect queue size, processing times, and message counts for monitoring."""
+
     queue_size_max: int = 0
     start_processing: float = 0.0
     processing_times: Dict[str, float] = field(default_factory=dict)
@@ -57,8 +50,10 @@ T = TypeVar("T")
 
 
 class Singleton(type):
-    """ref : Python Cookbook Recipes for Mastering Python 3, (David Beazley, Brian K. Jones)
-    Using a Metaclass to Control Instance Creation
+    """Metaclass for creating singleton classes.
+
+    Based on Python Cookbook Recipes for Mastering Python 3 by Beazley and Jones.
+    Ensures only one instance of the decorated class is created.
     """
 
     def __init__(cls: Type[T], *args, **kwargs) -> None:
@@ -73,22 +68,19 @@ class Singleton(type):
 
 
 def check_parameter(name: str, value: Any, class_of: type, optional: bool = False) -> None:
-    """
-    Check if a parameter meets the specified type and optionality requirements.
+    """Validate a parameter's type and optionality.
 
-    This function validates a parameter by checking if it is of the expected type.
-    If the parameter is not optional and is None, or if it is not an instance of the
-    specified type, a TypeError is raised.
+    Raises TypeError if the parameter is None when not optional, or if it doesn't
+    match the expected type.
 
     Args:
-        name (str): The name of the parameter being checked.
-        value (Any): The value of the parameter to check.
-        class_of (type): The expected type of the parameter.
-        optional (bool, optional): Whether the parameter is optional. Defaults to False.
+        name: Parameter name for error messages.
+        value: Value to validate.
+        class_of: Expected type for the parameter.
+        optional: Whether None is acceptable; defaults to False.
 
     Raises:
-        TypeError: If the parameter is not optional and is None, or if it is not an instance
-                   of the specified type.
+        TypeError: If validation fails.
     """
     if value is None:
         if optional:
@@ -99,12 +91,14 @@ def check_parameter(name: str, value: Any, class_of: type, optional: bool = Fals
 
 
 class TimerManager:
-    """
-    A class to manage timers for devices, ensuring thread safety and preventing multiple timers
-    from being active for the same device in case of bouncing messages
+    """Manage timers for devices with thread safety and single-timer-per-device enforcement.
+
+    Prevents multiple concurrent timers for the same device by cancelling existing timers
+    when new ones are created. Useful for handling bouncing messages during polling.
     """
 
     def __init__(self):
+        """Initialize timer registry with lock for thread safety."""
         self._timer_registry: Dict[str, threading.Thread] = {}
         self._timer_registry_lock = threading.Lock()
 
@@ -116,26 +110,23 @@ class TimerManager:
         args: tuple = (),
         kwargs: Optional[Dict[str, Any]] = None,
     ) -> threading.Thread:
-        """
-        Manages a timer for a specific device, ensuring that only one timer is active per device.
+        """Create and start a timer for a device, cancelling any existing timer.
 
-        This method creates and starts a new timer for the given device. If a timer for the device
-        already exists, it cancels the existing timer before starting a new one. The timer will call
-        the specified function (`task`) with the provided arguments (`args` and `kwargs`) after
-        the countdown period.
+        Only one timer per device_id is active at a time. If a timer already exists
+        for the given device_id, it is cancelled before the new timer starts.
 
         Args:
-            device_id (str): The id of the device for which the timer is being managed.
-            countdown (float): The countdown period in seconds after which the `task` function
-                will be executed.
-            task (Callable[..., Any]): The function to be called when the timer expires.
-            args (tuple, optional): Positional arguments to be passed to the `task` function.
-                Defaults to ().
-            kwargs (Optional[Dict[str, Any]], optional): Keyword arguments to be passed to the
-                `task` function. Defaults to None.
+            device_id: Identifier for the device.
+            countdown: Delay in seconds before task execution.
+            task: Callable to invoke when timer expires.
+            args: Positional arguments for task; defaults to empty tuple.
+            kwargs: Keyword arguments for task; defaults to None.
 
         Returns:
-            threading.Thread: The newly created and started timer thread.
+            The started timer thread.
+
+        Raises:
+            Exception: If timer creation or management fails.
         """
         if kwargs is None:
             kwargs = {}
@@ -169,10 +160,23 @@ def retry_with_timer(
     args: tuple = (),
     kwargs: Optional[Dict[str, Any]] = None,
 ) -> bool:
-    """
-    Schedule `task` to run again via `timer_manager` with linear backoff, up to `max_retries`.
-    Returns True if a retry was scheduled, False if max_retries was exceeded (caller should
-    treat this as final failure).
+    """Schedule a retry of task with linear backoff via timer_manager.
+
+    Schedules the task to run again after countdown_base * (retry_count + 1) seconds.
+    Increments retry_count automatically and passes it to task via kwargs.
+
+    Args:
+        timer_manager: TimerManager instance for scheduling.
+        key: Device or operation identifier for timer registry.
+        countdown_base: Base delay in seconds; multiplied by (retry_count + 1).
+        max_retries: Maximum retry attempts allowed.
+        task: Callable to retry.
+        retry_count: Current attempt number; defaults to 0.
+        args: Positional arguments for task; defaults to empty tuple.
+        kwargs: Keyword arguments for task; defaults to None.
+
+    Returns:
+        True if retry was scheduled, False if max_retries exceeded (final failure).
     """
     if retry_count > max_retries:
         return False

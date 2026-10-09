@@ -1,10 +1,5 @@
 class ConnectionException(Exception):
-    """
-    Exception raised for errors when connecting MQTT client.
-
-    Attributes:
-        message (str): The error message describing the exception.
-    """
+    """Raised when MQTT client connection fails."""
 
     def __init__(self, message: str):
         self.message = message
@@ -14,14 +9,9 @@ class ConnectionException(Exception):
 
 
 class DecodingException(Exception):
-    """
-    Exception raised for errors in the decoding process.
+    """Raised when message decoding fails.
 
-    This exception is raised when a message is received on the wrong topic
-    or when there is an issue with decoding the message.
-
-    Attributes:
-        message (str): The error message describing the exception.
+    Occurs when a message is received on an unexpected topic or when decoding fails.
     """
 
     def __init__(self, message: str):
@@ -32,13 +22,10 @@ class DecodingException(Exception):
 
 
 class NoValueException(Exception):
-    """
-    Exception raised for errors in the decoding process.
+    """Raised when an empty string is received instead of a typed value.
 
-    This exception is raised when a message is received with empty string as value
-
-    Attributes:
-        message (str): The error message describing the exception.
+    Args:
+        the_type: Expected type for the value.
     """
 
     def __init__(self, the_type: type):

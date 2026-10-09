@@ -1,11 +1,9 @@
 # coding=utf-8
 
 """
-This module provides various classes and functions for managing MQTT topics and configurations
-used in the `scrutinizer` module.
+Manage MQTT topics and configurations for different protocols and message types.
 
-It includes classes for managing topic configurations based on protocol and message type,
-as well as functions for retrieving topic configurations and generating MQTT topics.
+Entry points: CommandTopicManager, InfoTopicManager.
 """
 
 from typing import List, Optional
@@ -34,12 +32,7 @@ RING_CMND_BASE_TOPIC = "ring"
 
 class TopicManager(metaclass=utils.Singleton):
     """
-    A registry for managing topic configurations based on protocol and message type.
-
-    This class provides a centralized way to store and retrieve topic configurations
-    for different combinations of protocol and message type. It acts as a registry
-    for topic configurations, allowing easy access to the topic base, topic extension,
-    and device name offset for a given protocol and message type.
+    Base registry for topic configurations by protocol and message type.
     """
 
     def __init__(self) -> None:
@@ -48,11 +41,7 @@ class TopicManager(metaclass=utils.Singleton):
 
 class CommandTopicManager(TopicManager):
     """
-    Manages command topics for different protocols.
-
-    This class provides methods to register and retrieve command base topics
-    for various protocols. It acts as a registry for command topic configurations,
-    allowing easy access to the command base topic for a given protocol.
+    Manage command topics for different protocols.
     """
 
     def register(
@@ -61,12 +50,11 @@ class CommandTopicManager(TopicManager):
         command_topic_base: str,
     ) -> None:
         """
-        Register a command topic base for a given protocol.
+        Register a command topic base for a protocol.
 
         Args:
-            protocol (dev.Protocol): The protocol for which the command topic base is
-                being registered.
-            command_topic_base (str): The base topic for commands of the given protocol.
+            protocol: The protocol for which the command topic base is being registered.
+            command_topic_base: The base topic for commands of the given protocol.
 
         Raises:
             ValueError: If the protocol is already registered.
@@ -77,7 +65,16 @@ class CommandTopicManager(TopicManager):
 
     def get_command_base_topic(self, protocol: dev.Protocol) -> str:
         """
-        Get the command base topic for a given protocol.
+        Get the command base topic for a protocol.
+
+        Args:
+            protocol: The protocol.
+
+        Returns:
+            The command base topic registered for the protocol.
+
+        Raises:
+            exceptions.DecodingException: If no topic is registered for the protocol.
         """
         try:
             return self._topic_registry[protocol]
@@ -88,9 +85,7 @@ class CommandTopicManager(TopicManager):
             ) from exc
 
     def configure_topic_registry(self) -> None:
-        """
-        Configure the topic registry.
-        """
+        """Configure the topic registry with all protocol command topics."""
         _prefix = ""
         self.register(protocol=dev.Protocol.Z2M, command_topic_base=_prefix + Z2M_CMND_BASE_TOPIC)
         self.register(
@@ -108,10 +103,7 @@ class CommandTopicManager(TopicManager):
 
 
 class _InfoTopicRegistryKey(BaseModel):
-    """
-    A key used to uniquely identify a topic configuration based on the
-    protocol and message type.
-    """
+    """Unique key identifying a topic configuration by protocol and message type."""
 
     protocol: dev.Protocol
     message_type: messenger.MessageType
@@ -120,9 +112,7 @@ class _InfoTopicRegistryKey(BaseModel):
 
 
 class _InfoTopicRegistry(BaseModel):
-    """
-    Registered values for a given protocol and message type.
-    """
+    """Registered topic configuration values for a protocol and message type."""
 
     info_topic_base: str
     topic_to_subscribe: str
@@ -133,11 +123,7 @@ class _InfoTopicRegistry(BaseModel):
 
 class InfoTopicManager(TopicManager):
     """
-    Manages topic configurations for different protocols and message types.
-
-    This class provides methods to register, retrieve, and resolve MQTT topics
-    based on protocol and message type. It acts as a registry for topic configurations,
-    allowing easy access to the topic base, topic extension, and device name offset.
+    Manage topic configurations for different protocols and message types.
     """
 
     def _get_wildcard_by_index(
@@ -147,9 +133,7 @@ class InfoTopicManager(TopicManager):
         topic: str,
         index_name: str,
     ) -> Optional[str]:
-        """
-        Get the wildcard value for a given index based on the protocol and message type.
-        """
+        """Get the wildcard value for a given index from the topic."""
         if index_name not in ["index_device_id", "index_model"]:
             raise ValueError(f"Invalid index_name: {index_name}")
         _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
@@ -168,7 +152,15 @@ class InfoTopicManager(TopicManager):
         topic: str,
     ) -> str:
         """
-        Get the device ID from the topic based on the protocol and message type.
+        Extract the device ID from a topic.
+
+        Args:
+            protocol: The protocol.
+            message_type: The message type.
+            topic: The MQTT topic string.
+
+        Returns:
+            The device ID.
         """
         _device_id = self._get_wildcard_by_index(protocol, message_type, topic, "index_device_id")
         return _device_id
@@ -180,7 +172,15 @@ class InfoTopicManager(TopicManager):
         topic: str,
     ) -> Optional[dev.Model]:
         """
-        Get the model from the topic based on the protocol and message type.
+        Extract the model from a topic.
+
+        Args:
+            protocol: The protocol.
+            message_type: The message type.
+            topic: The MQTT topic string.
+
+        Returns:
+            The model, or None if not present in the topic.
         """
         _model = self._get_wildcard_by_index(protocol, message_type, topic, "index_model")
         if _model is None:
@@ -191,7 +191,17 @@ class InfoTopicManager(TopicManager):
         self, message_type: messenger.MessageType, topic: str
     ) -> Optional[str]:
         """
-        Get the ring location from the topic based on the protocol and message type.
+        Extract the Ring location ID from a topic.
+
+        Args:
+            message_type: The message type.
+            topic: The MQTT topic string.
+
+        Returns:
+            The location ID, or None if not present.
+
+        Raises:
+            ValueError: If the topic protocol is not "ring".
         """
         _protocol = topic.split("/")[0]
         if _protocol != "ring":
@@ -210,9 +220,7 @@ class InfoTopicManager(TopicManager):
         message_type: messenger.MessageType,
         topic: str,
     ) -> List[str]:
-        """
-        Get wildcards in the topic based on the protocol and message type.
-        """
+        """Extract wildcard segments from a topic."""
         _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         _registry_value = self._topic_registry.get(_registry_key)
         _offset = _registry_value.device_name_offset
@@ -226,7 +234,16 @@ class InfoTopicManager(TopicManager):
         position: int = 0,
     ) -> str:
         """
-        Resolve wildcards in the topic based on the protocol and message type.
+        Get a wildcard segment from a topic by position.
+
+        Args:
+            protocol: The protocol.
+            message_type: The message type.
+            topic: The MQTT topic string.
+            position: The segment index (default 0).
+
+        Returns:
+            The wildcard segment at the given position.
         """
         return self._get_wildcards(protocol, message_type, topic)[position]
 
@@ -234,7 +251,14 @@ class InfoTopicManager(TopicManager):
         self, protocol: dev.Protocol, message_type: messenger.MessageType
     ) -> str:
         """
-        Get the topic to subscribe to based on the protocol and message type.
+        Get the MQTT topic to subscribe to.
+
+        Args:
+            protocol: The protocol.
+            message_type: The message type.
+
+        Returns:
+            The subscription topic pattern.
         """
         _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         _registry_value = self._topic_registry.get(_registry_key)
@@ -242,7 +266,10 @@ class InfoTopicManager(TopicManager):
 
     def get_all_topics_to_subscribe(self) -> List[str]:
         """
-        Get a list of all topics to subscribe to.
+        Get all subscription topic patterns.
+
+        Returns:
+            List of all registered subscription topics.
         """
         return [x.topic_to_subscribe for x in self._topic_registry.values()]
 
@@ -257,6 +284,17 @@ class InfoTopicManager(TopicManager):
     ) -> None:
         """
         Register a topic configuration.
+
+        Args:
+            protocol: The protocol.
+            message_type: The message type.
+            info_topic_base: The base topic path (e.g., "stat", "zigbee2mqtt").
+            info_topic_extension: The topic extension pattern (e.g., "/+/RESULT").
+            index_device_id: Position of device ID in wildcard segments.
+            index_model: Position of model in wildcard segments, or None if not applicable.
+
+        Raises:
+            ValueError: If the protocol and message_type combination is already registered.
         """
         _registry_key = _InfoTopicRegistryKey(protocol=protocol, message_type=message_type)
         if _registry_key in self._topic_registry:
@@ -272,9 +310,7 @@ class InfoTopicManager(TopicManager):
         self._topic_registry[_registry_key] = _registry_value
 
     def configure_topic_registry(self) -> None:
-        """
-        Configure the topic registry.
-        """
+        """Configure the topic registry with all protocol and message type combinations."""
         self.register(
             protocol=dev.Protocol.Z2M,
             message_type=messenger.MessageType.AVAIL,

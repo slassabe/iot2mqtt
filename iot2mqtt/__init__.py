@@ -1,7 +1,10 @@
 #!/usr/local/bin/python3
 # coding=utf-8
 """
-This is the initialization module for the iot2mqtt package.
+IoT to MQTT bridge framework for integrating IoT devices with MQTT-based smart homes.
+
+Provides device registry, protocol handlers, message processing, and MQTT client
+management for devices across multiple protocols (Zigbee, Ring, Shelly, Somfy, Tasmota).
 """
 
 # Core modules

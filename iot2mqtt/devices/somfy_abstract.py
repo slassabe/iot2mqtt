@@ -27,9 +27,7 @@ SomfyBool = Annotated[
 
 
 class SomfyDevice(DeviceState):
-    """
-    Represents the state of a Somfy RTS device.
-    """
+    """Somfy RTS device state including direction, rolling code, and sensor status."""
 
     name: Optional[str] = None
     remoteAddress: Optional[str] = None
@@ -49,10 +47,14 @@ class SomfyDevice(DeviceState):
 
 
 class SomfyGroup(SomfyDevice):
+    """Somfy group device for controlling multiple shades as a group."""
+
     groupId: Optional[int] = None
 
 
 class SomfyShade(SomfyDevice):
+    """Somfy shade device with position, tilt, and motor control state."""
+
     # shadeId: Optional[int] = None
     shadeId: SomfyInt = None
     shadeType: SomfyInt = None
