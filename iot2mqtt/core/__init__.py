@@ -7,7 +7,7 @@ This module provides essential utilities for MQTT operations:
 - utils: Utility functions and classes
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 # Explicit imports from submodules
 from iot2mqtt.core.exceptions import (
