@@ -116,7 +116,7 @@ class ClientHelper(mqtt.Client):
 
         Raises:
             RuntimeError: If loop_start fails.
-            ConnectionException: If connection is refused.
+            ConnectionException: If connection is refused or times out.
         """
         if self._context.started:
             utils.i2m_log.warning("[%s] already started", self)
@@ -132,7 +132,7 @@ class ClientHelper(mqtt.Client):
                 raise RuntimeError("loop_start failed")
             self._context.started = True
             return _rc
-        except ConnectionRefusedError as exp:
+        except (ConnectionRefusedError, socket.timeout) as exp:
             utils.i2m_log.fatal("[%s] cannot connect host %s", exp, self._context.hostname)
             raise exceptions.ConnectionException("[%s] connection refused") from exp
 
@@ -165,7 +165,7 @@ class ClientHelper(mqtt.Client):
         """Connect to the MQTT broker with retry logic for DNS resolution failures.
 
         Attempts up to MAX_RETRY connections, retrying after RETRY_DELAY seconds
-        if socket.gaierror is encountered.
+        if socket.gaierror or socket.timeout is encountered.
 
         Returns:
             Connection result code.
@@ -184,7 +184,7 @@ class ClientHelper(mqtt.Client):
                     properties=None,
                 )
                 return _rc
-            except socket.gaierror as exp:
+            except (socket.gaierror, socket.timeout) as exp:
                 utils.i2m_log.fatal(
                     "[%s] cannot connect host %s (attempt %d/%d)",
                     exp,

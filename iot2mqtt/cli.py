@@ -1,4 +1,38 @@
 # coding=utf-8
+"""Command-line interface for monitoring and displaying IoT device messages from MQTT brokers.
+
+This module provides a CLI tool that connects to an MQTT broker, listens for incoming
+messages from integrated IoT protocols (starting with Zigbee2MQTT), decodes them, and
+displays them in human-readable or JSON format.
+
+Basic usage:
+
+    iot2mqtt [-b BROKER] [-d DEVICES] [-l SECONDS] [-r] [-v]
+
+Options:
+
+    -b, --brocker       MQTT broker hostname (default: localhost)
+    -d, --devices       Comma-separated device IDs to filter (displays all if omitted)
+    -l, --loop          Run for specified number of seconds (default: runs indefinitely)
+    -r, --readable      Display output as human-readable text (default: JSON format)
+    -v, --verbose       Include raw data and protocol details in output
+
+Examples:
+
+    # Monitor all messages from default localhost broker in JSON format
+    iot2mqtt
+
+    # Monitor specific devices in readable format
+    iot2mqtt -d device1,device2 -r
+
+    # Monitor with verbose details for 60 seconds
+    iot2mqtt -l 60 -v -r
+
+    # Connect to remote broker and filter devices
+    iot2mqtt -b mqtt.example.com -d sensor_kitchen -r
+
+Main entry point: main()
+"""
 import argparse
 import json
 import signal
@@ -132,6 +166,7 @@ def main():
     try:
         _client.start()
     except exceptions.ConnectionException:
+        print(f"Error: Failed to connect to MQTT broker at {_brocker}", file=sys.stderr)
         sys.exit(1)
 
     _refined_queue = central.get_refined_data_queue(_client, protocols_expected=[dev.Protocol.Z2M])
