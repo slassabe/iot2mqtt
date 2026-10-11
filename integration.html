@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Integration Guide &mdash; iot2mqtt 2.0.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Integration Guide &mdash; iot2mqtt 1.1.X documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=51b770b3"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=96b41c6b"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -28,19 +26,9 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="index.html" class="icon icon-home">
-            iot2mqtt
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
+  <a href="index.html" class="icon icon-home">
+    iot2mqtt <span class="version">v1.1.X</span>
+  </a>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
@@ -77,7 +65,7 @@
   <section id="integration-guide">
 <h1>Integration Guide<a class="headerlink" href="#integration-guide" title="Link to this heading"></a></h1>
 <p>When devices are paired with Zigbee2MQTT, they are automatically discovered and added to the MQTT broker. However, some devices may not be configured in iot2mqtt generating warning messages in the logs.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="w"> </span>WARNING<span class="w"> </span><span class="p">|</span><span class="w"> </span>iot2mqtt<span class="w"> </span><span class="p">|</span><span class="w"> </span>processor.py:575<span class="w"> </span><span class="p">|</span><span class="w">  </span>process<span class="o">()</span>:<span class="w"> </span><span class="o">[</span>0xa4c1383fa08a72e8<span class="o">]</span><span class="w"> </span>Model<span class="w"> </span><span class="nv">tag</span><span class="o">=</span><span class="s1">&#39;E3&#39;</span><span class="w"> </span>not<span class="w"> </span>supported
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="w"> </span>WARNING<span class="w"> </span><span class="p">|</span><span class="w"> </span>iot2mqtt<span class="w"> </span><span class="p">|</span><span class="w"> </span>processor.py:575<span class="w"> </span><span class="p">|</span><span class="w">  </span>process<span class="o">()</span>:<span class="w"> </span><span class="o">[</span>0xa4c1383fa08a72e8<span class="o">]</span><span class="w"> </span>Model<span class="w"> </span><span class="nv">tag</span><span class="o">=</span><span class="s1">'E3'</span><span class="w"> </span>not<span class="w"> </span>supported
 </pre></div>
 </div>
 <p>To resolve this issue, you can integrate this device into the iot2mqtt ecosystem by creating a new device model.</p>
@@ -95,7 +83,7 @@
 <section id="how-to-setup-a-new-device-model">
 <h3>How to Setup a New Device Model<a class="headerlink" href="#how-to-setup-a-new-device-model" title="Link to this heading"></a></h3>
 <p>In file <code class="docutils literal notranslate"><span class="pre">iot2mqtt/setup.py</span></code>, you should define a new device model model name and define , for example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">E3</span> <span class="o">=</span> <span class="s2">&quot;E3&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">E3</span> <span class="o">=</span> <span class="s2">"E3"</span>
 </pre></div>
 </div>
 </section>
@@ -116,7 +104,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Serge LASSABE.</p>
+    <p>&#169; Copyright 2026, Serge LASSABE.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iot2mqtt.devices.common_abstract &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../../index.html" class="icon icon-home">
+    iot2mqtt <span class="version">v2.0.0</span>
+  </a>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../devices.html">iot2mqtt.devices</a></li>
+      <li class="breadcrumb-item active">iot2mqtt.devices.common_abstract</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for iot2mqtt.devices.common_abstract</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding=utf-8</span>
+
+<span class="sd">"""</span>
+<span class="sd">Common abstract device state classes and shared constants.</span>
+
+<span class="sd">This module provides the base classes for device state representations</span>
+<span class="sd">and shared power state constants used across device implementations.</span>
+
+<span class="sd">Key entry points:</span>
+<span class="sd">  - DeviceState: Base class for all device state models.</span>
+<span class="sd">  - Availability: Device online/offline status.</span>
+<span class="sd">  - Registry: Collection of discovered device identifiers.</span>
+<span class="sd">  - Switch, Switch2Channels: Power switch state models.</span>
+<span class="sd">  - ADC: Analog-to-Digital Converter state.</span>
+<span class="sd">  - POWER_ON, POWER_OFF: Standard power state constants.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AliasChoices</span><span class="p">,</span>
+    <span class="n">BaseModel</span><span class="p">,</span>
+    <span class="n">Field</span><span class="p">,</span>
+    <span class="n">computed_field</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="DeviceState">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.DeviceState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeviceState</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Root class for all device state classes.</span>
+
+<span class="sd">    This class serves as the base for various device state representations,</span>
+<span class="sd">    providing common attributes and functionality.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        last_seen: Timestamp when the device was last seen (aliases: "last_seen", "Time").</span>
+<span class="sd">    """</span>
+
+    <span class="n">last_seen</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">"last_seen"</span><span class="p">,</span> <span class="s2">"Time"</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Availability">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Availability">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Availability</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Represents the availability status of a device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        is_online: Whether the device is currently online (immutable after creation).</span>
+<span class="sd">    """</span>
+
+    <span class="n">is_online</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Registry">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Registry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Registry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Represents a registry of discovered devices.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        device_ids: List of unique device identifiers.</span>
+<span class="sd">    """</span>
+
+    <span class="n">device_ids</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+
+<span class="c1">#</span>
+<span class="c1"># Shared Data</span>
+<span class="c1">#</span>
+
+<span class="n">POWER_ON</span> <span class="o">=</span> <span class="s2">"ON"</span>
+<span class="n">POWER_OFF</span> <span class="o">=</span> <span class="s2">"OFF"</span>
+
+
+<div class="viewcode-block" id="Switch">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Switch">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Switch</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Represents the state of a switch device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        power_on_behavior: Behavior when power is restored after outage.</span>
+<span class="sd">        power: Current power state ("ON" or "OFF"). Aliases: "power", "state", "POWER".</span>
+<span class="sd">    """</span>
+
+    <span class="n">power_on_behavior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">power</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"ON"</span><span class="p">,</span> <span class="s2">"OFF"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">"power"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="s2">"POWER"</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="n">SWITCH_ON</span> <span class="o">=</span> <span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">POWER_ON</span><span class="p">)</span>
+<span class="n">SWITCH_OFF</span> <span class="o">=</span> <span class="n">Switch</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="n">POWER_OFF</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Switch2Channels">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Switch2Channels">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Switch2Channels</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Represents the state of a switch device with two channels.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        power1: Current power state of the first channel ("ON" or "OFF"). Aliases: "power1", "POWER1".</span>
+<span class="sd">        power2: Current power state of the second channel ("ON" or "OFF"). Aliases: "power2", "POWER2".</span>
+<span class="sd">    """</span>
+
+    <span class="n">power1</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"ON"</span><span class="p">,</span> <span class="s2">"OFF"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">"power1"</span><span class="p">,</span> <span class="s2">"POWER1"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">power2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"ON"</span><span class="p">,</span> <span class="s2">"OFF"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">"power2"</span><span class="p">,</span> <span class="s2">"POWER2"</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># Orphan</span>
+
+
+<div class="viewcode-block" id="ADC">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.ADC">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ADC</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Represents the state of an ADC (Analog-to-Digital Converter) device.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        Range: Raw ADC range value. Voltage is computed by dividing by 100.</span>
+<span class="sd">    """</span>
+
+    <span class="n">Range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@computed_field</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Compute voltage from the ADC range value.</span>
+
+<span class="sd">        Divides the raw range value by 100 to convert to volts.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Voltage in volts.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Range</span> <span class="o">/</span> <span class="mi">100</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"DeviceState"</span><span class="p">,</span>
+    <span class="s2">"Availability"</span><span class="p">,</span>
+    <span class="s2">"Registry"</span><span class="p">,</span>
+    <span class="s2">"Switch"</span><span class="p">,</span>
+    <span class="s2">"Switch2Channels"</span><span class="p">,</span>
+    <span class="s2">"ADC"</span><span class="p">,</span>
+    <span class="s2">"POWER_ON"</span><span class="p">,</span>
+    <span class="s2">"POWER_OFF"</span><span class="p">,</span>
+    <span class="s2">"SWITCH_ON"</span><span class="p">,</span>
+    <span class="s2">"SWITCH_OFF"</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

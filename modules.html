@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>iot2mqtt &mdash; iot2mqtt 2.0.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>iot2mqtt &mdash; iot2mqtt 1.1.X documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=51b770b3"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=96b41c6b"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -30,19 +28,9 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="index.html" class="icon icon-home">
-            iot2mqtt
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
+  <a href="index.html" class="icon icon-home">
+    iot2mqtt <span class="version">v1.1.X</span>
+  </a>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
@@ -85,40 +73,54 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="iot2mqtt.html">iot2mqtt package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-abstract-module">iot2mqtt.abstract module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#constants">Constants</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-abstract-module">iot2mqtt.abstract module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#module-iot2mqtt.central">iot2mqtt.central module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#classes">Classes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#functions">Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.RETRY_COUNT_MAX"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.RETRY_COUNT_MAX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.RETRY_ELAPSE"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.RETRY_ELAPSE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.ring_trigger_change_state"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.ring_trigger_change_state()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.switch_power_change"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.switch_power_change()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.switch_power_change_helper"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.switch_power_change_helper()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.trigger_change_state"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.trigger_change_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.trigger_change_state_helper"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.trigger_change_state_helper()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.DeviceAccessor.trigger_get_state"><code class="docutils literal notranslate"><span class="pre">DeviceAccessor.trigger_get_state()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.ESPSomfyMessageParser"><code class="docutils literal notranslate"><span class="pre">ESPSomfyMessageParser</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.ESPSomfyMessageParser.parse"><code class="docutils literal notranslate"><span class="pre">ESPSomfyMessageParser.parse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.ESPSomfyMessageFormater"><code class="docutils literal notranslate"><span class="pre">ESPSomfyMessageFormater</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.ESPSomfyMessageFormater.modify_incoming_message"><code class="docutils literal notranslate"><span class="pre">ESPSomfyMessageFormater.modify_incoming_message()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.JsonMessageParser"><code class="docutils literal notranslate"><span class="pre">JsonMessageParser</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.JsonMessageParser.parse"><code class="docutils literal notranslate"><span class="pre">JsonMessageParser.parse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.JsonMessageFormater"><code class="docutils literal notranslate"><span class="pre">JsonMessageFormater</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.JsonMessageFormater.modify_incoming_message"><code class="docutils literal notranslate"><span class="pre">JsonMessageFormater.modify_incoming_message()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageParser"><code class="docutils literal notranslate"><span class="pre">MessageParser</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageParser.parse"><code class="docutils literal notranslate"><span class="pre">MessageParser.parse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageFormater"><code class="docutils literal notranslate"><span class="pre">MessageFormater</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageFormater.modify_incoming_message"><code class="docutils literal notranslate"><span class="pre">MessageFormater.modify_incoming_message()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageStructure"><code class="docutils literal notranslate"><span class="pre">MessageStructure</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageStructure.ESPSOMFY"><code class="docutils literal notranslate"><span class="pre">MessageStructure.ESPSOMFY</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageStructure.JSON"><code class="docutils literal notranslate"><span class="pre">MessageStructure.JSON</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageStructure.RAW"><code class="docutils literal notranslate"><span class="pre">MessageStructure.RAW</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.MessageStructure.RING"><code class="docutils literal notranslate"><span class="pre">MessageStructure.RING</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RawMessageParser"><code class="docutils literal notranslate"><span class="pre">RawMessageParser</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RawMessageParser.parse"><code class="docutils literal notranslate"><span class="pre">RawMessageParser.parse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RawMessageFormater"><code class="docutils literal notranslate"><span class="pre">RawMessageFormater</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RawMessageFormater.modify_incoming_message"><code class="docutils literal notranslate"><span class="pre">RawMessageFormater.modify_incoming_message()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingMessageFormater"><code class="docutils literal notranslate"><span class="pre">RingMessageFormater</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingMessageFormater.ATTRIBUTE_POSITION"><code class="docutils literal notranslate"><span class="pre">RingMessageFormater.ATTRIBUTE_POSITION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingMessageFormater.TOPIC_TAG_POSITION"><code class="docutils literal notranslate"><span class="pre">RingMessageFormater.TOPIC_TAG_POSITION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingMessageFormater.modify_incoming_message"><code class="docutils literal notranslate"><span class="pre">RingMessageFormater.modify_incoming_message()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingTags"><code class="docutils literal notranslate"><span class="pre">RingTags</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingTags.ATTRIBUTES"><code class="docutils literal notranslate"><span class="pre">RingTags.ATTRIBUTES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingTags.COMMAND"><code class="docutils literal notranslate"><span class="pre">RingTags.COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingTags.IMAGE"><code class="docutils literal notranslate"><span class="pre">RingTags.IMAGE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingTags.INFO"><code class="docutils literal notranslate"><span class="pre">RingTags.INFO</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.RingTags.STATE"><code class="docutils literal notranslate"><span class="pre">RingTags.STATE</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.Scrutinizer"><code class="docutils literal notranslate"><span class="pre">Scrutinizer</span></code></a></li>
@@ -126,13 +128,8 @@
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.central.is_message_expected"><code class="docutils literal notranslate"><span class="pre">is_message_expected()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-dev-module">iot2mqtt.dev module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#classes-and-enums">Classes and Enums</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-dev-module">iot2mqtt.dev module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#module-iot2mqtt.encoder">iot2mqtt.encoder module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#id1">Classes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#id2">Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.Encoder"><code class="docutils literal notranslate"><span class="pre">Encoder</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.Encoder.field_aliases"><code class="docutils literal notranslate"><span class="pre">Encoder.field_aliases</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.Encoder.field_converters"><code class="docutils literal notranslate"><span class="pre">Encoder.field_converters</span></code></a></li>
@@ -142,18 +139,14 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.EncoderRegistry"><code class="docutils literal notranslate"><span class="pre">EncoderRegistry</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.EncoderRegistry._registry"><code class="docutils literal notranslate"><span class="pre">EncoderRegistry._registry</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.EncoderRegistry.get_encoder"><code class="docutils literal notranslate"><span class="pre">EncoderRegistry.get_encoder()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.EncoderRegistry.reset"><code class="docutils literal notranslate"><span class="pre">EncoderRegistry.reset()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.encoder.encode"><code class="docutils literal notranslate"><span class="pre">encode()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-messenger-module">iot2mqtt.messenger module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#id3">Classes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#id4">Functions</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-messenger-module">iot2mqtt.messenger module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#iot2mqtt-mqtthelper-module">iot2mqtt.mqtthelper module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#module-iot2mqtt.processor">iot2mqtt.processor module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.AvailabilityNormalizer"><code class="docutils literal notranslate"><span class="pre">AvailabilityNormalizer</span></code></a><ul>
@@ -166,6 +159,7 @@
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.DeviceDirectory.get_device"><code class="docutils literal notranslate"><span class="pre">DeviceDirectory.get_device()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.DeviceDirectory.get_device_ids"><code class="docutils literal notranslate"><span class="pre">DeviceDirectory.get_device_ids()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.DeviceDirectory.get_devices"><code class="docutils literal notranslate"><span class="pre">DeviceDirectory.get_devices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.DeviceDirectory.reset"><code class="docutils literal notranslate"><span class="pre">DeviceDirectory.reset()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.DeviceDirectory.update_devices"><code class="docutils literal notranslate"><span class="pre">DeviceDirectory.update_devices()</span></code></a></li>
 </ul>
 </li>
@@ -176,25 +170,19 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyConfig"><code class="docutils literal notranslate"><span class="pre">ESPSomfyConfig</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyConfig.device"><code class="docutils literal notranslate"><span class="pre">ESPSomfyConfig.device</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyConfig.model_computed_fields"><code class="docutils literal notranslate"><span class="pre">ESPSomfyConfig.model_computed_fields</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ESPSomfyConfig.model_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyConfig.model_fields"><code class="docutils literal notranslate"><span class="pre">ESPSomfyConfig.model_fields</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyConfig.path"><code class="docutils literal notranslate"><span class="pre">ESPSomfyConfig.path</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDevice"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDevice</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDevice.address"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDevice.address</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDevice.model"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDevice.model</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDevice.model_computed_fields"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDevice.model_computed_fields</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDevice.model_config"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDevice.model_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDevice.model_fields"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDevice.model_fields</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDiscovery"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDiscovery</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDiscovery.config"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDiscovery.config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDiscovery.model_computed_fields"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDiscovery.model_computed_fields</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDiscovery.model_config"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDiscovery.model_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ESPSomfyDiscovery.model_fields"><code class="docutils literal notranslate"><span class="pre">ESPSomfyDiscovery.model_fields</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.MessageLogger"><code class="docutils literal notranslate"><span class="pre">MessageLogger</span></code></a><ul>
@@ -207,6 +195,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ModelResolver"><code class="docutils literal notranslate"><span class="pre">ModelResolver</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ModelResolver.process"><code class="docutils literal notranslate"><span class="pre">ModelResolver.process()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.ModelResolver.reset"><code class="docutils literal notranslate"><span class="pre">ModelResolver.reset()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.Processor"><code class="docutils literal notranslate"><span class="pre">Processor</span></code></a><ul>
@@ -217,20 +206,20 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizer"><code class="docutils literal notranslate"><span class="pre">StateNormalizer</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizer.process"><code class="docutils literal notranslate"><span class="pre">StateNormalizer.process()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizer.reset"><code class="docutils literal notranslate"><span class="pre">StateNormalizer.reset()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizerFactory"><code class="docutils literal notranslate"><span class="pre">StateNormalizerFactory</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizerFactory.get"><code class="docutils literal notranslate"><span class="pre">StateNormalizerFactory.get()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizerFactory.register"><code class="docutils literal notranslate"><span class="pre">StateNormalizerFactory.register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.StateNormalizerFactory.reset"><code class="docutils literal notranslate"><span class="pre">StateNormalizerFactory.reset()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery.address"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery.address</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery.device_id"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery.device_id</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery.model"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery.model</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery.model_computed_fields"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery.model_computed_fields</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery.model_config"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery.model_config</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.TasmotaDiscovery.model_fields"><code class="docutils literal notranslate"><span class="pre">TasmotaDiscovery.model_fields</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.is_button_action_expected"><code class="docutils literal notranslate"><span class="pre">is_button_action_expected()</span></code></a></li>
@@ -239,28 +228,8 @@
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.processor.is_switch_power_expected"><code class="docutils literal notranslate"><span class="pre">is_switch_power_expected()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#module-iot2mqtt.setup">iot2mqtt.setup module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models"><code class="docutils literal notranslate"><span class="pre">Models</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.CTP_R01"><code class="docutils literal notranslate"><span class="pre">Models.CTP_R01</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.E3"><code class="docutils literal notranslate"><span class="pre">Models.E3</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.HM_ALARM_BUTTON"><code class="docutils literal notranslate"><span class="pre">Models.HM_ALARM_BUTTON</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.MIFLORA"><code class="docutils literal notranslate"><span class="pre">Models.MIFLORA</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.NEO_ALARM"><code class="docutils literal notranslate"><span class="pre">Models.NEO_ALARM</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.RING_CAMERA"><code class="docutils literal notranslate"><span class="pre">Models.RING_CAMERA</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SHELLY_PLUGS"><code class="docutils literal notranslate"><span class="pre">Models.SHELLY_PLUGS</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SHELLY_UNI"><code class="docutils literal notranslate"><span class="pre">Models.SHELLY_UNI</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_AIRSENSOR"><code class="docutils literal notranslate"><span class="pre">Models.SN_AIRSENSOR</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_BUTTON"><code class="docutils literal notranslate"><span class="pre">Models.SN_BUTTON</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_MINI"><code class="docutils literal notranslate"><span class="pre">Models.SN_MINI</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_MINI_L2"><code class="docutils literal notranslate"><span class="pre">Models.SN_MINI_L2</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_MOTION"><code class="docutils literal notranslate"><span class="pre">Models.SN_MOTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_SMART_PLUG"><code class="docutils literal notranslate"><span class="pre">Models.SN_SMART_PLUG</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SN_ZBBRIDGE"><code class="docutils literal notranslate"><span class="pre">Models.SN_ZBBRIDGE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SOMFY_SHADES"><code class="docutils literal notranslate"><span class="pre">Models.SOMFY_SHADES</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.SRTS_A01"><code class="docutils literal notranslate"><span class="pre">Models.SRTS_A01</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.setup.Models.TUYA_SOIL"><code class="docutils literal notranslate"><span class="pre">Models.TUYA_SOIL</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#module-iot2mqtt.devices">iot2mqtt.devices module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.devices.load_devices_for_protocols"><code class="docutils literal notranslate"><span class="pre">load_devices_for_protocols()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="iot2mqtt.html#module-iot2mqtt.topics">iot2mqtt.topics module</a><ul>
@@ -273,10 +242,12 @@
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.configure_topic_registry"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.configure_topic_registry()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_all_topics_to_subscribe"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_all_topics_to_subscribe()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_sub_topic"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_sub_topic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_device_id"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_device_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_model"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_ring_location_id"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_ring_location_id()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_topic_to_subscribe"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_topic_to_subscribe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.get_wildcard_by_position"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.get_wildcard_by_position()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.register"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.register()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.InfoTopicManager.resolve_wildcards"><code class="docutils literal notranslate"><span class="pre">InfoTopicManager.resolve_wildcards()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="iot2mqtt.html#iot2mqtt.topics.TopicManager"><code class="docutils literal notranslate"><span class="pre">TopicManager</span></code></a></li>
@@ -300,7 +271,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Serge LASSABE.</p>
+    <p>&#169; Copyright 2026, Serge LASSABE.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

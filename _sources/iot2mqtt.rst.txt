@@ -69,10 +69,10 @@ iot2mqtt.processor module
    :undoc-members:
    :show-inheritance:
 
-iot2mqtt.setup module
+iot2mqtt.devices module
 -------------------------
 
-.. automodule:: iot2mqtt.setup
+.. automodule:: iot2mqtt.devices
    :members:
    :undoc-members:
    :show-inheritance:

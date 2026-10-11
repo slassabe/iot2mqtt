@@ -1,0 +1,347 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iot2mqtt.devices.ring_abstract &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../../index.html" class="icon icon-home">
+    iot2mqtt <span class="version">v2.0.0</span>
+  </a>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../devices.html">iot2mqtt.devices</a></li>
+      <li class="breadcrumb-item active">iot2mqtt.devices.ring_abstract</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for iot2mqtt.devices.ring_abstract</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding=utf-8</span>
+
+
+<span class="c1">#</span>
+<span class="c1"># Ring abstract devices</span>
+<span class="c1">#</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseModel</span><span class="p">,</span>
+    <span class="n">field_validator</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="RingDeviceState">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.RingDeviceState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RingDeviceState</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Base model for all Ring device state classes."""</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="MotionInfo">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.MotionInfo">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MotionInfo</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Motion sensor state with detection status and last motion timestamp."""</span>
+
+    <span class="n">last_motion_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">detection_enabled</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="StreamAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.StreamAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Live stream state including activation and failure status."""</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"inactive"</span><span class="p">,</span> <span class="s2">"activating"</span><span class="p">,</span> <span class="s2">"active"</span><span class="p">,</span> <span class="s2">"failed"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="MotionAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.MotionAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MotionAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Motion detection attributes including timestamp, person detection, and status."""</span>
+
+    <span class="c1"># {'motion_attributes': {'lastMotion': 1739625899,</span>
+    <span class="c1">#                        'lastMotionTime': '2025-02-15T13:24:59Z',</span>
+    <span class="c1">#                        'personDetected': False, 'motionDetectionEnabled': True}}</span>
+    <span class="n">lastMotion</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">lastMotionTime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">personDetected</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">motionDetectionEnabled</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"lastMotionTime"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_last_motion_time</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"null"</span><span class="p">,</span> <span class="s2">"undefined"</span><span class="p">}:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="BatteryAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.BatteryAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatteryAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Battery level and remaining life for battery-powered devices."""</span>
+
+    <span class="c1"># Get battery level (0-100)</span>
+    <span class="n">batteryLevel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">batteryLife</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">batteryLife2</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="WirelessAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.WirelessAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WirelessAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Wireless network information including signal strength."""</span>
+
+    <span class="n">wirelessNetwork</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">wirelessSignal</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="EventSelectAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.EventSelectAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventSelectAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Video event details including recording URL and event ID."""</span>
+
+    <span class="c1"># {"recordingUrl":"https://www.sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4",</span>
+    <span class="c1">#  "eventId":"1234"}</span>
+    <span class="n">recordingUrl</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">eventId</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="DingAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.DingAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DingAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Doorbell ding events with timestamp information."""</span>
+
+    <span class="c1">#  {'ding_attributes': {'lastDing': 1741776527,</span>
+    <span class="c1">#                       'lastDingTime': '2025-03-12T10:48:47Z'}}</span>
+    <span class="n">lastDing</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">lastDingTime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"lastDingTime"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_coerce_last_ding_time</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"none"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"null"</span><span class="p">,</span> <span class="s2">"undefined"</span><span class="p">}:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="SnapshotAttributes">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.SnapshotAttributes">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SnapshotAttributes</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Snapshot metadata including capture timestamp and type."""</span>
+
+    <span class="c1"># {'snapshot_attributes': {'timestamp': 1739874181, 'type': 'interval'}}</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RingInfo">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.RingInfo">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RingInfo</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Device connection information including stream source and image URLs."""</span>
+
+    <span class="c1"># {'info': RingInfo(last_seen=None,</span>
+    <span class="c1">#       stream_Source='rtsp://172.18.0.6:8554/187f8877c231_live',</span>
+    <span class="c1">#       still_Image_URL='https://localhost:8123{{</span>
+    <span class="c1">#          states.camera.rez-de-chaussée_snapshot.attributes.entity_picture</span>
+    <span class="c1">#       }}')}</span>
+    <span class="n">stream_Source</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">still_Image_URL</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="Camera">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Camera">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Camera</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ring camera device state including motion, stream, and snapshot controls."""</span>
+
+    <span class="c1"># Doorbell Ding Detected</span>
+    <span class="n">ding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Last ding time</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/ding/attributes</span>
+    <span class="n">ding_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DingAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Motion Detected</span>
+    <span class="n">motion</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Last motion time, person/motion detection enabled</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/motion/attributes</span>
+    <span class="n">motion_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MotionAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set motion detection ON/OFF</span>
+    <span class="n">motion_detection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set motion warning ON/OFF</span>
+    <span class="n">motion_warning</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set light ON/OFF</span>
+    <span class="n">light</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set siren ON/OFF</span>
+    <span class="n">siren</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Device info sensor</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RingInfo</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Snapshot images (JPEG binary data)</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/snapshot/image</span>
+    <span class="c1"># {'snapshot_image': b'\xff\xd8\xff'}</span>
+    <span class="n">snapshot_image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># JSON attributes for image (timestamp)</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/snapshot/attributes</span>
+    <span class="n">snapshot_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SnapshotAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set snapshot refresh interval (10-604800)</span>
+    <span class="n">snapshot_interval</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set live stream ON/OFF</span>
+    <span class="n">stream</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Detailed live stream state:</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/stream/attributes</span>
+    <span class="n">stream_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StreamAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set event stream ON/OFF</span>
+    <span class="n">event_stream</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Detailed event stream state:</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/event_stream/attributes</span>
+    <span class="n">event_stream_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">StreamAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set selected event stream</span>
+    <span class="n">event_select</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#</span>
+    <span class="c1"># Undocumented Attributes</span>
+    <span class="c1">#</span>
+    <span class="n">battery_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BatteryAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">wireless_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">WirelessAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># ring/&lt;location_id&gt;/camera/&lt;device_id&gt;/event_select/attributes</span>
+    <span class="n">event_select_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">EventSelectAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="Chime">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Chime">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Chime</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Ring chime device state including volume, snooze, and sound controls."""</span>
+
+    <span class="c1"># Get/set volume (0-11)</span>
+    <span class="n">volume</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set snooze state (ON = snooze)</span>
+    <span class="n">snooze</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set current minutes to snooze (1-1440)</span>
+    <span class="n">snooze_minutes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set ding sound (ON = Play ding chime)</span>
+    <span class="n">play_ding_sound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get/set Motion chime (ON = Play ding chime)</span>
+    <span class="n">play_motion_sound</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Get device info sensor</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RingInfo</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Undocumented Attributes</span>
+    <span class="n">wireless_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">WirelessAttributes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RingAlarm">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.RingAlarm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RingAlarm</span><span class="p">(</span><span class="n">RingDeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Virtual alarm control panel for setting location modes on Ring devices without native alarm."""</span>
+
+    <span class="c1"># {'mode': 'armed_home'}</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"disarmed"</span><span class="p">,</span> <span class="s2">"armed_home"</span><span class="p">,</span> <span class="s2">"armed_away"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"RingDeviceState"</span><span class="p">,</span>
+    <span class="s2">"MotionInfo"</span><span class="p">,</span>
+    <span class="s2">"StreamAttributes"</span><span class="p">,</span>
+    <span class="s2">"MotionAttributes"</span><span class="p">,</span>
+    <span class="s2">"BatteryAttributes"</span><span class="p">,</span>
+    <span class="s2">"WirelessAttributes"</span><span class="p">,</span>
+    <span class="s2">"EventSelectAttributes"</span><span class="p">,</span>
+    <span class="s2">"DingAttributes"</span><span class="p">,</span>
+    <span class="s2">"SnapshotAttributes"</span><span class="p">,</span>
+    <span class="s2">"RingInfo"</span><span class="p">,</span>
+    <span class="s2">"Camera"</span><span class="p">,</span>
+    <span class="s2">"Chime"</span><span class="p">,</span>
+    <span class="s2">"RingAlarm"</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

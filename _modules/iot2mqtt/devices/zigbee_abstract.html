@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iot2mqtt.devices.zigbee_abstract &mdash; iot2mqtt 2.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=51b770b3"></script>
+      <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+  <a href="../../../index.html" class="icon icon-home">
+    iot2mqtt <span class="version">v2.0.0</span>
+  </a>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">iot2mqtt: Simplifying IoT Solutions with MQTT Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Core Concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../userguide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">iot2mqtt</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">iot2mqtt</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../devices.html">iot2mqtt.devices</a></li>
+      <li class="breadcrumb-item active">iot2mqtt.devices.zigbee_abstract</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for iot2mqtt.devices.zigbee_abstract</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AliasChoices</span><span class="p">,</span>
+    <span class="n">Field</span><span class="p">,</span>
+    <span class="n">confloat</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">iot2mqtt.devices.common_abstract</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeviceState</span>
+
+
+<div class="viewcode-block" id="AirSensor">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.AirSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AirSensor</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Air sensor with humidity and temperature measurements."""</span>
+
+    <span class="n">humidity</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="Alarm">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Alarm">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Alarm</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Alarm device with volume, melody, duration, and battery status."""</span>
+
+    <span class="n">alarm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">melody</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">volume</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"low"</span><span class="p">,</span> <span class="s2">"medium"</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AlarmVolumes</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Possible alarm volume levels: low, medium, high."""</span>
+
+    <span class="n">LOW</span> <span class="o">=</span> <span class="s2">"low"</span>
+    <span class="n">MEDIUM</span> <span class="o">=</span> <span class="s2">"medium"</span>
+    <span class="n">HIGH</span> <span class="o">=</span> <span class="s2">"high"</span>
+
+
+<div class="viewcode-block" id="AlarmButtonlValues">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.AlarmButtonlValues">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AlarmButtonlValues</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Alarm controller actions: emergency, disarm, arm day zones, or arm all zones."""</span>
+
+    <span class="n">EMERGENCY_ACTION</span> <span class="o">=</span> <span class="s2">"emergency"</span>
+    <span class="n">DISARM_ACTION</span> <span class="o">=</span> <span class="s2">"disarm"</span>
+    <span class="n">ARM_DAYZONES_ACTION</span> <span class="o">=</span> <span class="s2">"arm_day_zones"</span>
+    <span class="n">ARM_ALL_ACTION</span> <span class="o">=</span> <span class="s2">"arm_all_zones"</span></div>
+
+
+
+<div class="viewcode-block" id="AlarmButton">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.AlarmButton">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AlarmButton</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Alarm controller device with battery, link quality, and action state."""</span>
+
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">action</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AlarmButtonlValues</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ButtonValues">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.ButtonValues">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ButtonValues</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Button press actions: single, double, or long press."""</span>
+
+    <span class="n">SINGLE_ACTION</span> <span class="o">=</span> <span class="s2">"single"</span>
+    <span class="n">DOUBLE_ACTION</span> <span class="o">=</span> <span class="s2">"double"</span>
+    <span class="n">LONG_ACTION</span> <span class="o">=</span> <span class="s2">"long"</span></div>
+
+
+
+<div class="viewcode-block" id="Button">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Button">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Button</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Button device with action state (single, double, or long press)."""</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ButtonValues</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="DoorSensor">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.DoorSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DoorSensor</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Door/window contact sensor with battery, tamper detection, and link quality.</span>
+
+<span class="sd">    Contact state indicates door/window open (False) or closed (True).</span>
+<span class="sd">    """</span>
+
+    <span class="n">contact</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">voltage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">tamper</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="MagicCube">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.MagicCube">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MagicCube</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Aquara Cube T1 Pro device with motion, orientation, and action detection."""</span>
+
+    <span class="c1"># Batterie restante en %</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Tension de la batterie en millivolts</span>
+    <span class="n">voltage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Nombre de pannes de courant (depuis le dernier couplage)</span>
+    <span class="n">power_outage_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">operation_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"action_mode"</span><span class="p">,</span> <span class="s2">"scene_mode"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Face du cube</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Action depuis face du cube</span>
+    <span class="n">action_from_side</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Angle en degrès</span>
+    <span class="n">action_angle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Action déclenchée (par ex : un clic sur un bouton)</span>
+    <span class="n">action</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">Literal</span><span class="p">[</span>
+            <span class="s2">"shake"</span><span class="p">,</span>
+            <span class="s2">"throw"</span><span class="p">,</span>
+            <span class="s2">"tap"</span><span class="p">,</span>
+            <span class="s2">"slide"</span><span class="p">,</span>
+            <span class="s2">"flip180"</span><span class="p">,</span>
+            <span class="s2">"flip90"</span><span class="p">,</span>
+            <span class="s2">"hold"</span><span class="p">,</span>
+            <span class="s2">"side_up"</span><span class="p">,</span>
+            <span class="s2">"rotate_left"</span><span class="p">,</span>
+            <span class="s2">"rotate_right"</span><span class="p">,</span>
+            <span class="s2">"1_min_inactivity"</span><span class="p">,</span>
+            <span class="s2">"flip_to_side"</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Qualité du lien (force du signal)</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="Motion">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.Motion">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Motion</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Motion sensor with occupancy detection and battery status."""</span>
+
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">occupancy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="SmokeSensor">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.SmokeSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SmokeSensor</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Smoke sensor with test mode and battery status."""</span>
+
+    <span class="n">smoke</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery_low</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">test</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="SoilSensor">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.SoilSensor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SoilSensor</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Soil sensor with moisture and temperature measurements."""</span>
+
+    <span class="n">moisture</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_alias</span><span class="o">=</span><span class="n">AliasChoices</span><span class="p">(</span><span class="s2">"moisture"</span><span class="p">,</span> <span class="s2">"soil_moisture"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="SrtsA01">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.SrtsA01">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SrtsA01</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Aquara SRTS-A01 smart radiator thermostat with temperature and valve control.</span>
+
+<span class="sd">    Supports remote temperature input, scheduling, child lock, and window detection.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Température d'absence pré-définie</span>
+    <span class="n">away_preset_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=-</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mf">35.0</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Batterie restante en %, peut prendre jusqu'à 24 heures avant d'être signalée.</span>
+    <span class="n">battery</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si cette vanne est calibrée, utilisez l'option calibrer</span>
+    <span class="c1"># pour calibrer.</span>
+    <span class="n">calibrated</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si cette vanne est calibrée, utilisez l'option calibrer pour calibrer.</span>
+    <span class="n">child_lock</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"LOCK"</span><span class="p">,</span> <span class="s2">"UNLOCK"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Température de l'appareil</span>
+    <span class="n">device_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Entrée pour le capteur de température à distance</span>
+    <span class="c1"># (lorsque le capteur est réglé sur externe)</span>
+    <span class="n">external_temperature_input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mi">55</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">internal_heating_setpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Qualité du lien (force du signal)</span>
+    <span class="n">linkquality</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Température actuelle mesurée par le capteur interne ou externe</span>
+    <span class="n">local_temperature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Consigne de température</span>
+    <span class="n">occupied_heating_setpoint</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lt</span><span class="o">=</span><span class="mi">30</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Nombre de pannes de courant (depuis le dernier couplage)</span>
+    <span class="n">power_outage_count</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Mode de l'appareil (similaire à system_mode): 'manual', 'away', 'auto'</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"manual"</span><span class="p">,</span> <span class="s2">"away"</span><span class="p">,</span> <span class="s2">"auto"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Lorsqu'il est activé, l'appareil change d'état en fonction de vos</span>
+    <span class="c1"># paramètres de programmation.</span>
+    <span class="n">schedule</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Configuration intelligente de l'horaire (par défaut :</span>
+    <span class="c1"># lun, mar, mer, jeu, ven|8:00,24.0|18:00,17.0|23:00,22.0|8:00,22.0)</span>
+    <span class="n">schedule_settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Sélectionnez le détecteur température à utiliser</span>
+    <span class="n">sensor</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"internal"</span><span class="p">,</span> <span class="s2">"external"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si l'appareil est en mode configuration (E11)</span>
+    <span class="n">setup</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Mode de l'appareil</span>
+    <span class="n">system_mode</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">"off"</span><span class="p">,</span> <span class="s2">"heat"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">update</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Avertit d'une anomalie de contrôle de la température si la détection</span>
+    <span class="c1"># de la vanne est activée (par exemple, thermostat mal installé,</span>
+    <span class="c1"># défaillance de la vanne ou étalonnage incorrect, lien incorrect</span>
+    <span class="c1"># avec le capteur de température externe)</span>
+    <span class="n">valve_alarm</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Détermine si des anomalies de contrôle de la température</span>
+    <span class="c1"># doivent être détectées</span>
+    <span class="n">valve_detection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Tension de la batterie en millivolts</span>
+    <span class="n">voltage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Active/désactive la détection de fenêtre de l'appareil</span>
+    <span class="n">window_detection</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Indique si la fenêtre est ouverte</span>
+    <span class="n">window_open</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="WaterLevel">
+<a class="viewcode-back" href="../../../iot2mqtt.html#iot2mqtt.abstract.WaterLevel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WaterLevel</span><span class="p">(</span><span class="n">DeviceState</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Water level sensor with installation height and liquid depth measurements.</span>
+
+<span class="sd">    Requires installation_height and liquid_depth_max to be configured via Z2M.</span>
+<span class="sd">    """</span>
+
+    <span class="n">installation_height</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">liquid_depth</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">liquid_depth_max</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">liquid_level_percent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"AirSensor"</span><span class="p">,</span>
+    <span class="s2">"Alarm"</span><span class="p">,</span>
+    <span class="s2">"AlarmButton"</span><span class="p">,</span>
+    <span class="s2">"AlarmButtonlValues"</span><span class="p">,</span>
+    <span class="s2">"Button"</span><span class="p">,</span>
+    <span class="s2">"ButtonValues"</span><span class="p">,</span>
+    <span class="s2">"DoorSensor"</span><span class="p">,</span>
+    <span class="s2">"MagicCube"</span><span class="p">,</span>
+    <span class="s2">"Motion"</span><span class="p">,</span>
+    <span class="s2">"SmokeSensor"</span><span class="p">,</span>
+    <span class="s2">"SoilSensor"</span><span class="p">,</span>
+    <span class="s2">"SrtsA01"</span><span class="p">,</span>
+    <span class="s2">"WaterLevel"</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Serge LASSABE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
