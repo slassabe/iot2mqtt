@@ -18,7 +18,7 @@ from iot2mqtt.devices.common_abstract import DeviceState
 
 class Encoder(BaseModel):
     """Encode and validate device states with field aliasing and conversion.
-    
+
     Transforms device state objects to dictionaries using optional field aliases
     and converter functions for customization.
     """
@@ -61,7 +61,7 @@ class Encoder(BaseModel):
 
 class EncoderRegistry:
     """Registry mapping device models to their corresponding encoders.
-    
+
     Manages encoder creation and retrieval for device models with support for
     field aliasing and conversion. Thread-safe for concurrent access.
     """

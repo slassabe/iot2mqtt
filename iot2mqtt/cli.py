@@ -7,11 +7,12 @@ displays them in human-readable or JSON format.
 
 Basic usage:
 
-    iot2mqtt [-b BROKER] [-d DEVICES] [-l SECONDS] [-r] [-v]
+    iot2mqtt [-b BROKER] [-d DEVICES] [-l SECONDS] [-r] [-v] [--debug]
 
 Options:
 
     -b, --brocker       MQTT broker hostname (default: localhost)
+    --debug             enable DEBUG logging
     -d, --devices       Comma-separated device IDs to filter (displays all if omitted)
     -l, --loop          Run for specified number of seconds (default: runs indefinitely)
     -r, --readable      Display output as human-readable text (default: JSON format)
@@ -35,6 +36,7 @@ Main entry point: main()
 """
 import argparse
 import json
+import logging
 import signal
 import sys
 import time
@@ -126,6 +128,7 @@ def main():
 
     Supports the following command-line options:
     - -b/--broker: MQTT broker hostname (default: localhost)
+    - --debug: enable DEBUG logging
     - -d/--devices: Comma-separated device IDs to filter
     - -l/--loop: Run for specified number of seconds
     - -r/--readable: Display as readable text (default: JSON)
@@ -152,8 +155,15 @@ def main():
         help="display information for biped (default is JSON)",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+    parser.add_argument("--debug", action="store_true", help="enable DEBUG logging")
 
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.WARNING,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
     if args.brocker:
         _brocker = args.brocker
         print(f"MQTT: Using broker {_brocker}")
@@ -163,12 +173,16 @@ def main():
     _client = mqtthelper.ClientHelper(
         mqtthelper.MQTTContext(hostname=_brocker), mqtthelper.SecurityContext()
     )
+    # Uncomment next line to display paho messages (verbose):
+    # _client.enable_logger()
+
     try:
         _client.start()
     except exceptions.ConnectionException:
         print(f"Error: Failed to connect to MQTT broker at {_brocker}", file=sys.stderr)
         sys.exit(1)
 
+    # Listen to Zigbee device messages
     _refined_queue = central.get_refined_data_queue(_client, protocols_expected=[dev.Protocol.Z2M])
 
     # Configure a dispatcher to handle all incoming messages

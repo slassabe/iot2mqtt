@@ -21,7 +21,7 @@ class Model(BaseModel, frozen=True):
 
 class ModelFactory:
     """Thread-safe singleton factory for Model instances.
-    
+
     Ensures only one Model instance exists per tag and provides thread-safe access
     with an UNKNOWN model constant for unrecognized models.
     """
@@ -53,7 +53,7 @@ class ModelFactory:
 
 class Protocol(Enum):
     """IoT device communication protocols.
-    
+
     Enumeration of protocols supported by the system: ESPSomfy, Ring, Shelly, Tasmota,
     and Zigbee2MQTT.
     """
@@ -72,7 +72,7 @@ class Protocol(Enum):
 
 class Device(BaseModel):
     """Base model for IoT devices with protocol and addressing information.
-    
+
     Common properties for all device types: immutable name and protocol, plus optional
     network address and model information.
     """

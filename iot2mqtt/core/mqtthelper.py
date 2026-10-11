@@ -22,6 +22,7 @@ from iot2mqtt.core import exceptions, utils
 
 OnConnectHandler = Callable[[mqtt.Client, Any, Any, Any, Any], None]
 
+
 @dataclasses.dataclass
 class MQTTContext:
     """Configuration and state for MQTT client connection.
@@ -42,17 +43,18 @@ class MQTTContext:
         State fields are mutable and updated by ClientHelper during connection lifecycle.
         Should not be modified directly after ClientHelper initialization.
     """
+
     hostname: str = "127.0.0.1"
     client_id: str = ""
     port: int = 1883
     keepalive: int = 60
     clean_start: bool = False
-    
+
     # State fields with proper field declaration
     connected: bool = dataclasses.field(default=False, init=False, repr=False)
     started: bool = dataclasses.field(default=False, init=False, repr=False)
     loop_forever_used: bool = dataclasses.field(default=False, init=False, repr=False)
-    
+
     def __post_init__(self) -> None:
         # Validation only
         utils.check_parameter("client_id", self.client_id, str)
@@ -60,7 +62,6 @@ class MQTTContext:
         utils.check_parameter("port", self.port, int)
         utils.check_parameter("keepalive", self.keepalive, int)
         utils.check_parameter("clean_start", self.clean_start, bool)
-
 
 
 @dataclasses.dataclass
@@ -232,7 +233,6 @@ class ClientHelper(mqtt.Client):
         # Only reachable if MAX_RETRY < 1; makes the return contract explicit for type checkers.
         raise exceptions.ConnectionException("No connection attempt was made")
 
-
     def _handle_on_connect(  # pylint: disable=too-many-arguments
         self,
         client: mqtt.Client,
@@ -249,10 +249,10 @@ class ClientHelper(mqtt.Client):
 
     def connect_handler_add(self, handler: Callable) -> None:
         """Register a callback to invoke when client successfully connects to broker.
-        
+
         Args:
             handler: Callable with signature (client, userdata, flags, reason_code, properties) -> None
-        
+
         Raises:
             TypeError: If handler is not callable.
         """
@@ -289,5 +289,3 @@ class ClientHelper(mqtt.Client):
     def disconnect_handler_add(self, handler: Callable) -> None:
         """Register a callback to invoke when client disconnects from broker."""
         self.on_disconnect_handlers.append(handler)
-
-

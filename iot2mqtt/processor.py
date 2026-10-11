@@ -52,6 +52,7 @@ class Processor(metaclass=ABCMeta):
     @staticmethod
     def pass_through(message: messenger.Message) -> messenger.Message:
         """Return the message unchanged."""
+        return message
 
 
 def _check_devices(msg: messenger.Message, device_ids: str) -> bool:
@@ -212,6 +213,7 @@ class ModelResolver(Processor):
 
     def _notify_once(self, message: messenger.Message) -> None:
         """Log a warning for unknown device, once per device ID."""
+        _device_id = message.device_id
         if _device_id in self._notified_devices:
             return
         utils.i2m_log.warning(
@@ -640,6 +642,18 @@ class StateNormalizer(Processor):
 
     def _notify_once(self, message: messenger.Message) -> None:
         """Log a warning for normalization failure, once per device ID."""
+        _device_id = message.device_id
+        if _device_id in self._notified_devices:
+            return
+        utils.i2m_log.warning(
+            '["%s"] unable to normalyse message - device_id: "%s" - type: %s - model: %s - value: %s',
+            self.__class__.__name__,
+            _device_id,
+            message.message_type.value,
+            message.model if message.model else "Unset",
+            message.raw_item.data,
+        )
+        self._notified_devices[_device_id] = True
 
     def process(self, message: messenger.Message) -> Optional[messenger.Message]:
         """Normalize a state message to a DeviceState object.
