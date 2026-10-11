@@ -1,0 +1,8 @@
+{% extends "!layout.html" %}
+
+{# Display the release next to the project name in the sidebar header #}
+{%- block sidebartitle %}
+  <a href="{{ pathto(master_doc) }}" class="icon icon-home">
+    {{ project }} <span class="version">v{{ release }}</span>
+  </a>
+{%- endblock %}

@@ -11,9 +11,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 
 project = 'iot2mqtt'
-copyright = '2024, Serge LASSABE'
+copyright = '2026, Serge LASSABE'
 author = 'Serge LASSABE'
-release = '2.0.0'
+release = '1.1.X'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -44,4 +44,7 @@ source_suffix = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
+html_theme_options = {
+    'version_selector': False,
+}
 html_static_path = ['_static']

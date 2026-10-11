@@ -58,7 +58,7 @@ help: ## Show lib commands
 	@printf "  \033[36m%-20s\033[0m %s\n" "upload" "Upload distributions to $(TWINE_REPOSITORY)"
 	@printf "\n"
 	@printf "$(BOLD)Run:$(RESET)\n"
-	@printf "  \033[36m%-20s\033[0m %s\n" "CLI" "Monitor IoT device messages"
+	@printf "  \033[36m%-20s\033[0m %s\n" "run" "Monitor IoT device messages"
 	@printf "\n"
 	@printf "$(BOLD)Maintenance:$(RESET)\n"
 	@printf "  \033[36m%-20s\033[0m %s\n" "clean" "Remove venv, build artifacts, and caches"
@@ -68,7 +68,7 @@ venv: ## Create local virtual environment
 	python3 -m venv $(VENV)
 	$(PYTHON) -m pip install --upgrade pip setuptools wheel
 
-CLI:  ## Run the IoT2MQTT CLI
+run:  ## Run the IoT2MQTT CLI
 	$(VENV)/bin/cli_iot2mqtt
 
 install: venv ## Install component dependencies
